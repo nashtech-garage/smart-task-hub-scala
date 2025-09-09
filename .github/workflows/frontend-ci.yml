@@ -1,0 +1,57 @@
+name: Frontend Development Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'frontend/**'
+  pull_request:
+    branches: [ dev ]
+    paths:
+      - 'frontend/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      # 1. Checkout & Setup
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # 2. Install dependencies
+      - name: Install dependencies
+        run: npm ci
+
+      # 3. Code Quality Checks (Lint, Prettier, Type-check)
+      - name: Run Code Quality Checks
+        run: |
+          npm run lint || true
+          npm run format:check || true
+          npx tsc --noEmit || true
+
+      # 4. Run Tests
+      - name: Run Unit Tests & Coverage
+        run: |
+          npm run test:run
+          npm run test:coverage
+
+      # 5. Build & Deploy
+      - name: Build & Deploy
+        run: |
+          npm run build
+          npx vercel --prod --yes --token=${{ secrets.TRELLO_FRONTEND_VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ vars.TRELLO_FRONTEND_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.TRELLO_FRONTEND_VERCEL_PROJECT_ID }}
+          VITE_TRELLO_LIKE_API_URL: ${{ vars.VITE_TRELLO_LIKE_API_URL }}

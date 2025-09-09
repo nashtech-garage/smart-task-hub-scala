@@ -1,0 +1,48 @@
+name: Backend Development Pipeline
+
+on:
+  push:
+    branches: [ main ]
+    paths:
+      - 'backend/**'
+  pull_request:
+    branches: [ dev ]
+    paths:
+      - 'backend/**'
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      # 1. Checkout code
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      # 2. Setup Java (JVM)
+      - name: Setup Java 18
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 18
+
+      # 3. Setup Scala + sbt
+      - name: Setup Scala & sbt
+        uses: coursier/setup-action@v1
+        with:
+          apps: sbt
+
+      # 4. Build (compile & stage)
+      - name: Build Play Framework App
+        run: sbt stage
+
+      # 5. Run Scalastyle (Static Code Analysis)
+      - name: Run Scalastyle
+        run: sbt scalastyle
+
+      # 6. Run tests with coverage
+      - name: Run Scoverage Tests
+        run: sbt clean coverage test coverageReport coverageAggregate

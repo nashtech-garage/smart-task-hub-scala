@@ -1,0 +1,6 @@
+# https://www.playframework.com/documentation/latest/ScalaI18N
+validate.required = {0} is required
+validate.empty = {0} can not be empty
+validate.tooShort = {0} must be at least {1} characters
+validate.invalidEnum = {0} is invalid, expected one of: [{1}]
+validate.minValue = {0} must be at least {1}

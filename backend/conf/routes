@@ -1,0 +1,56 @@
+# Routes
+# This file defines all application routes (Higher priority routes first)
+# https://www.playframework.com/documentation/latest/ScalaRouting
+# ~~~~
+
+
+# Authentication routes
+POST    /api/auth/register      controllers.AuthController.register()
+POST    /api/auth/login         controllers.AuthController.login()
+POST    /api/auth/logout        controllers.AuthController.logout()
+GET     /api/auth/me            controllers.AuthController.me()
+POST    /api/auth/refresh       controllers.AuthController.refresh()
+GET     /api/auth/check         controllers.AuthController.checkAuth()
+GET    /api/auth/role         controllers.AuthController.roleRetrieve()
+
+# Workspace
+GET     /api/workspaces            controllers.WorkspaceController.getAllWorkspaces
+GET     /api/workspaces/:id        controllers.WorkspaceController.getWorkspaceById(id: Int)
+DELETE  /api/workspaces/:id        controllers.WorkspaceController.deleteWorkspace(id: Int)
+
+# URL Preview for adding item
+GET     /api/url-preview        controllers.UrlPreviewController.preview()
+OPTIONS /api/url-preview        controllers.UrlPreviewController.previewOptions()
+
+# Workspace routes
+
+POST   /api/workspaces    controllers.WorkspaceController.create
+PUT    /api/workspaces/:id controllers.WorkspaceController.update(id: Int)
+
+# Project routes
+POST   /api/workspaces/:workspaceId/projects    controllers.ProjectController.create(workspaceId: Int)
+GET    /api/workspaces/:workspaceId/projects    controllers.ProjectController.getAll(workspaceId: Int)
+PATCH   /api/projects/:projectId/complete   controllers.ProjectController.completeProject(projectId: Int)
+PATCH   /api/projects/:projectId/delete     controllers.ProjectController.deleteProject(projectId: Int)
+PATCH   /api/projects/:projectId/reopen     controllers.ProjectController.reopenProject(projectId: Int)
+GET    /api/projects/completed       controllers.ProjectController.getCompletedProjectsByUser
+GET    /api/projects/:projectId/members        controllers.ProjectController.getAllMembersInProject(projectId: Int)
+GET    /api/projects/:projectId        controllers.ProjectController.getProjectById(projectId: Int)
+
+# Column routes
+POST   /api/projects/:projectId/columns    controllers.ColumnController.create(projectId: Int)
+GET    /api/projects/:projectId/columns    controllers.ColumnController.getAll(projectId: Int)
+GET    /api/projects/:projectId/columns/archived    controllers.ColumnController.getArchivedColumns(projectId: Int)
+PATCH  /api/projects/:projectId/columns/:columnId   controllers.ColumnController.update(projectId: Int, columnId: Int)
+PATCH   /api/columns/:columnId/archive    controllers.ColumnController.archive(columnId: Int)
+PATCH   /api/columns/:columnId/restore    controllers.ColumnController.restore(columnId: Int)
+DELETE  /api/columns/:columnId            controllers.ColumnController.delete(columnId: Int)
+PATCH  /api/columns/:columnId/position        controllers.ColumnController.updatePosition(columnId: Int)
+
+# Task routes
+POST   /api/columns/:columnId/tasks    controllers.TaskController.create(columnId: Int)
+PATCH  /api/tasks/:taskId              controllers.TaskController.update(taskId: Int)
+GET    /api/tasks/:taskId              controllers.TaskController.getById(taskId: Int)
+PATCH  /api/tasks/:taskId/archive      controllers.TaskController.archive(taskId: Int)
+PATCH  /api/tasks/:taskId/restore      controllers.TaskController.restore(taskId: Int)
+DELETE  /api/tasks/:taskId             controllers.TaskController.delete(taskId: Int)

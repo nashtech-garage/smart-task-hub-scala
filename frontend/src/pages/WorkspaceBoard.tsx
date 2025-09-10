@@ -2,10 +2,13 @@ import BoardNavbar from '@/components/board/BoardNavbar';
 import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
+import { useWebSocket } from '@/hooks/useWebsocket';
 import { archiveColumn, createNewColumn, fetchBoardColumns, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
 import { notify } from '@/services/toastService';
 import { reopenBoard } from '@/services/workspaceService';
 import type { Board, Column } from '@/types';
+import type { ColumnOutMsg } from '@/types/ws/columns';
+import type { DomainOutMsg } from '@/types/ws/domains';
 import {
     DndContext,
     DragOverlay,
@@ -33,6 +36,7 @@ import { useParams } from 'react-router-dom';
 const WorkspaceBoard = () => {
 
     const { boardId } = useParams();
+    const { lastMessage, send } = useWebSocket();
     const [isBoardClosed, setIsBoardClosed] = useState(false);
     const [boardDetail, setBoardDetail] = useState<Board>({ id: 0, name: '', status: undefined });
     const [columns, setColumns] = useState<Column[]>([]);
@@ -42,18 +46,6 @@ const WorkspaceBoard = () => {
     const [cardTitle, setCardTitle] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
-
-    const ws = new WebSocket("http://localhost:9000/ws");
-
-    ws.onopen = () => {
-        console.log("Connected to WS");
-        ws.send(JSON.stringify({ type: "ping" }));
-    };
-
-    ws.onmessage = (event) => {
-        const msg = JSON.parse(event.data);
-        console.log("Received:", msg);
-    };
 
     // OPTIMIZATION: Track dragging state separately from active elements
     const [isDragging, setIsDragging] = useState(false);
@@ -127,8 +119,31 @@ const WorkspaceBoard = () => {
     }
 
     useEffect(() => {
+        send({ type: "join", boardId: Number(boardId) });
         fetchBoardData();
-    }, []);
+    }, [boardId]);
+
+    useEffect(() => {
+        if (!lastMessage) return;
+        
+        switch (lastMessage.type) {
+            case "pong":
+                console.log("Server alive");
+                break;
+
+            case "joined":
+                console.log("Joined board", lastMessage.boardId);
+                break;
+
+            case "columnMoved":
+                console.log("Column moved:", (lastMessage as ColumnOutMsg).columnId);
+                break;
+
+            case "error":
+                console.error("WS Error:", (lastMessage as DomainOutMsg).type);
+                break;
+        }
+    }, [lastMessage]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {

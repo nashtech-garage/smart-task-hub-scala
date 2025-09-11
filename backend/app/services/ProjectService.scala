@@ -184,4 +184,8 @@ class ProjectService @Inject()(
     db.run(action)
   }
 
+  def isUserInActiveProject(userId: Int, projectId: Int): Future[Boolean] = {
+    db.run(projectRepository.isUserInActiveProject(userId, projectId))
+  }
+
 }

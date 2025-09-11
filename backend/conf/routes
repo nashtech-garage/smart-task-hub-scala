@@ -45,7 +45,7 @@ PATCH  /api/projects/:projectId/columns/:columnId   controllers.ColumnController
 PATCH   /api/columns/:columnId/archive    controllers.ColumnController.archive(columnId: Int)
 PATCH   /api/columns/:columnId/restore    controllers.ColumnController.restore(columnId: Int)
 DELETE  /api/columns/:columnId            controllers.ColumnController.delete(columnId: Int)
-PATCH  /api/columns/:columnId/position        controllers.ColumnController.updatePosition(columnId: Int)
+PATCH  /api/projects/:projectId/columns/:columnId/position        controllers.ColumnController.updatePosition(projectId: Int, columnId: Int)
 
 # Task routes
 POST   /api/columns/:columnId/tasks    controllers.TaskController.create(columnId: Int)
@@ -56,4 +56,4 @@ PATCH  /api/tasks/:taskId/restore      controllers.TaskController.restore(taskId
 DELETE  /api/tasks/:taskId             controllers.TaskController.delete(taskId: Int)
 
 #Web socket
-GET   /ws                controllers.WebSocketController.ws
+GET /ws/project/:projectId  controllers.WebSocketController.joinProject(projectId: Int)

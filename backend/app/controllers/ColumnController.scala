@@ -112,15 +112,15 @@ class ColumnController @Inject()(
       }
     }
 
-  /** PATCH /columns/:columnId/position */
-  def updatePosition(columnId: Int): Action[JsValue] =
+  /** PATCH /projects/:projectId/columns/:columnId/position */
+  def updatePosition(projectId: Int, columnId: Int): Action[JsValue] =
     authenticatedActionWithUser.async(parse.json) { request =>
       implicit val messages: Messages = request.messages
       val updatedBy = request.userToken.userId
       handleJsonValidation[UpdateColumnPositionRequest](request.body) {
-        updatePositionDto =>
+        updateColumnPositionDto =>
           columnService
-            .updatePosition(columnId, updatePositionDto, updatedBy)
+            .updatePosition(projectId, columnId, updateColumnPositionDto, updatedBy)
             .map { _ =>
               Ok(
                 Json.toJson(

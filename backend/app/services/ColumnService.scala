@@ -2,6 +2,7 @@ package services
 
 import dto.request.column.{CreateColumnRequest, UpdateColumnPositionRequest, UpdateColumnRequest}
 import dto.response.column.{ColumnSummariesResponse, ColumnWithTasksResponse}
+import dto.websocket.board.ColumnMoved
 import exception.AppException
 import models.Enums.ColumnStatus
 import models.Enums.ColumnStatus.ColumnStatus
@@ -17,6 +18,7 @@ import scala.concurrent.{ExecutionContext, Future}
 class ColumnService @Inject()(
   columnRepository: ColumnRepository,
   projectRepository: ProjectRepository,
+  broadcastService: BroadcastService,
   protected val dbConfigProvider: DatabaseConfigProvider
 )(implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] {
@@ -157,7 +159,10 @@ class ColumnService @Inject()(
         errorMsg = "Only archived columns can be deleted"
         )
 
-  def updatePosition(columnId: Int, request: UpdateColumnPositionRequest, userId: Int): Future[Int] = {
+  def updatePosition(projectId: Int,
+                     columnId: Int,
+                     request: UpdateColumnPositionRequest,
+                     userId: Int): Future[Int] = {
     val action = for {
       maybeStatus <- columnRepository.findStatusIfUserInProject(
         columnId,
@@ -173,7 +178,14 @@ class ColumnService @Inject()(
       }
     } yield updatedRows
 
-    db.run(action)
+    val resultF: Future[Int] = db.run(action)
+    resultF.foreach { _ =>
+      broadcastService.broadcastToProject(
+        projectId,
+        ColumnMoved(columnId, request.position)
+      )
+    }
+    resultF
   }
 
   def getArchivedColumns(projectId: Int, userId: Int): Future[Seq[ColumnSummariesResponse]] = {

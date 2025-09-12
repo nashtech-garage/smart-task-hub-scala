@@ -85,8 +85,12 @@ class ColumnRepository @Inject()(
 
   def findStatusIfUserInProject(columnId: Int, userId: Int): DBIO[Option[ColumnStatus]] = {
     val query = for {
-      (c, p) <- columns join projects on (_.projectId === _.id)
-      if c.id === columnId.bind && p.createdBy === userId.bind
+      (((c, p), up)) <- columns
+        .join(projects).on(_.projectId === _.id)
+        .join(userProjects).on { case ((c, p), up) =>
+          p.id === up.projectId && up.userId === userId.bind
+        }
+      if c.id === columnId.bind
     } yield c.status
 
     query.result.headOption

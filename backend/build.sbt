@@ -69,8 +69,7 @@ lazy val root = (project in file("."))
         coverageExcludedPackages := Seq(
             "controllers\\.javascript\\..*",
             "controllers.Reverse.*",
-            "dto\\.request\\..*",
-            "dto\\.response\\..*",
+            "dto\\..*",
             "filters\\..*",
             "mappers\\..*",
             "models\\..*",

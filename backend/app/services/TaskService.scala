@@ -2,6 +2,7 @@ package services
 
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
 import dto.response.task.TaskDetailResponse
+import dto.websocket.board.TaskCreated
 import exception.AppException
 import mappers.TaskMapper
 import models.Enums.TaskStatus
@@ -19,7 +20,8 @@ import scala.concurrent.{ExecutionContext, Future}
 @Singleton
 class TaskService @Inject()(taskRepository: TaskRepository,
                             columnRepository: ColumnRepository,
-                            protected val dbConfigProvider: DatabaseConfigProvider
+                            protected val dbConfigProvider: DatabaseConfigProvider,
+                            broadcastService: BroadcastService
 )(implicit ec: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile]  {
 
   import profile.api._
@@ -27,8 +29,8 @@ class TaskService @Inject()(taskRepository: TaskRepository,
   def createNewTask(request: CreateTaskRequest, columnId: Int, createdBy: Int): Future[Int] = {
     val action = for {
       columnOpt <- columnRepository.findColumnIfUserInProject(columnId, createdBy)
-      _ <- columnOpt match {
-        case Some(_) => DBIO.successful()
+      projectId <- columnOpt match {
+        case Some(_) => DBIO.successful(columnOpt.get.projectId)
         case _ => DBIO.failed(AppException(
           message = s"Column with ID $columnId does not exist or is not active",
           statusCode = Status.NOT_FOUND)
@@ -55,9 +57,22 @@ class TaskService @Inject()(taskRepository: TaskRepository,
         )
         taskRepository.create(newTask)
       }
-    } yield taskId
+    } yield (taskId, projectId)
 
-    db.run(action.transactionally)
+    val result = db.run(action.transactionally)
+    result.onComplete(res => {
+      res.map {
+        case (taskId, projectId) =>
+          val message = TaskCreated(
+            taskId = taskId,
+            columnId = columnId,
+            name = request.name,
+            position = request.position
+          )
+          broadcastService.broadcastToProject(projectId, message)
+      }
+    })
+    result.map(_._1)
   }
 
   def updateTask(taskId: Int, req: UpdateTaskRequest, updatedBy: Int): Future[Int] = {

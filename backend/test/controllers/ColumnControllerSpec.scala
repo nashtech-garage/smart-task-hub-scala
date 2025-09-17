@@ -217,11 +217,11 @@ class ColumnControllerSpec
     }
 
     "delete column successfully" in {
-      val archiveRequest = FakeRequest(PATCH, "/api/columns/2/archive")
+      val archiveRequest = FakeRequest(PATCH, "/api/columns/3/archive")
         .withCookies(Cookie(cookieName, fakeToken))
       route(app, archiveRequest).get
 
-      val request = FakeRequest(DELETE, "/api/columns/2")
+      val request = FakeRequest(DELETE, "/api/columns/3")
         .withCookies(Cookie(cookieName, fakeToken))
       val result = route(app, request).get
 

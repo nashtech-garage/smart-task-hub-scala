@@ -80,6 +80,7 @@ lazy val root = (project in file("."))
             "db\\..*",
             "validations\\..*",
             "utils\\..*",
+            "actors\\..*",
         ).mkString(";"),
 
         Test / javaOptions += "-Dconfig.file=conf/application.test.conf",

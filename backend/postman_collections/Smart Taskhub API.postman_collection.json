@@ -1,6 +1,6 @@
 {
 	"info": {
-		"_postman_id": "77962f38-c1f6-4e67-b55d-4cc7b8e37edd",
+		"_postman_id": "d1795af4-fe16-437c-9cbf-b90c156f1249",
 		"name": "Smart Taskhub API",
 		"description": "API documentation for Smart Taskhub, a task and project management application.",
 		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
@@ -916,7 +916,7 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Workspace ID"
 								}
 							]
@@ -1076,7 +1076,7 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Workspace ID"
 								}
 							]
@@ -1368,7 +1368,7 @@
 							"variable": [
 								{
 									"key": "id",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Workspace ID"
 								}
 							]
@@ -1535,7 +1535,7 @@
 							"variable": [
 								{
 									"key": "workspaceId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Workspace ID"
 								}
 							]
@@ -1780,7 +1780,7 @@
 							"variable": [
 								{
 									"key": "workspaceId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Workspace ID"
 								}
 							]
@@ -1929,7 +1929,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -2076,7 +2076,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -2265,7 +2265,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -2454,7 +2454,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -2701,7 +2701,7 @@
 							}
 						],
 						"url": {
-							"raw": "{{baseUrl}}/url-preview?url=https://qqAtIwoxKmmrVOZcoPNTTzvXvoj.obCCg-KD9.9j",
+							"raw": "{{baseUrl}}/url-preview?url=https://lthOZYdOEiM.igyjIqHP3GE9rjGOAI09vGpTZ2b",
 							"host": [
 								"{{baseUrl}}"
 							],
@@ -2711,7 +2711,7 @@
 							"query": [
 								{
 									"key": "url",
-									"value": "https://qqAtIwoxKmmrVOZcoPNTTzvXvoj.obCCg-KD9.9j",
+									"value": "https://lthOZYdOEiM.igyjIqHP3GE9rjGOAI09vGpTZ2b",
 									"description": "(Required) The URL to preview"
 								}
 							]
@@ -2730,7 +2730,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/url-preview?url=https://qqAtIwoxKmmrVOZcoPNTTzvXvoj.obCCg-KD9.9j",
+									"raw": "{{baseUrl}}/url-preview?url=https://lthOZYdOEiM.igyjIqHP3GE9rjGOAI09vGpTZ2b",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -2740,7 +2740,7 @@
 									"query": [
 										{
 											"key": "url",
-											"value": "https://qqAtIwoxKmmrVOZcoPNTTzvXvoj.obCCg-KD9.9j",
+											"value": "https://lthOZYdOEiM.igyjIqHP3GE9rjGOAI09vGpTZ2b",
 											"description": "(Required) The URL to preview"
 										}
 									]
@@ -2793,7 +2793,7 @@
 									}
 								],
 								"url": {
-									"raw": "{{baseUrl}}/url-preview?url=https://qqAtIwoxKmmrVOZcoPNTTzvXvoj.obCCg-KD9.9j",
+									"raw": "{{baseUrl}}/url-preview?url=https://lthOZYdOEiM.igyjIqHP3GE9rjGOAI09vGpTZ2b",
 									"host": [
 										"{{baseUrl}}"
 									],
@@ -2803,7 +2803,7 @@
 									"query": [
 										{
 											"key": "url",
-											"value": "https://qqAtIwoxKmmrVOZcoPNTTzvXvoj.obCCg-KD9.9j",
+											"value": "https://lthOZYdOEiM.igyjIqHP3GE9rjGOAI09vGpTZ2b",
 											"description": "(Required) The URL to preview"
 										}
 									]
@@ -2916,7 +2916,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -3214,7 +3214,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -3379,12 +3379,12 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								},
 								{
 									"key": "columnId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Column ID"
 								}
 							]
@@ -3645,7 +3645,7 @@
 							"variable": [
 								{
 									"key": "columnId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Column ID"
 								}
 							]
@@ -3834,7 +3834,7 @@
 							"variable": [
 								{
 									"key": "columnId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Column ID"
 								}
 							]
@@ -4022,7 +4022,7 @@
 							"variable": [
 								{
 									"key": "columnId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Column ID"
 								}
 							]
@@ -4209,19 +4209,26 @@
 							}
 						},
 						"url": {
-							"raw": "{{baseUrl}}/columns/:columnId/position",
+							"raw": "{{baseUrl}}/projects/:projectId/columns/:columnId/position",
 							"host": [
 								"{{baseUrl}}"
 							],
 							"path": [
+								"projects",
+								":projectId",
 								"columns",
 								":columnId",
 								"position"
 							],
 							"variable": [
 								{
+									"key": "projectId",
+									"value": "8219",
+									"description": "(Required) Project ID"
+								},
+								{
 									"key": "columnId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Column ID"
 								}
 							]
@@ -4254,16 +4261,21 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/columns/:columnId/position",
+									"raw": "{{baseUrl}}/projects/:projectId/columns/:columnId/position",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
+										"projects",
+										":projectId",
 										"columns",
 										":columnId",
 										"position"
 									],
 									"variable": [
+										{
+											"key": "projectId"
+										},
 										{
 											"key": "columnId"
 										}
@@ -4307,16 +4319,21 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/columns/:columnId/position",
+									"raw": "{{baseUrl}}/projects/:projectId/columns/:columnId/position",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
+										"projects",
+										":projectId",
 										"columns",
 										":columnId",
 										"position"
 									],
 									"variable": [
+										{
+											"key": "projectId"
+										},
 										{
 											"key": "columnId"
 										}
@@ -4360,16 +4377,21 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/columns/:columnId/position",
+									"raw": "{{baseUrl}}/projects/:projectId/columns/:columnId/position",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
+										"projects",
+										":projectId",
 										"columns",
 										":columnId",
 										"position"
 									],
 									"variable": [
+										{
+											"key": "projectId"
+										},
 										{
 											"key": "columnId"
 										}
@@ -4413,16 +4435,21 @@
 									}
 								},
 								"url": {
-									"raw": "{{baseUrl}}/columns/:columnId/position",
+									"raw": "{{baseUrl}}/projects/:projectId/columns/:columnId/position",
 									"host": [
 										"{{baseUrl}}"
 									],
 									"path": [
+										"projects",
+										":projectId",
 										"columns",
 										":columnId",
 										"position"
 									],
 									"variable": [
+										{
+											"key": "projectId"
+										},
 										{
 											"key": "columnId"
 										}
@@ -4467,7 +4494,7 @@
 							"variable": [
 								{
 									"key": "projectId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Project ID"
 								}
 							]
@@ -4640,7 +4667,7 @@
 							"variable": [
 								{
 									"key": "columnId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Column ID"
 								}
 							]
@@ -4984,7 +5011,7 @@
 						],
 						"body": {
 							"mode": "raw",
-							"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+							"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 							"options": {
 								"raw": {
 									"headerFamily": "json",
@@ -5004,7 +5031,7 @@
 							"variable": [
 								{
 									"key": "taskId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Task ID"
 								}
 							]
@@ -5028,7 +5055,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 									"options": {
 										"raw": {
 											"headerFamily": "json",
@@ -5080,7 +5107,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 									"options": {
 										"raw": {
 											"headerFamily": "json",
@@ -5132,7 +5159,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 									"options": {
 										"raw": {
 											"headerFamily": "json",
@@ -5184,7 +5211,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 									"options": {
 										"raw": {
 											"headerFamily": "json",
@@ -5236,7 +5263,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 									"options": {
 										"raw": {
 											"headerFamily": "json",
@@ -5288,7 +5315,7 @@
 								],
 								"body": {
 									"mode": "raw",
-									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"MEDIUM\",\n  \"isCompleted\": false\n}",
+									"raw": "{\n  \"name\": \"Updated Task Name\",\n  \"description\": \"This is an updated description for the task\",\n  \"startDate\": \"2023-12-31T23:59:59Z\",\n  \"endDate\": \"2024-01-15T23:59:59Z\",\n  \"priority\": \"LOW\",\n  \"isCompleted\": false\n}",
 									"options": {
 										"raw": {
 											"headerFamily": "json",
@@ -5348,7 +5375,7 @@
 							"variable": [
 								{
 									"key": "taskId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Task ID"
 								}
 							]
@@ -5532,7 +5559,7 @@
 							"variable": [
 								{
 									"key": "taskId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Task ID"
 								}
 							]
@@ -5717,7 +5744,7 @@
 							"variable": [
 								{
 									"key": "taskId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Task ID"
 								}
 							]
@@ -5906,7 +5933,7 @@
 							"variable": [
 								{
 									"key": "taskId",
-									"value": "6621",
+									"value": "8219",
 									"description": "(Required) Task ID"
 								}
 							]

@@ -67,7 +67,7 @@ class TaskService @Inject()(taskRepository: TaskRepository,
             taskId = taskId,
             columnId = columnId,
             name = request.name,
-            position = request.position
+            taskPosition = request.position
           )
           broadcastService.broadcastToProject(projectId, message)
       }

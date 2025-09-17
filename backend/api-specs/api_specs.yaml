@@ -1431,13 +1431,19 @@ paths:
               example:
                 message: "Column not found"
 
-  /columns/{columnId}/position:
+  /projects/{projectId}/columns/{columnId}/position:
     patch:
       tags:
         - Columns
       summary: Update column position
       description: Updates the position of a specific column in a project
       parameters:
+        - in: path
+          name: projectId
+          required: true
+          description: Project ID
+          schema:
+            type: integer
         - in: path
           name: columnId
           required: true
@@ -1497,7 +1503,7 @@ paths:
 
 
   /projects/{projectId}/columns/archived:
-   get:
+    get:
       tags:
         - Columns
       summary: Get archived columns in project
@@ -1526,12 +1532,12 @@ paths:
               example:
                 message: "Archived columns retrieved"
                 data:
-                - id: 2
-                  name: "Done"
-                  position: 3
-                - id: 3
-                  name: "Archived"
-                  position: 4
+                  - id: 2
+                    name: "Done"
+                    position: 3
+                  - id: 3
+                    name: "Archived"
+                    position: 4
 
         '401':
           description: Unauthenticated request
@@ -2154,15 +2160,15 @@ components:
           example: false
 
     UpdateColumnPositionRequest:
-        type: object
-        required:
-          - position
-        properties:
-          position:
-            type: integer
-            minimum: 1
-            description: New position of the column in the project board
-            example: 2
+      type: object
+      required:
+        - position
+      properties:
+        position:
+          type: integer
+          minimum: 1
+          description: New position of the column in the project board
+          example: 2
 
 
     # Response schemas

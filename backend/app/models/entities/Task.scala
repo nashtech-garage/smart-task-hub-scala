@@ -28,7 +28,7 @@ case class UserTask(
                      taskId: Int,
                      assignedTo: Int,
                      assignedBy: Option[Int] = None,
-                     assignedAt: LocalDateTime = LocalDateTime.now()
+                     assignedAt: Instant = Instant.now()
                    )
 
 case class Checklist(

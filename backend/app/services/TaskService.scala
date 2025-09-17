@@ -1,6 +1,8 @@
 package services
 
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
+import dto.response.task.TaskDetailResponse
+import dto.websocket.board.{MemberAssignedToTask, TaskCreated}
 import dto.response.task.{TaskDetailResponse, TaskSummaryResponse}
 import dto.websocket.OutgoingMessage
 import dto.websocket.board.{TaskCreated, TaskStatusUpdated, TaskUpdated}
@@ -205,6 +207,41 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     }
   }
 
+  def assignMemberToTask(projectId: Int, taskId: Int, userId: Int, assignedBy: Int): Future[Int] = {
+    val action = for {
+      (task, projectId) <- getTaskAndProjectByTaskId(taskId, assignedBy)
+
+      _ <- if (task.status == models.Enums.TaskStatus.active) {
+        DBIO.successful(())
+      } else {
+        DBIO.failed(AppException(
+          message = s"Task with ID $taskId does not exist or is not active",
+          statusCode = Status.NOT_FOUND))
+      }
+
+      userCheckOpt <- taskRepository.findUserInProjectNotAssigned(userId, taskId)
+      _ <- userCheckOpt match {
+        case Some(_) => {
+          val assignedMemberToTaskMessage = MemberAssignedToTask(
+            taskId,
+            userCheckOpt.get
+          )
+          broadcastService.broadcastToProject(projectId, assignedMemberToTaskMessage)
+          DBIO.successful(())
+        }
+        case None => DBIO.failed(AppException(
+          message = s"User with ID $userId is not in the project or already assigned",
+          statusCode = Status.NOT_FOUND)
+        )
+      }
+
+      // assign vào task
+      rowsAffected <- taskRepository.assignMemberToTask(taskId, userId, Some(assignedBy))
+    } yield rowsAffected
+
+    db.run(action)
+  }
+
   private def changeStatus(taskId: Int,
                            userId: Int,
                            validFrom: Set[TaskStatus],
@@ -255,5 +292,4 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       }
     } yield result
   }
-
 }

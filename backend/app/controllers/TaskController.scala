@@ -123,4 +123,19 @@ class TaskController @Inject()(
         }
     }
 
+  def getArchivedTasks(projectId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      implicit val messages: Messages = request.messages
+      val userId = request.userToken.userId
+      taskService
+        .getArchivedTask(projectId, userId)
+        .map { tasks =>
+          Ok(
+            Json.toJson(
+              ApiResponse.success("Archived tasks retrieved successfully", tasks)
+            )
+          )
+        }
+    }
+
 }

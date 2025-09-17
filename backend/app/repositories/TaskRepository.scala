@@ -1,8 +1,9 @@
 package repositories
 
 import db.MyPostgresProfile.api.{columnStatusTypeMapper, projectStatusTypeMapper, taskStatusTypeMapper}
+import dto.response.task.TaskSummaryResponse
 import models.Enums.{ColumnStatus, ProjectStatus, TaskStatus}
-import models.entities.Task
+import models.entities.{Project, Task}
 import models.tables.TaskTable
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
@@ -27,8 +28,8 @@ class TaskRepository@Inject()(
       .result
   }
 
-  def findTaskIfUserInProject(taskId: Int, userId: Int): DBIO[Option[Task]] = {
-    val query = (for {
+  def findTaskAndProjectIdIfUserInProject(taskId: Int, userId: Int): DBIO[Option[(Task, Int)]] = {
+    val query = for {
       (((t, c), p), up) <- tasks
         .join(columns).on(_.columnId === _.id)
         .join(projects).on { case ((t, c), p) => c.projectId === p.id }
@@ -37,7 +38,7 @@ class TaskRepository@Inject()(
         c.status === ColumnStatus.active &&
         p.status === ProjectStatus.active &&
         up.userId === userId
-    } yield t)
+    } yield (t, p.id)
 
     query.result.headOption
   }
@@ -45,6 +46,24 @@ class TaskRepository@Inject()(
 
   def update(task: Task): DBIO[Int] = {
     tasks.filter(_.id === task.id).update(task)
+  }
+
+  def findArchivedTasksByProjectId(projectId: Int): DBIO[Seq[TaskSummaryResponse]] = {
+    val query = for {
+      ((t, c), p) <- tasks
+        .join(columns).on(_.columnId === _.id)
+        .join(projects).on { case ((t, c), p) => c.projectId === p.id }
+      if p.id === projectId &&
+        t.status === TaskStatus.archived &&
+        c.status === ColumnStatus.active &&
+        p.status === ProjectStatus.active
+    } yield (t.id, t.name, t.position, t.updatedAt)
+
+    query.sortBy(_._4.desc.nullsLast).result.map { rows =>
+      rows.map { case (id, name, position, _) =>
+        TaskSummaryResponse(id, name, position.get)
+      }
+    }
   }
 
 

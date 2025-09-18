@@ -2,6 +2,7 @@ package controllers
 
 import dto.request.column.CreateColumnRequest
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
+import dto.response.task.TaskSummaryResponse
 import exception.AppException
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -173,6 +174,31 @@ class TaskControllerSpec
       status(result) mustBe OK
       (contentAsJson(result) \ "message")
         .as[String] mustBe "Task deleted successfully"
+    }
+
+    "get archived tasks successfully" in {
+      val columnService = inject[ColumnService]
+      val taskService = inject[TaskService]
+
+      // Create and archive a task in the new column
+      val taskId = await(
+        taskService.createNewTask(
+          CreateTaskRequest("Task to Archive", 1),
+          1,
+          1
+        )
+      )
+      await(taskService.archiveTask(taskId, 1))
+
+      val request = FakeRequest(GET, "/api/projects/1/columns/tasks/archived")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message")
+        .as[String] mustBe "Archived tasks retrieved successfully"
+      val tasks = (contentAsJson(result) \ "data").as[Seq[TaskSummaryResponse]]
+      tasks.exists(task => task.id == taskId && task.name == "Task to Archive") mustBe true
     }
   }
 }

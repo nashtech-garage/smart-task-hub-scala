@@ -272,7 +272,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                     >
                         <Ellipsis size={16} />
                     </button>
-                    
+
                     <ColumnOptionsMenu
                         isOpen={showOptionsMenu}
                         onClose={() => setShowOptionsMenu(false)}
@@ -292,11 +292,11 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                             item={item}
                             onDelete={onDeleteItem}
                             handleShowDetailTask={handleShowDetailTask}
-                            // label='FE'
-                            // assignedMember={{ 
-                            //     name: "John Doe", 
-                            //     initials: "JD",
-                            // }}
+                        // label='FE'
+                        // assignedMember={{ 
+                        //     name: "John Doe", 
+                        //     initials: "JD",
+                        // }}
                         />
                     ))}
                 </div>
@@ -379,7 +379,7 @@ const arePropsEqual = (
 
         if (
             prevItem.id !== nextItem.id ||
-            prevItem.content !== nextItem.content
+            prevItem.name !== nextItem.name
         ) {
             return false;
         }

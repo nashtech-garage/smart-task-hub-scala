@@ -3,6 +3,7 @@ import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
 import { archiveColumn, createNewColumn, fetchBoardColumns, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
+import taskService from '@/services/taskService';
 import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
@@ -481,6 +482,19 @@ const WorkspaceBoard = () => {
             console.log(columnId);
             if (isBoardClosed) return;
 
+            const column = columns.find(col => col.id === columnId);
+            if (!column) return;
+            const lastTask = column.tasks[column.tasks.length - 1];
+            const newPosition = lastTask ? lastTask.position + 1000 : 1000;
+
+            try {
+                const result = await taskService.createTask(columnId, cardTitle, newPosition)
+                notify.success(result.message);
+                await fetchBoardData();
+            } catch (error: any) {
+                notify.error(error.response?.data?.message);
+            }
+
             setActiveInputColumnId(null);
             setCardTitle('');
             // if (cardTitle.trim()) {
@@ -660,7 +674,7 @@ const WorkspaceBoard = () => {
                                     ) : !isBoardClosed && activeElements.activeItem ? (
                                         <div className='bg-[rgba(0,0,0,0.6)] p-3 rounded-lg shadow-2xl opacity-95 transform rotate-2'>
                                             <span className='text-sm text-white whitespace-pre-wrap break-words'>
-                                                {activeElements.activeItem.content}
+                                                {activeElements.activeItem.name}
                                             </span>
                                         </div>
                                     ) : null}

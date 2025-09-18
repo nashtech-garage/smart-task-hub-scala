@@ -6,6 +6,8 @@ import { notify } from '@/services/toastService';
 const urlRegex = /(https?:\/\/[^\s]+)/g;
 
 export const detectUrl = (text: string): string | null => {
+    console.log('Detecting URL in text:', text);
+    if (!text) return null;
     const matches = text.match(urlRegex);
     return matches ? matches[0] : null;
 };

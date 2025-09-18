@@ -1,6 +1,6 @@
 package controllers
 
-import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
+import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskRequest}
 import dto.response.ApiResponse
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
@@ -113,15 +113,28 @@ class TaskController @Inject()(
       taskService
         .deleteTask(taskId, deletedBy)
         .map { _ =>
-          Ok(
-            Json.toJson(
-              ApiResponse[Unit](
-                s"Task deleted successfully"
-              )
-            )
-          )
+          Ok(Json.toJson(ApiResponse[Unit](s"Task deleted successfully")))
         }
     }
+
+  def assignMember(projectId:Int, taskId: Int): Action[JsValue] = {
+    authenticatedActionWithUser.async(parse.json) { request =>
+      val assignedBy = request.userToken.userId
+      handleJsonValidation[AssignMemberRequest](request.body) {
+        assignMemberRequest =>
+          val userId = assignMemberRequest.userId
+          taskService
+            .assignMemberToTask(projectId, taskId, userId, assignedBy)
+            .map { _ =>
+              Ok(
+                Json.toJson(
+                  ApiResponse[Unit](s"Member assigned to task successfully")
+                )
+              )
+            }
+      }
+    }
+  }
 
   def getArchivedTasks(projectId: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>

@@ -1,6 +1,7 @@
 package controllers
 
 import dto.request.column.CreateColumnRequest
+import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskRequest}
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
 import dto.response.task.TaskSummaryResponse
 import exception.AppException
@@ -82,6 +83,20 @@ class TaskControllerSpec
       status(result) mustBe CREATED
       (contentAsJson(result) \ "message").as[String] must include(
         "Task created successfully"
+      )
+    }
+
+    "assign member into a task successfully" in {
+      val body = Json.toJson(AssignMemberRequest(1))
+      val request = FakeRequest(POST, "/api/projects/1/tasks/1/members")
+        .withCookies(Cookie(cookieName, fakeToken))
+        .withBody(body)
+
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] must include(
+        "Member assigned to task successfully"
       )
     }
 

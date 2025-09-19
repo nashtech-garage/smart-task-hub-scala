@@ -4,9 +4,10 @@ import { Folder, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArchivedItemsModal from './ArchivedItemsModal';
-import type { Column } from '@/types';
+import type { Column, Item } from '@/types';
 import { deleteColumn, fetchArchivedColumns, restoreColumn } from '@/services/boardService';
 import { notify } from '@/services/toastService';
+import taskService from '@/services/taskService';
 
 // const menuItems = [
 //     { icon: <Users />, label: "Share", color: "text-gray-300" },
@@ -40,7 +41,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const { wsId, boardId } = useParams();
     const navigate = useNavigate();
     const [archivedColumns, setArchivedColumns] = useState<Column[]>([]);
-    // const [archivedTasks, setArchivedTasks] = useState<Item[]>([]);
+    const [archivedTasks, setArchivedTasks] = useState<Item[]>([]);
     const [showMenu, setShowMenu] = useState(false);
     const [showVisibility, setShowVisibility] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -49,8 +50,10 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const fetchArchivedItems = async () => {
         if(id === 0) return;
         try {
-            const result = await fetchArchivedColumns(id);
-            result.data && setArchivedColumns(result.data);
+            const archivedColumnsResponse = await fetchArchivedColumns(id);
+            archivedColumnsResponse.data && setArchivedColumns(archivedColumnsResponse.data);
+            const archivedTasksResponse = await taskService.getArchivedTasks(id);
+            archivedTasksResponse.data && setArchivedTasks(archivedTasksResponse.data);
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
@@ -58,7 +61,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
     useEffect(() => {
         fetchArchivedItems();
-    }, [fetchArchivedColumns]);
+    }, []);
 
     const handleCloseMenu = () => {
         setShowCloseConfirm(false);
@@ -262,7 +265,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                 <ArchivedItemsModal
                                     onClose={handleCloseMenu}
                                     onBack={handleBackToMenu}
-                                    archivedTasks={[]}
+                                    archivedTasks={archivedTasks}
                                     archivedColumns={archivedColumns}
                                     onRestoreTask={handleRestoreTask}
                                     onRestoreColumn={handleRestoreColumn}

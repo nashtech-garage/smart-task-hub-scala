@@ -15,6 +15,7 @@ interface DraggableItemProps {
         avatar?: string;
         initials?: string;
     };
+    setActiveItem: (item: Item) => void;
 }
 
 const DraggableItem: React.FC<DraggableItemProps> = ({
@@ -22,7 +23,8 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     onDelete,
     handleShowDetailTask,
     label,
-    assignedMember
+    assignedMember,
+    setActiveItem,
 }) => {
     const {
         attributes,
@@ -50,7 +52,10 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             style={style}
             {...attributes}
             {...listeners}
-            onClick={detectUrl(item.name) ? undefined : handleShowDetailTask}
+            onClick={() => {
+                detectUrl(item.name) ? undefined : handleShowDetailTask();
+                setActiveItem(item);
+            }}
             className={`
                 select-none bg-[#222f44] p-2 rounded-lg 
                 shadow-sm cursor-grab hover:shadow-md   

@@ -7,7 +7,7 @@ import taskService from '@/services/taskService';
 import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
-import type { Board, Column } from '@/types';
+import type { Board, Column, Item } from '@/types';
 import {
     DndContext,
     DragOverlay,
@@ -44,6 +44,7 @@ const WorkspaceBoard = () => {
     const [activeInputColumnId, setActiveInputColumnId] = useState<number | null>(null);
     const [cardTitle, setCardTitle] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [activeItem, setActiveItem] = useState<Item | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
 
@@ -542,6 +543,17 @@ const WorkspaceBoard = () => {
         }
     }, [isBoardClosed]);
 
+    const handleArchiveItem = useCallback(async (taskId: number) => {
+        if (isBoardClosed) return;
+        try {
+            const result = await taskService.archiveTask(taskId);
+            notify.success(result.message);
+            await fetchBoardData();
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
+    }, [isBoardClosed]);
+
     const handleArchiveAllItemInColumns = useCallback((columnId: number) => {
         if (isBoardClosed) return;
         console.log("archived all items", columnId);
@@ -639,6 +651,7 @@ const WorkspaceBoard = () => {
                                                 onArchiveColumn={handleArchiveColumn}
                                                 onArchiveAllItems={handleArchiveAllItemInColumns}
                                                 handleShowDetailTask={handleShowDetailModal}
+                                                setActiveItem={setActiveItem}
                                             />
                                         ))}
                                     </SortableContext>
@@ -685,7 +698,8 @@ const WorkspaceBoard = () => {
                             showDetailModal &&
                             <TaskDetailModal
                                 onClose={handleHideDetailModal}
-                                item={{ id: '1', content: 'Hello' }}
+                                item={activeItem as Item}
+                                onArchive={handleArchiveItem}
                             />
                         }
                     </>

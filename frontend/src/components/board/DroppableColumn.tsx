@@ -33,6 +33,7 @@ interface DroppableColumnProps {
     onArchiveColumn: (columnId: number) => void;
     onArchiveAllItems: (columnId: number) => void;
     handleShowDetailTask: () => void;
+    setActiveItem: (item: Item) => void;
 }
 
 const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
@@ -48,7 +49,8 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
     onUpdateColumnTitle,
     onArchiveColumn,
     onArchiveAllItems,
-    handleShowDetailTask
+    handleShowDetailTask,
+    setActiveItem,
 }) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -292,6 +294,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                             item={item}
                             onDelete={onDeleteItem}
                             handleShowDetailTask={handleShowDetailTask}
+                            setActiveItem={setActiveItem}
                         // label='FE'
                         // assignedMember={{ 
                         //     name: "John Doe", 

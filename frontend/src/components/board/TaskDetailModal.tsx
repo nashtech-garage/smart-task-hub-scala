@@ -4,16 +4,14 @@ import { X, Calendar, Users,
   // Eye, Paperclip, Copy, Trash2, MessageSquareText 
 } from 'lucide-react';
 import LoadingContent from '../ui/LoadingContent';
+import type { Item } from '@/types';
 
 interface TaskModalProps {
   onClose: () => void;
-  item: {
-    id: string;
-    content: string;
-    columnId?: string;
-  };
-  onUpdate?: (itemId: string, updates: any) => void;
+  item: Item;
+  onUpdate?: (itemId: number, updates: any) => void;
   onDelete?: (itemId: string) => void;
+  onArchive: (itemId: number) => void;
 }
 
 const TaskDetailModal: React.FC<TaskModalProps> = ({ 
@@ -21,10 +19,11 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
   item, 
   onUpdate, 
   // onDelete 
+  onArchive
 }) => {
   const [isLoading, setIsLoading] = useState(false);
-  const [title, setTitle] = useState(item.content);
-  const [description, setDescription] = useState("As a workgroup member, I want to create, assign, update, and delete tasks inside a project, so that we can manage our work effectively in a collaborative environment.");
+  const [title, setTitle] = useState(item?.name);
+  const [description, setDescription] = useState("");
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   // const [comment, setComment] = useState('');
@@ -77,7 +76,7 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
                       className="text-xl font-medium text-white cursor-pointer hover:bg-gray-700 hover:bg-opacity-50 p-1 rounded flex-1 mr-4"
                       onClick={() => setIsEditingTitle(true)}
                     >
-                      [Sprint X][Tasks][BE] {title}
+                      {title}
                     </h1>
                   )}
                   <button
@@ -112,7 +111,7 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
               <div className="px-6 pb-4">
                 <h3 className="text-sm font-medium text-white mb-2">Labels</h3>
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="px-2 py-1 bg-green-600 text-white text-xs font-medium rounded">BE</span>
+                  {/* <span className="px-2 py-1 bg-green-600 text-white text-xs font-medium rounded">BE</span> */}
                   <button className="w-6 h-6 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-gray-300 text-lg rounded flex items-center justify-center leading-none">+</button>
                 </div>
                 <div className="text-xs text-gray-500 mt-1">Story Points</div>
@@ -254,7 +253,13 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
                     ACTIONS
                   </h4>
                   <div className="space-y-1">
-                    <button className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2">
+                    <button 
+                      className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2"
+                      onClick={() => {
+                        onArchive(item.id);
+                        onClose();
+                      }}
+                    >
                       <Archive size={14} />
                       Archive
                     </button>

@@ -26,3 +26,8 @@ export interface Column {
     name: string;
     tasks: Item[];
 }
+
+export interface UpdateItemRequest {
+    name: string;
+    description: string;
+}

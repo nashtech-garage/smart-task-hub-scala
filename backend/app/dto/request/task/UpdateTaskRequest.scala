@@ -31,10 +31,10 @@ object UpdateTaskRequest {
     ) and
       validateOptionalField[String](
         "description",
-        Seq(
-          notEmpty(ErrorMessages.empty("Task description"))
-        ),
-        _.trim
+//        Seq(
+//          notEmpty(ErrorMessages.empty("Task description"))
+//        ),
+//        _.trim
       ) and
       validateOptionalField[Instant](
         "startDate",

@@ -1972,7 +1972,7 @@ paths:
               example:
                 message: "Task with ID 22 does not exist"
 
-  /project/{projectId}/columns/tasks/archived:
+  /projects/{projectId}/columns/tasks/archived:
     get:
       tags:
         - Tasks

@@ -2,10 +2,9 @@ package services
 
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
 import dto.response.task.TaskDetailResponse
-import dto.websocket.board.{MemberAssignedToTask, TaskCreated}
-import dto.response.task.{TaskDetailResponse, TaskSummaryResponse}
+import dto.response.task.TaskSummaryResponse
 import dto.websocket.OutgoingMessage
-import dto.websocket.board.{TaskCreated, TaskStatusUpdated, TaskUpdated}
+import dto.websocket.board.messageTypes.{MemberAssignedToTask, MemberAssignedToTaskPayload, TaskCreated, TaskCreatedPayload, TaskStatusUpdated, TaskStatusUpdatedPayload, TaskUpdated, TaskUpdatedPayload}
 import exception.AppException
 import mappers.TaskMapper
 import models.Enums.TaskStatus
@@ -70,10 +69,11 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       res.map {
         case (taskId, projectId) =>
           val message = TaskCreated(
+            TaskCreatedPayload(
             taskId = taskId,
             columnId = columnId,
             name = request.name,
-            taskPosition = request.position
+            taskPosition = request.position)
           )
           broadcastService.broadcastToProject(projectId, message)
       }
@@ -111,11 +111,11 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     val result = db.run(action.transactionally)
     result.onComplete {
       case Success((task, project)) =>
-        val message = TaskUpdated(
+        val message = TaskUpdated(TaskUpdatedPayload(
           taskId = task.id.get,
           columnId = task.columnId,
           taskPosition = task.position.getOrElse(0),
-          detail = TaskMapper.toDetailResponse(task)
+          detail = TaskMapper.toDetailResponse(task))
         )
         broadcastService.broadcastToProject(project, message)
       case _ => Logger("application").error("Failed to broadcast task update")
@@ -140,12 +140,12 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       validFrom = Set(TaskStatus.active),
       next = TaskStatus.archived,
       errorMsg = "Only active tasks can be archived",
-      broadcastMessage = TaskStatusUpdated(
+      broadcastMessage = TaskStatusUpdated(TaskStatusUpdatedPayload(
         taskId = taskId,
         columnId = 0, // Placeholder, actual columnId should be fetched if needed
         taskPosition = 0, // Placeholder, actual position should be fetched if needed
         name = "",
-        updatedStatus = TaskStatus.archived
+        updatedStatus = TaskStatus.archived)
       )
     )
   }
@@ -157,12 +157,12 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       validFrom = Set(TaskStatus.archived),
       next = TaskStatus.active,
       errorMsg = "Only archived tasks can be restored",
-      broadcastMessage = TaskStatusUpdated(
+      broadcastMessage = TaskStatusUpdated(TaskStatusUpdatedPayload(
         taskId = taskId,
         columnId = 0, // Placeholder, actual columnId should be fetched if needed
         taskPosition = 0, // Placeholder, actual position should be fetched if needed
         name = "",
-        updatedStatus = TaskStatus.active
+        updatedStatus = TaskStatus.active)
       )
     )
   }
@@ -174,12 +174,12 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       validFrom = Set(TaskStatus.archived),
       next = TaskStatus.deleted,
       errorMsg = "Only archived tasks can be deleted",
-      broadcastMessage = TaskStatusUpdated(
+      broadcastMessage = TaskStatusUpdated(TaskStatusUpdatedPayload(
         taskId = taskId,
         columnId = 0, // Placeholder, actual columnId should be fetched if needed
         taskPosition = 0, // Placeholder, actual position should be fetched if needed
         name = "", // Placeholder, actual name should be fetched if needed
-        updatedStatus = TaskStatus.deleted
+        updatedStatus = TaskStatus.deleted)
       )
     )
   }
@@ -222,9 +222,9 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       userCheckOpt <- taskRepository.findUserInProjectNotAssigned(userId, taskId)
       _ <- userCheckOpt match {
         case Some(_) => {
-          val assignedMemberToTaskMessage = MemberAssignedToTask(
+          val assignedMemberToTaskMessage = MemberAssignedToTask(MemberAssignedToTaskPayload(
             taskId,
-            userCheckOpt.get
+            userCheckOpt.get)
           )
           broadcastService.broadcastToProject(projectId, assignedMemberToTaskMessage)
           DBIO.successful(())
@@ -268,9 +268,11 @@ class TaskService @Inject()(taskRepository: TaskRepository,
         val message = broadcastMessage match {
           case msg: TaskStatusUpdated =>
             msg.copy(
-              columnId = task.columnId,
-              taskPosition = task.position.getOrElse(0),
-              name = task.name
+              payload = msg.payload.copy(
+                columnId = task.columnId,
+                taskPosition = task.position.getOrElse(0),
+                name = task.name
+              )
             )
           case other => other
         }

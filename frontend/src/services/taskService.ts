@@ -1,4 +1,4 @@
-import type { ApiResponse, Item } from "@/types";
+import type { ApiResponse, Item, ItemDetail, UpdateItemRequest } from "@/types";
 import axiosClients from "./axiosClient";
 
 const projectUrl = 'projects';
@@ -11,6 +11,15 @@ const taskService = {
             name,
             position
         });
+    },
+
+    getTaskDetail(taskId: number): Promise<ApiResponse<ItemDetail>> {
+        return axiosClients.get(`/${taskUrl}/${taskId}`);
+    },
+
+    updateTask(taskId: number, data: UpdateItemRequest): Promise<ApiResponse<null>> {
+        console.log('Updating task:', taskId, data);
+        return axiosClients.patch(`/${taskUrl}/${taskId}`, data);
     },
 
     archiveTask(taskId: number): Promise<ApiResponse<null>> {

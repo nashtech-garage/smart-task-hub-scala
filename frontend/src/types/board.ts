@@ -31,3 +31,7 @@ export interface UpdateItemRequest {
     name: string;
     description: string;
 }
+
+export interface ItemDetail extends Item {
+    description?: string;
+}

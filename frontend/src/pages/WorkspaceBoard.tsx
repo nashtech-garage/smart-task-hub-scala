@@ -7,7 +7,7 @@ import taskService from '@/services/taskService';
 import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
-import type { Board, Column, Item } from '@/types';
+import type { Board, Column, Item, UpdateItemRequest } from '@/types';
 import {
     DndContext,
     DragOverlay,
@@ -521,6 +521,16 @@ const WorkspaceBoard = () => {
         setCardTitle('');
     }, []);
 
+    const handleUpdateTask = useCallback(async (taskId: number, data: UpdateItemRequest) => {
+        if (isBoardClosed) return;
+        await taskService.updateTask(taskId, data)
+            .then(data => {
+                notify.success(data.message)
+            })
+            .catch(err => notify.success(err.response?.data?.message))
+        await fetchBoardData();
+    }, [isBoardClosed]);
+
     const deleteItem = useCallback((itemId: number) => {
         if (isBoardClosed) return;
 
@@ -698,8 +708,9 @@ const WorkspaceBoard = () => {
                             showDetailModal &&
                             <TaskDetailModal
                                 onClose={handleHideDetailModal}
-                                item={activeItem as Item}
+                                itemId={activeItem?.id || 0}
                                 onArchive={handleArchiveItem}
+                                onUpdate={handleUpdateTask}
                             />
                         }
                     </>

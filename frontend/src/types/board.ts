@@ -15,8 +15,9 @@ export interface Board {
 
 export interface Item {
     id: number;
-    content: string;
+    name: string;
     urlPreview?: UrlPreviewData;
+    position: number
 }
 
 export interface Column {
@@ -24,4 +25,13 @@ export interface Column {
     position: number;
     name: string;
     tasks: Item[];
+}
+
+export interface UpdateItemRequest {
+    name: string;
+    description: string;
+}
+
+export interface ItemDetail extends Item {
+    description?: string;
 }

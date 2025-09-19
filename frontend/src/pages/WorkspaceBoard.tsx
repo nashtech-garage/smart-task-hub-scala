@@ -3,10 +3,11 @@ import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
 import { archiveColumn, createNewColumn, fetchBoardColumns, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
+import taskService from '@/services/taskService';
 import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
-import type { Board, Column } from '@/types';
+import type { Board, Column, Item, UpdateItemRequest } from '@/types';
 import {
     DndContext,
     DragOverlay,
@@ -43,6 +44,7 @@ const WorkspaceBoard = () => {
     const [activeInputColumnId, setActiveInputColumnId] = useState<number | null>(null);
     const [cardTitle, setCardTitle] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
+    const [activeItem, setActiveItem] = useState<Item | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
 
@@ -481,6 +483,19 @@ const WorkspaceBoard = () => {
             console.log(columnId);
             if (isBoardClosed) return;
 
+            const column = columns.find(col => col.id === columnId);
+            if (!column) return;
+            const lastTask = column.tasks[column.tasks.length - 1];
+            const newPosition = lastTask ? lastTask.position + 1000 : 1000;
+
+            try {
+                const result = await taskService.createTask(columnId, cardTitle, newPosition)
+                notify.success(result.message);
+                await fetchBoardData();
+            } catch (error: any) {
+                notify.error(error.response?.data?.message);
+            }
+
             setActiveInputColumnId(null);
             setCardTitle('');
             // if (cardTitle.trim()) {
@@ -506,6 +521,16 @@ const WorkspaceBoard = () => {
         setCardTitle('');
     }, []);
 
+    const handleUpdateTask = useCallback(async (taskId: number, data: UpdateItemRequest) => {
+        if (isBoardClosed) return;
+        await taskService.updateTask(taskId, data)
+            .then(data => {
+                notify.success(data.message)
+            })
+            .catch(err => notify.success(err.response?.data?.message))
+        await fetchBoardData();
+    }, [isBoardClosed]);
+
     const deleteItem = useCallback((itemId: number) => {
         if (isBoardClosed) return;
 
@@ -521,6 +546,17 @@ const WorkspaceBoard = () => {
         if (isBoardClosed) return;
         try {
             const result = await archiveColumn(columnId);
+            notify.success(result.message);
+            await fetchBoardData();
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
+    }, [isBoardClosed]);
+
+    const handleArchiveItem = useCallback(async (taskId: number) => {
+        if (isBoardClosed) return;
+        try {
+            const result = await taskService.archiveTask(taskId);
             notify.success(result.message);
             await fetchBoardData();
         } catch (error: any) {
@@ -593,7 +629,7 @@ const WorkspaceBoard = () => {
                                 </button>
                             </div>
                         )}
-                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} />
+                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} fetchBoardData={fetchBoardData}/>
 
                         <div className={`grow overflow-hidden ${isBoardClosed ? 'pointer-events-none opacity-60' : ''}`}>
                             <DndContext
@@ -625,6 +661,7 @@ const WorkspaceBoard = () => {
                                                 onArchiveColumn={handleArchiveColumn}
                                                 onArchiveAllItems={handleArchiveAllItemInColumns}
                                                 handleShowDetailTask={handleShowDetailModal}
+                                                setActiveItem={setActiveItem}
                                             />
                                         ))}
                                     </SortableContext>
@@ -660,7 +697,7 @@ const WorkspaceBoard = () => {
                                     ) : !isBoardClosed && activeElements.activeItem ? (
                                         <div className='bg-[rgba(0,0,0,0.6)] p-3 rounded-lg shadow-2xl opacity-95 transform rotate-2'>
                                             <span className='text-sm text-white whitespace-pre-wrap break-words'>
-                                                {activeElements.activeItem.content}
+                                                {activeElements.activeItem.name}
                                             </span>
                                         </div>
                                     ) : null}
@@ -671,7 +708,9 @@ const WorkspaceBoard = () => {
                             showDetailModal &&
                             <TaskDetailModal
                                 onClose={handleHideDetailModal}
-                                item={{ id: '1', content: 'Hello' }}
+                                itemId={activeItem?.id || 0}
+                                onArchive={handleArchiveItem}
+                                onUpdate={handleUpdateTask}
                             />
                         }
                     </>

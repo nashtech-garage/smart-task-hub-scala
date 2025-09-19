@@ -4,9 +4,10 @@ import { Folder, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArchivedItemsModal from './ArchivedItemsModal';
-import type { Column } from '@/types';
+import type { Column, Item } from '@/types';
 import { deleteColumn, fetchArchivedColumns, restoreColumn } from '@/services/boardService';
 import { notify } from '@/services/toastService';
+import taskService from '@/services/taskService';
 
 // const menuItems = [
 //     { icon: <Users />, label: "Share", color: "text-gray-300" },
@@ -29,18 +30,20 @@ interface BoardNavbarProps {
     id: number;
     name?: string;
     isBoardClosed: boolean;
+    fetchBoardData: () => Promise<void>;
 }
 
 const BoardNavbar: React.FC<BoardNavbarProps> = ({
     id,
     name,
-    isBoardClosed
+    isBoardClosed,
+    fetchBoardData
 }) => {
 
     const { wsId, boardId } = useParams();
     const navigate = useNavigate();
     const [archivedColumns, setArchivedColumns] = useState<Column[]>([]);
-    // const [archivedTasks, setArchivedTasks] = useState<Item[]>([]);
+    const [archivedTasks, setArchivedTasks] = useState<Item[]>([]);
     const [showMenu, setShowMenu] = useState(false);
     const [showVisibility, setShowVisibility] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -49,8 +52,10 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const fetchArchivedItems = async () => {
         if(id === 0) return;
         try {
-            const result = await fetchArchivedColumns(id);
-            result.data && setArchivedColumns(result.data);
+            const archivedColumnsResponse = await fetchArchivedColumns(id);
+            archivedColumnsResponse.data && setArchivedColumns(archivedColumnsResponse.data);
+            const archivedTasksResponse = await taskService.getArchivedTasks(id);
+            archivedTasksResponse.data && setArchivedTasks(archivedTasksResponse.data);
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
@@ -58,7 +63,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
     useEffect(() => {
         fetchArchivedItems();
-    }, [fetchArchivedColumns]);
+    }, []);
 
     const handleCloseMenu = () => {
         setShowCloseConfirm(false);
@@ -88,7 +93,14 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
     // Archive handlers - implement these based on your data management
     const handleRestoreTask = async (taskId: number) => {
-        console.log(taskId);
+        try {
+            const result = await taskService.restoreTask(taskId);
+            setArchivedTasks(archivedTasks.filter(item => item.id !== taskId));
+            notify.success(result.message);
+            await fetchBoardData();
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const handleRestoreColumn = async (columnId: number) => {
@@ -96,13 +108,20 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
             const result = await restoreColumn(columnId);
             setArchivedColumns(archivedColumns.filter(item => item.id !== columnId));
             notify.success(result.message);
+            await fetchBoardData();
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
     };
 
     const handleDeleteTask = async (taskId: number) => {
-        console.log(taskId);
+        try {
+            const result = await taskService.deleteTask(taskId);
+            setArchivedTasks(archivedTasks.filter(item => item.id !== taskId));
+            notify.success(result.message);
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const handleDeleteColumn = async (columnId: number) => {
@@ -262,7 +281,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                 <ArchivedItemsModal
                                     onClose={handleCloseMenu}
                                     onBack={handleBackToMenu}
-                                    archivedTasks={[]}
+                                    archivedTasks={archivedTasks}
                                     archivedColumns={archivedColumns}
                                     onRestoreTask={handleRestoreTask}
                                     onRestoreColumn={handleRestoreColumn}

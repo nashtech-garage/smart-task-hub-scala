@@ -33,6 +33,7 @@ interface DroppableColumnProps {
     onArchiveColumn: (columnId: number) => void;
     onArchiveAllItems: (columnId: number) => void;
     handleShowDetailTask: () => void;
+    setActiveItem: (item: Item) => void;
 }
 
 const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
@@ -48,7 +49,8 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
     onUpdateColumnTitle,
     onArchiveColumn,
     onArchiveAllItems,
-    handleShowDetailTask
+    handleShowDetailTask,
+    setActiveItem,
 }) => {
     const [isEditingTitle, setIsEditingTitle] = useState(false);
     const [showOptionsMenu, setShowOptionsMenu] = useState(false);
@@ -272,7 +274,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                     >
                         <Ellipsis size={16} />
                     </button>
-                    
+
                     <ColumnOptionsMenu
                         isOpen={showOptionsMenu}
                         onClose={() => setShowOptionsMenu(false)}
@@ -292,11 +294,12 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                             item={item}
                             onDelete={onDeleteItem}
                             handleShowDetailTask={handleShowDetailTask}
-                            // label='FE'
-                            // assignedMember={{ 
-                            //     name: "John Doe", 
-                            //     initials: "JD",
-                            // }}
+                            setActiveItem={setActiveItem}
+                        // label='FE'
+                        // assignedMember={{ 
+                        //     name: "John Doe", 
+                        //     initials: "JD",
+                        // }}
                         />
                     ))}
                 </div>
@@ -379,7 +382,7 @@ const arePropsEqual = (
 
         if (
             prevItem.id !== nextItem.id ||
-            prevItem.content !== nextItem.content
+            prevItem.name !== nextItem.name
         ) {
             return false;
         }

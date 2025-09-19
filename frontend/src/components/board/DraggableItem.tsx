@@ -15,14 +15,16 @@ interface DraggableItemProps {
         avatar?: string;
         initials?: string;
     };
+    setActiveItem: (item: Item) => void;
 }
 
-const DraggableItem: React.FC<DraggableItemProps> = ({ 
-    item, 
-    onDelete, 
+const DraggableItem: React.FC<DraggableItemProps> = ({
+    item,
+    onDelete,
     handleShowDetailTask,
     label,
-    assignedMember 
+    assignedMember,
+    setActiveItem,
 }) => {
     const {
         attributes,
@@ -50,7 +52,10 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             style={style}
             {...attributes}
             {...listeners}
-            onClick={detectUrl(item.content) ? undefined : handleShowDetailTask}
+            onClick={() => {
+                detectUrl(item.name) ? undefined : handleShowDetailTask();
+                setActiveItem(item);
+            }}
             className={`
                 select-none bg-[#222f44] p-2 rounded-lg 
                 shadow-sm cursor-grab hover:shadow-md   
@@ -88,17 +93,17 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                 <X size={12} />
             </button>
             {/* URL Preview Display */}
-            {detectUrl(item.content) ? (
+            {detectUrl(item.name) ? (
                 <div className='py-1 space-y-3 w-full'>
                     <UrlPreview
                         isDragging={isDragging}
-                        url={item.content}
+                        url={item.name}
                         showRemoveButton={false}
                     />
                 </div>
             ) : (
                 <span className={`py-1 text-sm text-[#B6C2CF] flex-1 whitespace-pre-wrap`}>
-                    {item.content}
+                    {item.name}
                 </span>
             )}
 
@@ -106,8 +111,8 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             {assignedMember && (
                 <div className='self-end'>
                     {assignedMember.avatar ? (
-                        <img 
-                            src={assignedMember.avatar} 
+                        <img
+                            src={assignedMember.avatar}
                             alt={assignedMember.name}
                             className='w-6 h-6 rounded-full border-2 border-white shadow-sm'
                         />

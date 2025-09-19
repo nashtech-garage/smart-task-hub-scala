@@ -2,7 +2,7 @@ package services
 
 import dto.request.column.{CreateColumnRequest, UpdateColumnPositionRequest, UpdateColumnRequest}
 import dto.response.column.{ColumnSummariesResponse, ColumnWithTasksResponse}
-import dto.websocket.board.ColumnMoved
+import dto.websocket.board.messageTypes.{ColumnMoved, ColumnMovedPayload}
 import exception.AppException
 import models.Enums.ColumnStatus
 import models.Enums.ColumnStatus.ColumnStatus
@@ -182,7 +182,7 @@ class ColumnService @Inject()(
     resultF.foreach { _ =>
       broadcastService.broadcastToProject(
         projectId,
-        ColumnMoved(columnId, request.position)
+        ColumnMoved(ColumnMovedPayload(columnId, request.position))
       )
     }
     resultF

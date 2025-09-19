@@ -3,6 +3,7 @@ import { persistStore, persistReducer } from 'redux-persist';
 import storage from 'redux-persist/lib/storage';
 import { combineReducers } from '@reduxjs/toolkit';
 import authSlice from './slices/authSlice';
+import columnsReducer from "./slices/columnsSlice";
 
 // Persist configuration
 const persistConfig = {
@@ -13,6 +14,7 @@ const persistConfig = {
 
 const rootReducer = combineReducers({
     auth: authSlice,
+    columns: columnsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

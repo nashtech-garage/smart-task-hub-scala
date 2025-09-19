@@ -619,7 +619,7 @@ const WorkspaceBoard = () => {
                                 </button>
                             </div>
                         )}
-                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} />
+                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} fetchBoardData={fetchBoardData}/>
 
                         <div className={`grow overflow-hidden ${isBoardClosed ? 'pointer-events-none opacity-60' : ''}`}>
                             <DndContext

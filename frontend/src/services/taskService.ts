@@ -19,7 +19,15 @@ const taskService = {
 
     getArchivedTasks(boardId: number): Promise<ApiResponse<Item[]>> {
         return axiosClients.get(`${projectUrl}/${boardId}/${columnUrl}/${taskUrl}/archived`);
-    }
+    },
+
+    restoreTask(taskId: number): Promise<ApiResponse<null>> {
+        return axiosClients.patch(`/${taskUrl}/${taskId}/restore`);
+    },
+
+    deleteTask(taskId: number): Promise<ApiResponse<null>> {
+        return axiosClients.delete(`/${taskUrl}/${taskId}`);
+    },
 
 }
 

@@ -30,12 +30,14 @@ interface BoardNavbarProps {
     id: number;
     name?: string;
     isBoardClosed: boolean;
+    fetchBoardData: () => Promise<void>;
 }
 
 const BoardNavbar: React.FC<BoardNavbarProps> = ({
     id,
     name,
-    isBoardClosed
+    isBoardClosed,
+    fetchBoardData
 }) => {
 
     const { wsId, boardId } = useParams();
@@ -91,7 +93,14 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
     // Archive handlers - implement these based on your data management
     const handleRestoreTask = async (taskId: number) => {
-        console.log(taskId);
+        try {
+            const result = await taskService.restoreTask(taskId);
+            setArchivedTasks(archivedTasks.filter(item => item.id !== taskId));
+            notify.success(result.message);
+            await fetchBoardData();
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const handleRestoreColumn = async (columnId: number) => {
@@ -99,13 +108,20 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
             const result = await restoreColumn(columnId);
             setArchivedColumns(archivedColumns.filter(item => item.id !== columnId));
             notify.success(result.message);
+            await fetchBoardData();
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
     };
 
     const handleDeleteTask = async (taskId: number) => {
-        console.log(taskId);
+        try {
+            const result = await taskService.deleteTask(taskId);
+            setArchivedTasks(archivedTasks.filter(item => item.id !== taskId));
+            notify.success(result.message);
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const handleDeleteColumn = async (columnId: number) => {

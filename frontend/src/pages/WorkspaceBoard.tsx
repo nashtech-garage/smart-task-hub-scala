@@ -2,13 +2,11 @@ import BoardNavbar from '@/components/board/BoardNavbar';
 import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
-import { useWebSocket } from '@/hooks/useWebsocket';
 import { archiveColumn, createNewColumn, fetchBoardColumns, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
 import { notify } from '@/services/toastService';
+import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
 import type { Board, Column } from '@/types';
-import type { ColumnOutMsg } from '@/types/ws/columns';
-import type { DomainOutMsg } from '@/types/ws/domains';
 import {
     DndContext,
     DragOverlay,
@@ -31,12 +29,12 @@ import {
 } from '@dnd-kit/sortable';
 import { GripVertical, Plus, Lock, Unlock } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
 const WorkspaceBoard = () => {
 
     const { boardId } = useParams();
-    const { lastMessage, send } = useWebSocket();
     const [isBoardClosed, setIsBoardClosed] = useState(false);
     const [boardDetail, setBoardDetail] = useState<Board>({ id: 0, name: '', status: undefined });
     const [columns, setColumns] = useState<Column[]>([]);
@@ -46,6 +44,7 @@ const WorkspaceBoard = () => {
     const [cardTitle, setCardTitle] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
     const containerRef = useRef<HTMLDivElement>(null);
+    const dispatch = useDispatch();
 
     // OPTIMIZATION: Track dragging state separately from active elements
     const [isDragging, setIsDragging] = useState(false);
@@ -77,9 +76,9 @@ const WorkspaceBoard = () => {
         }),
         useSensor(KeyboardSensor, {
             keyboardCodes: {
-            start: [KeyboardCode.Enter],
-            cancel: [KeyboardCode.Esc],
-            end: [KeyboardCode.Enter],
+                start: [KeyboardCode.Enter],
+                cancel: [KeyboardCode.Esc],
+                end: [KeyboardCode.Enter],
             },
         })
     );
@@ -119,31 +118,22 @@ const WorkspaceBoard = () => {
     }
 
     useEffect(() => {
-        send({ type: "join", boardId: Number(boardId) });
         fetchBoardData();
-    }, [boardId]);
+        connectToProjectWS(Number(boardId), (message) => {
+            switch (message.type) {
+                case "columnMoved":
+                    console.log("Column moved", message);
+                    break;
 
-    useEffect(() => {
-        if (!lastMessage) return;
-        
-        switch (lastMessage.type) {
-            case "pong":
-                console.log("Server alive");
-                break;
+                default:
+                    console.warn("Unknown WS event", message);
+            }
+        });
 
-            case "joined":
-                console.log("Joined board", lastMessage.boardId);
-                break;
-
-            case "columnMoved":
-                console.log("Column moved:", (lastMessage as ColumnOutMsg).columnId);
-                break;
-
-            case "error":
-                console.error("WS Error:", (lastMessage as DomainOutMsg).type);
-                break;
-        }
-    }, [lastMessage]);
+        return () => {
+            disconnectWS();
+        };
+    }, [boardId, dispatch]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -390,10 +380,10 @@ const WorkspaceBoard = () => {
                     } else {
                         newPosition = 1000;
                     }
-                    
+
                     const movedColumn = newColumns[movedIndex];
                     updateColumnPosititon(Number(boardId), movedColumn.id, Math.floor(newPosition));
-                    return newColumns; 
+                    return newColumns;
                 };
                 return columns;
             });
@@ -439,12 +429,12 @@ const WorkspaceBoard = () => {
         }
     }, [isBoardClosed]);
 
-    const addColumn = useCallback( async () => {
+    const addColumn = useCallback(async () => {
         if (isBoardClosed) return;
 
         const lastColumn = columns[columns.length - 1];
         const newPosition = lastColumn ? lastColumn.position + 1000 : 1000;
-        
+
         try {
             const result = await createNewColumn(Number(boardId), 'New Column', newPosition)
             notify.success(result.message);
@@ -454,14 +444,14 @@ const WorkspaceBoard = () => {
         }
     }, [isBoardClosed, columns, boardId]);
 
-    const handleUpdateColumnTitle = useCallback( async (columnId: number, newTitle: string) => {
+    const handleUpdateColumnTitle = useCallback(async (columnId: number, newTitle: string) => {
         if (isBoardClosed) return;
         await updateColumn(Number(boardId), columnId, newTitle)
             .then(data => {
                 console.log(isBoardClosed, activeElements.activeColumn);
                 notify.success(data.message)
             })
-            .catch(err => notify.success(err.response?.data?.message))           
+            .catch(err => notify.success(err.response?.data?.message))
     }, [isBoardClosed]);
 
     const deleteColumn = useCallback(
@@ -527,12 +517,12 @@ const WorkspaceBoard = () => {
         );
     }, [isBoardClosed]);
 
-    const handleArchiveColumn = useCallback( async (columnId: number) => {
+    const handleArchiveColumn = useCallback(async (columnId: number) => {
         if (isBoardClosed) return;
         try {
             const result = await archiveColumn(columnId);
-            notify.success(result.message); 
-            await fetchBoardData();     
+            notify.success(result.message);
+            await fetchBoardData();
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
@@ -551,7 +541,7 @@ const WorkspaceBoard = () => {
         setShowDetailModal(true);
     }, []);
 
-    const handleReopenBoard = useCallback( async () => {
+    const handleReopenBoard = useCallback(async () => {
         setIsLoading(true);
         try {
             const result = await reopenBoard(Number(boardId));
@@ -583,7 +573,7 @@ const WorkspaceBoard = () => {
                 isLoading ?
                     <div className="mt-6">
                         <LoadingContent />
-                    </div> : 
+                    </div> :
                     <>
                         {/* Board Closed Banner */}
                         {boardDetail?.status === 'completed' && (

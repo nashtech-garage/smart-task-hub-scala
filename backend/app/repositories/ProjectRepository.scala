@@ -26,6 +26,13 @@ class ProjectRepository @Inject()(
   private val userProjects = TableQuery[UserProjectTable]
   private val workspaces = TableQuery[WorkspaceTable]
 
+  def existsByName(workspaceId: Int, name: String): DBIO[Boolean] = {
+    projects
+      .filter(p => p.workspaceId === workspaceId && p.name === name && p.status =!= ProjectStatus.deleted)
+      .exists
+      .result
+  }
+
   def createProjectWithOwner(project: Project, ownerId: Int): DBIO[Int] = {
     for {
       projectId <- (projects returning projects.map(_.id)) += project

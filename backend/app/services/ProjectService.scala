@@ -33,7 +33,33 @@ class ProjectService @Inject()(
       existsUserInActiveWorkspace <- workspaceRepository
         .isUserInActiveWorkspace(workspaceId, createdBy)
 
-      projectId <- if (existsUserInActiveWorkspace) {
+      _ <- if (existsUserInActiveWorkspace) {
+        DBIO.successful(())
+      } else {
+        DBIO.failed(
+          AppException(
+            message = "Workspace not found",
+            statusCode = Status.NOT_FOUND
+          )
+        )
+      }
+
+      // check project name already exists in this workspace
+      existsProject <- projectRepository.existsByName(workspaceId, req.name)
+
+      _ <- if (!existsProject) {
+        DBIO.successful(())
+      } else {
+        DBIO.failed(
+          AppException(
+            message = s"Project name '${req.name}' already exists",
+            statusCode = Status.CONFLICT
+          )
+        )
+      }
+
+      // create project
+      projectId <- {
         val newProject = Project(
           name = req.name,
           visibility =
@@ -43,13 +69,6 @@ class ProjectService @Inject()(
           updatedBy = Some(createdBy)
         )
         projectRepository.createProjectWithOwner(newProject, createdBy)
-      } else {
-        DBIO.failed(
-          AppException(
-            message = "Workspace not found",
-            statusCode = Status.NOT_FOUND
-          )
-        )
       }
     } yield projectId
 

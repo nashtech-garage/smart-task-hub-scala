@@ -54,15 +54,7 @@ class ColumnRepository @Inject()(
                 id = col.id.get,
                 name = col.name,
                 position = col.position,
-                tasks = grouped.getOrElse(col.id.get, Seq.empty).map {
-                  case (_, id, name, pos) =>
-                    TaskSummaryResponse(
-                      id,
-                      name,
-                      pos.getOrElse(1),
-                      col.id.get
-                    )
-                }
+                taskIds = grouped.getOrElse(col.id.get, Seq.empty).map(_._2)
               )
             }
           }
@@ -84,7 +76,7 @@ class ColumnRepository @Inject()(
     columns.filter(_.id === columnId).map(_.position).update(position)
   }
 
-  def findStatusIfUserInProject(columnId: Int, userId: Int): DBIO[Option[ColumnStatus]] = {
+  def findStatusAndProjectIdIfUserInProject(columnId: Int, userId: Int): DBIO[Option[(Int, ColumnStatus)]] = {
     val query = for {
       (((c, p), up)) <- columns
         .join(projects).on(_.projectId === _.id)
@@ -92,7 +84,7 @@ class ColumnRepository @Inject()(
           p.id === up.projectId && up.userId === userId.bind
         }
       if c.id === columnId.bind
-    } yield c.status
+    } yield (p.id, c.status)
 
     query.result.headOption
   }

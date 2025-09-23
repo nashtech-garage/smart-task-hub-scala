@@ -85,6 +85,19 @@ object Enums {
   object ColumnStatus extends Enumeration {
     type ColumnStatus = Value
     val active, archived, deleted = Value
+    implicit val format: Format[Value] = new Format[Value] {
+      def writes(o: Value): JsValue = JsString(o.toString)
+      def reads(json: JsValue): JsResult[Value] = json match {
+        case JsString(s) =>
+          try {
+            JsSuccess(ColumnStatus.withName(s))
+          } catch {
+            case _: NoSuchElementException =>
+              JsError(s"Invalid ColumnStatus: $s")
+          }
+        case _ => JsError("String value expected for ColumnStatus")
+      }
+    }
   }
 
   object TaskStatus extends Enumeration {

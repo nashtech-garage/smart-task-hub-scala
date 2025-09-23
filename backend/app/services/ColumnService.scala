@@ -2,7 +2,8 @@ package services
 
 import dto.request.column.{CreateColumnRequest, UpdateColumnPositionRequest, UpdateColumnRequest}
 import dto.response.column.{ColumnSummariesResponse, ColumnWithTasksResponse}
-import dto.websocket.board.messageTypes.{ColumnMoved, ColumnMovedPayload}
+import dto.websocket.OutgoingMessage
+import dto.websocket.board.messageTypes.{ColumnCreated, ColumnCreatedPayload, ColumnMoved, ColumnMovedPayload, ColumnStatusUpdated, ColumnStatusUpdatedPayload, ColumnUpdated, ColumnUpdatedPayload}
 import exception.AppException
 import models.Enums.ColumnStatus
 import models.Enums.ColumnStatus.ColumnStatus
@@ -60,8 +61,11 @@ class ColumnService @Inject()(
         )
       }
     } yield result
-
-    db.run(checkAndInsert)
+    db.run(checkAndInsert).map {
+      columnId =>
+        broadcastService.broadcastToProject(projectId, ColumnCreated(ColumnCreatedPayload(columnId, req.position, req.name)))
+        columnId
+    }
   }
 
   def getActiveColumnsWithTasks(
@@ -106,30 +110,45 @@ class ColumnService @Inject()(
       }
     } yield result
 
-    db.run(checkAndUpdate)
+    db.run(checkAndUpdate).map {
+      updatedRows =>
+        if (updatedRows > 0) {
+          broadcastService.broadcastToProject(projectId, ColumnUpdated(ColumnUpdatedPayload(columnId, req.name)))
+        }
+        updatedRows
+    }
   }
 
   private def changeStatus(columnId: Int,
                            userId: Int,
                            validFrom: Set[ColumnStatus],
                            next: ColumnStatus,
-                           errorMsg: String): Future[Int] = {
+                           errorMsg: String,
+                           broadcastMessage: OutgoingMessage
+                          ): Future[Int] = {
     val action = for {
-      maybeStatus <- columnRepository.findStatusIfUserInProject(
+      maybe <- columnRepository.findStatusAndProjectIdIfUserInProject(
         columnId,
         userId
       )
-      updatedRows <- maybeStatus match {
-        case Some(s) if validFrom.contains(s) =>
+      (updatedRows, projectId) <- maybe match {
+        case Some((projectId, status)) if validFrom.contains(status) =>
           columnRepository.updateStatus(columnId, next)
-        case Some(_) =>
+            .map(rows => (rows, projectId))
+        case Some((_, _)) =>
           DBIO.failed(AppException(errorMsg, Status.BAD_REQUEST))
         case None =>
           DBIO.failed(AppException("Column not found", Status.NOT_FOUND))
       }
-    } yield updatedRows
+    } yield (updatedRows, projectId)
 
-    db.run(action)
+    db.run(action).map {
+      case (updatedRows, projectId) =>
+        if (updatedRows > 0) {
+          broadcastService.broadcastToProject(projectId, broadcastMessage)
+        }
+        updatedRows
+    }
   }
 
     def archiveColumn(columnId: Int, userId: Int): Future[Int] =
@@ -138,7 +157,8 @@ class ColumnService @Inject()(
         userId,
         validFrom = Set(ColumnStatus.active),
         next = ColumnStatus.archived,
-        errorMsg = "Only active columns can be archived"
+        errorMsg = "Only active columns can be archived",
+        broadcastMessage = ColumnStatusUpdated(ColumnStatusUpdatedPayload(columnId, ColumnStatus.archived))
         )
 
     def restoreColumn(columnId: Int, userId: Int): Future[Int] =
@@ -147,7 +167,8 @@ class ColumnService @Inject()(
         userId,
         validFrom = Set(ColumnStatus.archived),
         next = ColumnStatus.active,
-        errorMsg = "Only archived columns can be restored"
+        errorMsg = "Only archived columns can be restored",
+        broadcastMessage = ColumnStatusUpdated(ColumnStatusUpdatedPayload(columnId, ColumnStatus.active))
         )
 
     def deleteColumn(columnId: Int, userId: Int): Future[Int] =
@@ -156,7 +177,8 @@ class ColumnService @Inject()(
         userId,
         validFrom = Set(ColumnStatus.archived),
         next = ColumnStatus.deleted,
-        errorMsg = "Only archived columns can be deleted"
+        errorMsg = "Only archived columns can be deleted",
+        broadcastMessage = ColumnStatusUpdated(ColumnStatusUpdatedPayload(columnId, ColumnStatus.deleted))
         )
 
   def updatePosition(projectId: Int,
@@ -164,12 +186,12 @@ class ColumnService @Inject()(
                      request: UpdateColumnPositionRequest,
                      userId: Int): Future[Int] = {
     val action = for {
-      maybeStatus <- columnRepository.findStatusIfUserInProject(
+      maybe <- columnRepository.findStatusAndProjectIdIfUserInProject(
         columnId,
         userId
       )
-      updatedRows <- maybeStatus match {
-        case Some(s) if s == ColumnStatus.active =>
+      updatedRows <- maybe match {
+        case Some((_, s)) if s == ColumnStatus.active =>
           columnRepository.updatePosition(columnId, request.position)
         case Some(_) =>
           DBIO.failed(AppException("Only active columns can change position", Status.BAD_REQUEST))

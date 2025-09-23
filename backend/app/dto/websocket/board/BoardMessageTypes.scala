@@ -7,4 +7,7 @@ object BoardMessageTypes {
   final val MEMBER_ASSIGNED_TO_TASK: String = "MEMBER_ASSIGNED_TO_TASK"
   final val TASK_UPDATED: String            = "TASK_UPDATED"
   final val TASK_STATUS_UPDATED: String     = "TASK_STATUS_UPDATED"
+  final val COLUMN_CREATED: String            = "COLUMN_CREATED"
+  final val COLUMN_UPDATED: String            = "COLUMN_UPDATED"
+  final val COLUMN_STATUS_UPDATED: String     = "COLUMN_STATUS_UPDATED"
 }

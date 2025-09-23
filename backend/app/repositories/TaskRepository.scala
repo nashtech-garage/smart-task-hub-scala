@@ -66,15 +66,14 @@ class TaskRepository@Inject()(
         t.status === TaskStatus.archived &&
         c.status === ColumnStatus.active &&
         p.status === ProjectStatus.active
-    } yield (t.id, t.name, t.position, t.updatedAt)
+    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt)
 
-    query.sortBy(_._4.desc.nullsLast).result.map { rows =>
-      rows.map { case (id, name, position, _) =>
-        TaskSummaryResponse(id, name, position.get)
+    query.sortBy(_._5.desc.nullsLast).result.map { rows =>
+      rows.map { case (id, name, position, columnId, _) =>
+        TaskSummaryResponse(id, name, position.get, columnId)
       }
     }
   }
-
 
   def findUserInProjectNotAssigned(userId: Int, taskId: Int): DBIO[Option[AssignMemberToTaskResponse]] = {
     val query = for {
@@ -88,5 +87,23 @@ class TaskRepository@Inject()(
     query.result.headOption.map(_.map { case (uid, uname, colId) =>
       AssignMemberToTaskResponse(uid, uname, colId)
     })
+  }
+
+  def findActiveTaskByProjectId(projectId: Int): DBIO[Seq[TaskSummaryResponse]] = {
+    val query = for {
+      ((t, c), p) <- tasks
+        .join(columns).on(_.columnId === _.id)
+        .join(projects).on { case ((t, c), p) => c.projectId === p.id }
+      if p.id === projectId &&
+        t.status === TaskStatus.active &&
+        c.status === ColumnStatus.active &&
+        p.status === ProjectStatus.active
+    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt)
+
+    query.sortBy(_._4.asc.nullsLast).result.map { rows =>
+      rows.map { case (id, name, position, columnId, _) =>
+        TaskSummaryResponse(id, name, position.get, columnId)
+      }
+    }
   }
 }

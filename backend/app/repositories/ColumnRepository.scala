@@ -59,7 +59,8 @@ class ColumnRepository @Inject()(
                     TaskSummaryResponse(
                       id,
                       name,
-                      pos.getOrElse(1)
+                      pos.getOrElse(1),
+                      col.id.get
                     )
                 }
               )

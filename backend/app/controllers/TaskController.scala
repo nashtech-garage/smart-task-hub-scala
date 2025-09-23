@@ -151,4 +151,19 @@ class TaskController @Inject()(
         }
     }
 
+  def getActiveTasksInProject(projectId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      implicit val messages: Messages = request.messages
+      val userId = request.userToken.userId
+      taskService
+        .getActiveTasksInProject(projectId, userId)
+        .map { tasks =>
+          Ok(
+            Json.toJson(
+              ApiResponse.success("Active tasks retrieved successfully", tasks)
+            )
+          )
+        }
+    }
+
 }

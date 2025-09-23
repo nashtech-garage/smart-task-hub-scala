@@ -215,5 +215,28 @@ class TaskControllerSpec
       val tasks = (contentAsJson(result) \ "data").as[Seq[TaskSummaryResponse]]
       tasks.exists(task => task.id == taskId && task.name == "Task to Archive") mustBe true
     }
+
+    "get active tasks successfully" in {
+      val taskService = inject[TaskService]
+
+      // Create a new task in the existing column
+      val taskId = await(
+        taskService.createNewTask(
+          CreateTaskRequest("Active Task", 1),
+          1,
+          1
+        )
+      )
+
+      val request = FakeRequest(GET, "/api/projects/1/columns/tasks/active")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message")
+        .as[String] mustBe "Active tasks retrieved successfully"
+      val tasks = (contentAsJson(result) \ "data").as[Seq[TaskSummaryResponse]]
+      tasks.exists(task => task.id == taskId && task.name == "Active Task") mustBe true
+    }
   }
 }

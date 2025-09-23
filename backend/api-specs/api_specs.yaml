@@ -2005,31 +2005,94 @@ paths:
                   - id: 2
                     name: "Task A"
                     position: 3
+                    columnId: 1
                   - id: 3
                     name: "Task B"
                     position: 4
+                    columnId: 2
 
-          '401':
-            description: Unauthenticated request
-            content:
-              application/json:
-                schema:
-                  allOf:
-                    - $ref: '#/components/schemas/ApiResponse'
-                    - type: object
-                example:
-                  message: "Authentication required"
+        '401':
+          description: Unauthenticated request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Authentication required"
 
-          '404':
-            description: Project not found
-            content:
-              application/json:
-                schema:
-                  allOf:
-                    - $ref: '#/components/schemas/ApiResponse'
-                    - type: object
-                example:
-                  message: "Project not found"
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Project not found"
+
+  /projects/{projectId}/columns/tasks/active:
+    get:
+      tags:
+        - Tasks
+      summary: Get active tasks in project
+      description: Retrieves all active tasks in the specified project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          description: Project ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Active tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TaskSummariesResponse'
+              example:
+                message: "Archived tasks retrieved successfully"
+                data:
+                  - id: 2
+                    name: "Task A"
+                    position: 3
+                    columnId: 1
+                  - id: 3
+                    name: "Task B"
+                    position: 4
+                    columnId: 2
+
+        '401':
+          description: Unauthenticated request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Authentication required"
+
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Project not found"
 
 components:
   schemas:
@@ -2382,6 +2445,10 @@ components:
           type: integer
           description: Position of the task in the column
           example: 1
+        columnId:
+          type: integer
+          description: ID of the column containing the task
+          example: 1
 
     ColumnWithTasksResponse:
       type: object
@@ -2488,6 +2555,10 @@ components:
         position:
           type: integer
           description: Position of the task in the column
+          example: 1
+        columnId:
+          type: integer
+          description: ID of the column containing the task
           example: 1
 
     ProjectResponse:

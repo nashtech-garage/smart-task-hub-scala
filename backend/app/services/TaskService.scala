@@ -242,6 +242,29 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     db.run(action)
   }
 
+  def getActiveTasksInProject(projectId: Int, userId: Int): Future[Seq[TaskSummaryResponse]] = {
+    val action = for {
+      isUserInActiveProject <- projectRepository.isUserInActiveProject(
+        userId,
+        projectId
+      )
+      result <- if (isUserInActiveProject) {
+        taskRepository.findActiveTaskByProjectId(projectId)
+      } else {
+        DBIO.failed(
+          AppException(
+            message = s"Project not found",
+            statusCode = Status.NOT_FOUND
+          )
+        )
+      }
+    } yield result
+
+    db.run(action.transactionally).map { tasks =>
+      tasks
+    }
+  }
+
   private def changeStatus(taskId: Int,
                            userId: Int,
                            validFrom: Set[TaskStatus],

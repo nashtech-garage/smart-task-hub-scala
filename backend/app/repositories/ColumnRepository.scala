@@ -54,15 +54,7 @@ class ColumnRepository @Inject()(
                 id = col.id.get,
                 name = col.name,
                 position = col.position,
-                tasks = grouped.getOrElse(col.id.get, Seq.empty).map {
-                  case (_, id, name, pos) =>
-                    TaskSummaryResponse(
-                      id,
-                      name,
-                      pos.getOrElse(1),
-                      col.id.get
-                    )
-                }
+                taskIds = grouped.getOrElse(col.id.get, Seq.empty).map(_._2)
               )
             }
           }

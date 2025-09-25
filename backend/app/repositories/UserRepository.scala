@@ -63,4 +63,10 @@ class UserRepository @Inject()(
   def update(user: User): Future[Int] = {
     db.run(users.filter(_.id === user.id).update(user))
   }
+
+  def createBatch(userList: Seq[User]): Future[Seq[User]] = {
+    val insertQuery = users returning users.map(_.id) into ((user, id) => user.copy(id = Some(id)))
+    val action = insertQuery ++= userList
+    db.run(action)
+  }
 }

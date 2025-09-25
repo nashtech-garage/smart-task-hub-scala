@@ -13,7 +13,7 @@ import slick.jdbc.JdbcProfile
 
 import java.time.Instant
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ColumnRepository @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider
@@ -121,6 +121,10 @@ class ColumnRepository @Inject()(
       .map(c => (c.id, c.name, c.position))
       .result
       .map(_.map((ColumnSummariesResponse.apply _).tupled))
+  }
+
+  def insertColumnBatch(cols: Seq[Column]): Future[Seq[Column]] = {
+    db.run((columns returning columns) ++= cols).map(_.toSeq)
   }
 
 }

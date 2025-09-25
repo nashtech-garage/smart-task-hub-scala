@@ -11,7 +11,7 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 import models.tables.TableRegistry.{columns, projects, tasks, userProjects, userTasks, users}
 
 @Singleton
@@ -106,4 +106,14 @@ class TaskRepository@Inject()(
       }
     }
   }
+
+  def insertTaskBatch(tasksChunk: Seq[Task]): Future[Seq[Int]] = {
+    db.run((tasks returning tasks.map(_.id)) ++= tasksChunk).map(_.toSeq)
+  }
+
+  def insertUserBatchIntoTask(entries: Seq[UserTask]): Future[Unit] = {
+    val insertQuery = userTasks ++= entries
+    db.run(insertQuery).map(_ => ())
+  }
+
 }

@@ -5,7 +5,7 @@ import dto.response.project.{CompletedProjectSummariesResponse, ProjectResponse,
 import dto.response.user.UserInProjectResponse
 import models.Enums.ProjectStatus.ProjectStatus
 import models.Enums.{ProjectStatus, UserProjectRole}
-import models.entities.{Column, Project, UserProject}
+import models.entities.{Column, Project, UserProject, Workspace}
 import models.tables.TableRegistry.{columns, users}
 import models.tables.{ProjectTable, UserProjectTable, WorkspaceTable}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
@@ -13,7 +13,7 @@ import slick.jdbc.JdbcProfile
 
 import java.time.Instant
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ProjectRepository @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider
@@ -122,5 +122,17 @@ class ProjectRepository @Inject()(
       .map(_.map { case (id, name, status) =>
         ProjectResponse(id, name, status)
       })
+  }
+
+  def insertProjectBatch(projectList: Seq[Project]): Future[Seq[Project]] = {
+    val insertQuery = projects returning projects.map(_.id) into ((project, id) => project.copy(id = Some(id)))
+    val action = insertQuery ++= projectList
+    db.run(action)
+  }
+
+  def insertUserBatchIntoProject(entries: Seq[UserProject]): Future[Seq[Int]] = {
+    val insertQuery = userProjects returning userProjects.map(_.id)
+    val action = insertQuery ++= entries
+    db.run(action)
   }
 }

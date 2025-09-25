@@ -8,7 +8,7 @@ import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
 import javax.inject.{Inject, Singleton}
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class WorkspaceRepository @Inject()(
@@ -134,5 +134,17 @@ class WorkspaceRepository @Inject()(
       uw <- userWorkspaces if uw.userId === userId && uw.role === Enums.UserWorkspaceRole.admin
       w  <- workspaces if w.id === uw.workspaceId && w.name.toLowerCase === name.toLowerCase && !w.isDeleted
     } yield ()).exists.result
+  }
+
+  def insertWorkspaceBatch(workspaceList: Seq[Workspace]): Future[Seq[Int]] = {
+    val insertQuery = workspaces returning workspaces.map(_.id)
+    val action = insertQuery ++= workspaceList
+    db.run(action)
+  }
+
+  def insertUserBatchIntoWorkspace(entries: Seq[UserWorkspace]): Future[Seq[Int]] = {
+    val insertQuery = userWorkspaces returning userWorkspaces.map(_.id)
+    val action = insertQuery ++= entries
+    db.run(action)
   }
 }

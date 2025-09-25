@@ -13,13 +13,17 @@ import scala.concurrent.{ExecutionContext, Future}
 class DatabaseInitializer @Inject()(
                                      userRepository: UserRepository,
                                      roleRepository: RoleRepository,
-                                     config: Configuration
+                                     config: Configuration,
+                                     dataSeeder: DataSeeder
                                    )(implicit ec: ExecutionContext) {
 
   def initializeDatabase(): Future[Unit] = {
     Logger("application").info("Starting database initialization...")
 
-    createDefaultAdmin().map { _ =>
+    for {
+      _ <- createDefaultAdmin()
+      _ <- dataSeeder.seedAll()
+    } yield {
       Logger("application").info("Database initialization completed")
     }
   }

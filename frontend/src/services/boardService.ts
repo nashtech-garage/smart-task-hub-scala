@@ -20,13 +20,17 @@ const fetchBoardColumns = async (id: number): Promise<ApiResponse<Column[]>> => 
     return axiosClients.get(`${projectUrl}/${id}/columns`);
 };
 
+const fetchActiveBoardTasks = async (id: number): Promise<ApiResponse<Column[]>> => {
+    return axiosClients.get(`${projectUrl}/${id}/columns/tasks/active`);
+};
+
 const fetchArchivedColumns = async (id: number): Promise<ApiResponse<Column[]>> => {
     return axiosClients.get(`${projectUrl}/${id}/columns/archived`);
 };
 
-const createNewColumn = async (id: number, title: string, position: number): Promise<ApiResponse<null>> => {
+const createNewColumn = async (id: number, name: string, position: number): Promise<ApiResponse<null>> => {
     return axiosClients.post(`${projectUrl}/${id}/columns`, {
-        name: title,
+        name,
         position
     });
 };
@@ -59,5 +63,5 @@ export {
     fetchUrlPreview, fetchBoardDetail, createNewColumn, 
     updateColumn, archiveColumn, restoreColumn, 
     deleteColumn, updateColumnPosititon, fetchBoardColumns, 
-    fetchArchivedColumns 
+    fetchArchivedColumns, fetchActiveBoardTasks 
 };

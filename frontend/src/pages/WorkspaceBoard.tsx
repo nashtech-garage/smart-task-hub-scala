@@ -2,12 +2,20 @@ import BoardNavbar from '@/components/board/BoardNavbar';
 import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
-import { archiveColumn, createNewColumn, fetchBoardColumns, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
+import { createNewColumn, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
 import taskService from '@/services/taskService';
 import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
+import { store, useAppSelector } from '@/store';
+import { selectActiveColumns } from '@/store/selectors/columnsSelector';
+import { selectTaskById, selectTasksByColumns } from '@/store/selectors/tasksSelectors';
+import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
+import { columnsReordered, setColumns, taskDeleted } from '@/store/slices/columnsSlice';
+import { archiveColumnThunk, fetchColumns } from '@/store/thunks/columnsThunks';
+import { fetchTasks } from '@/store/thunks/tasksThunks';
 import type { Board, Column, Item, UpdateItemRequest } from '@/types';
+import { handleBoardWSMessage } from '@/websocket/boardHandler';
 import {
     DndContext,
     DragOverlay,
@@ -38,7 +46,6 @@ const WorkspaceBoard = () => {
     const { boardId } = useParams();
     const [isBoardClosed, setIsBoardClosed] = useState(false);
     const [boardDetail, setBoardDetail] = useState<Board>({ id: 0, name: '', status: undefined });
-    const [columns, setColumns] = useState<Column[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
     const [activeInputColumnId, setActiveInputColumnId] = useState<number | null>(null);
@@ -47,6 +54,8 @@ const WorkspaceBoard = () => {
     const [activeItem, setActiveItem] = useState<Item | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
+
+    const columns = useAppSelector(selectActiveColumns);
 
     // OPTIMIZATION: Track dragging state separately from active elements
     const [isDragging, setIsDragging] = useState(false);
@@ -89,18 +98,16 @@ const WorkspaceBoard = () => {
     const columnIds = useMemo(() => columns.map(col => col.id), [columns]);
 
     // OPTIMIZATION: Memoize active elements only when activeId changes
-    const activeElements = useMemo(() => {
-        if (!activeId) return { activeColumn: null, activeItem: null };
+    const activeTask = useAppSelector(
+    activeId ? selectTaskById(activeId as number) : () => null
+    );
 
-        const activeColumn = columns.find(col => col.id === activeId);
-        const activeItem = activeColumn
-            ? null
-            : columns
-                .flatMap(col => col.tasks)
-                .find(item => item.id === activeId);
-
-        return { activeColumn, activeItem };
+    const activeColumn = useMemo(() => {
+    if (!activeId) return null;
+    return columns.find(col => col.id === activeId) ?? null;
     }, [activeId, columns]);
+
+    const activeElements = { activeColumn, activeTask };
 
     const fetchBoardData = async () => {
         setIsLoading(true);
@@ -109,8 +116,8 @@ const WorkspaceBoard = () => {
             setBoardDetail(boardData.data);
             setIsBoardClosed(boardData.data?.status === 'completed');
             if (boardData.data?.status === 'active') {
-                const columnsData = await fetchBoardColumns(Number(boardId));
-                setColumns(columnsData.data);
+                dispatch(fetchColumns(Number(boardId)) as any);
+                dispatch(fetchTasks(Number(boardId)) as any);
             }
         } catch (error: any) {
             notify.error(error.response?.data?.message);
@@ -122,15 +129,8 @@ const WorkspaceBoard = () => {
     useEffect(() => {
         fetchBoardData();
         connectToProjectWS(Number(boardId), (message) => {
-            switch (message.type) {
-                case "columnMoved":
-                    console.log("Column moved", message);
-                    break;
-
-                default:
-                    console.warn("Unknown WS event", message);
-            }
-        });
+        handleBoardWSMessage(message, dispatch, store.getState);
+    });
 
         return () => {
             disconnectWS();
@@ -193,8 +193,8 @@ const WorkspaceBoard = () => {
 
             if (!over || !isDragging || isBoardClosed) return;
 
-            const activeId = active.id;
-            const overId = over.id;
+            const activeId = active.id as number;
+            const overId = over.id as number;
 
             if (activeId === overId) return;
 
@@ -225,10 +225,10 @@ const WorkspaceBoard = () => {
                 // Item over item (different column)
                 if (isActiveAnItem && isOverAnItem) {
                     const activeColumnIndex = newColumns.findIndex(col =>
-                        col.tasks.find(item => item.id === activeId)
+                        col.taskIds.includes(activeId)
                     );
                     const overColumnIndex = newColumns.findIndex(col =>
-                        col.tasks.find(item => item.id === overId)
+                        col.taskIds.includes(overId)
                     );
 
                     if (
@@ -241,26 +241,16 @@ const WorkspaceBoard = () => {
                         };
                         const overColumn = { ...newColumns[overColumnIndex] };
 
-                        const activeItemIndex = activeColumn.tasks.findIndex(
-                            item => item.id === activeId
-                        );
-                        const overItemIndex = overColumn.tasks.findIndex(
-                            item => item.id === overId
-                        );
+                        const activeItemIndex = activeColumn.taskIds.indexOf(activeId);
+                        const overItemIndex = overColumn.taskIds.indexOf(overId);
 
                         if (activeItemIndex !== -1 && overItemIndex !== -1) {
-                            activeColumn.tasks = [...activeColumn.tasks];
-                            overColumn.tasks = [...overColumn.tasks];
+                            activeColumn.taskIds = [...activeColumn.taskIds];
+                            overColumn.taskIds = [...overColumn.taskIds];
 
-                            const [activeItem] = activeColumn.tasks.splice(
-                                activeItemIndex,
-                                1
-                            );
-                            overColumn.tasks.splice(
-                                overItemIndex,
-                                0,
-                                activeItem
-                            );
+                            activeColumn.taskIds.splice(activeItemIndex, 1);
+                            overColumn.taskIds.splice(overItemIndex, 0, activeId);
+
 
                             newColumns[activeColumnIndex] = activeColumn;
                             newColumns[overColumnIndex] = overColumn;
@@ -272,7 +262,7 @@ const WorkspaceBoard = () => {
                 // Item over column
                 if (isActiveAnItem && isOverAColumn) {
                     const activeColumnIndex = newColumns.findIndex(col =>
-                        col.tasks.find(item => item.id === activeId)
+                        col.taskIds.includes(activeId)
                     );
                     const overColumnIndex = newColumns.findIndex(
                         col => col.id === overId
@@ -288,19 +278,14 @@ const WorkspaceBoard = () => {
                         };
                         const overColumn = { ...newColumns[overColumnIndex] };
 
-                        const activeItemIndex = activeColumn.tasks.findIndex(
-                            item => item.id === activeId
-                        );
+                        const activeItemIndex = activeColumn.taskIds.indexOf(activeId);
 
                         if (activeItemIndex !== -1) {
-                            activeColumn.tasks = [...activeColumn.tasks];
-                            overColumn.tasks = [...overColumn.tasks];
+                            activeColumn.taskIds = [...activeColumn.taskIds];
+                            overColumn.taskIds = [...overColumn.taskIds];
 
-                            const [activeItem] = activeColumn.tasks.splice(
-                                activeItemIndex,
-                                1
-                            );
-                            overColumn.tasks.push(activeItem);
+                            activeColumn.taskIds.splice(activeItemIndex, 1);
+                            overColumn.taskIds.push(activeId);
 
                             newColumns[activeColumnIndex] = activeColumn;
                             newColumns[overColumnIndex] = overColumn;
@@ -315,7 +300,7 @@ const WorkspaceBoard = () => {
                     dragStateRef.current.hasChanged = true;
 
                     // Update component state less frequently
-                    setColumns(newColumns);
+                    dispatch(columnsReordered(newColumns));
                 }
             }, 16); // OPTIMIZATION: 16ms delay = ~60fps batching
         },
@@ -338,18 +323,18 @@ const WorkspaceBoard = () => {
 
         // If board is closed, restore original state and return
         if (isBoardClosed) {
-            setColumns(dragStateRef.current.originalColumns);
+            dispatch(setColumns(dragStateRef.current.originalColumns));
             return;
         }
 
         if (!over) {
             // Restore original state if cancelled
-            setColumns(dragStateRef.current.originalColumns);
+            dispatch(setColumns(dragStateRef.current.originalColumns));
             return;
         }
 
-        const activeId = active.id;
-        const overId = over.id;
+        const activeId = active.id as number;
+        const overId = over.id as number;
 
         const isActiveAColumn = active.data.current?.type === 'column';
         const isOverAColumn = over.data.current?.type === 'column';
@@ -358,76 +343,58 @@ const WorkspaceBoard = () => {
 
         // Handle column reordering
         if (isActiveAColumn && isOverAColumn) {
-            setColumns(columns => {
-                const activeColumnIndex = columns.findIndex(
-                    col => col.id === activeId
-                );
-                const overColumnIndex = columns.findIndex(
-                    col => col.id === overId
-                );
+            const activeColumnIndex = columns.findIndex(col => col.id === activeId);
+            const overColumnIndex = columns.findIndex(col => col.id === overId);
 
-                if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-                    const newColumns = arrayMove(columns, activeColumnIndex, overColumnIndex);
-                    const movedIndex = overColumnIndex;
-                    const preCol = newColumns[movedIndex - 1] || null;
-                    const nextCol = newColumns[movedIndex + 1] || null;
+            if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
+            const newColumns = arrayMove(columns, activeColumnIndex, overColumnIndex);
+            const movedIndex = overColumnIndex;
 
-                    let newPosition: number;
-                    if (preCol && nextCol) {
-                        newPosition = (preCol.position + nextCol.position) / 2;
-                    } else if (!preCol && nextCol) {
-                        newPosition = nextCol.position - 1000;
-                    } else if (preCol && !nextCol) {
-                        newPosition = preCol.position + 1000;
-                    } else {
-                        newPosition = 1000;
-                    }
+            const preCol = newColumns[movedIndex - 1] || null;
+            const nextCol = newColumns[movedIndex + 1] || null;
 
-                    const movedColumn = newColumns[movedIndex];
-                    updateColumnPosititon(Number(boardId), movedColumn.id, Math.floor(newPosition));
-                    return newColumns;
-                };
-                return columns;
-            });
+            let newPosition: number;
+            if (preCol && nextCol) {
+                newPosition = (preCol.position + nextCol.position) / 2;
+            } else if (!preCol && nextCol) {
+                newPosition = nextCol.position - 1000;
+            } else if (preCol && !nextCol) {
+                newPosition = preCol.position + 1000;
+            } else {
+                newPosition = 1000;
+            }
+
+            const movedColumn = { ...newColumns[movedIndex], position: Math.floor(newPosition) };
+            newColumns[movedIndex] = movedColumn;
+            dispatch(columnsReordered(newColumns));
+            updateColumnPosititon(Number(boardId), movedColumn.id, movedColumn.position);
+            }
         }
 
         // Handle item reordering within same column
         if (isActiveAnItem && isOverAnItem) {
-            setColumns(prevColumns => {
-                const activeColumnIndex = prevColumns.findIndex(col =>
-                    col.tasks.find(item => item.id === activeId)
-                );
-                const overColumnIndex = prevColumns.findIndex(col =>
-                    col.tasks.find(item => item.id === overId)
-                );
+            const activeColumnIndex = columns.findIndex(col =>
+          col.taskIds.includes(activeId)
+        );
+        const overColumnIndex = columns.findIndex(col =>
+          col.taskIds.includes(overId)
+        );
 
-                if (
-                    activeColumnIndex === overColumnIndex &&
-                    activeColumnIndex !== -1
-                ) {
-                    const newColumns = [...prevColumns];
-                    const column = { ...newColumns[activeColumnIndex] };
+        if (activeColumnIndex === overColumnIndex && activeColumnIndex !== -1) {
+          const newColumns = [...columns];
+          const column = { ...newColumns[activeColumnIndex] };
 
-                    const activeItemIndex = column.tasks.findIndex(
-                        item => item.id === activeId
-                    );
-                    const overItemIndex = column.tasks.findIndex(
-                        item => item.id === overId
-                    );
+          const activeItemIndex = column.taskIds.indexOf(activeId);
+          const overItemIndex = column.taskIds.indexOf(overId);
 
-                    if (activeItemIndex !== -1 && overItemIndex !== -1) {
-                        column.tasks = arrayMove(
-                            column.tasks,
-                            activeItemIndex,
-                            overItemIndex
-                        );
-                        newColumns[activeColumnIndex] = column;
-                        return newColumns;
-                    }
-                }
+          if (activeItemIndex !== -1 && overItemIndex !== -1) {
+            column.taskIds = arrayMove(column.taskIds, activeItemIndex, overItemIndex);
 
-                return prevColumns;
-            });
+            newColumns[activeColumnIndex] = column;
+
+            dispatch(setColumns(newColumns));
+            }
+          }
         }
     }, [isBoardClosed]);
 
@@ -440,7 +407,6 @@ const WorkspaceBoard = () => {
         try {
             const result = await createNewColumn(Number(boardId), 'New Column', newPosition)
             notify.success(result.message);
-            await fetchBoardData();
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
@@ -450,7 +416,6 @@ const WorkspaceBoard = () => {
         if (isBoardClosed) return;
         await updateColumn(Number(boardId), columnId, newTitle)
             .then(data => {
-                console.log(isBoardClosed, activeElements.activeColumn);
                 notify.success(data.message)
             })
             .catch(err => notify.success(err.response?.data?.message))
@@ -460,9 +425,7 @@ const WorkspaceBoard = () => {
         (columnId: number) => {
             if (isBoardClosed) return;
 
-            setColumns(columns =>
-                columns.filter(column => column.id !== columnId)
-            );
+            dispatch(columnDeleted(columnId));
             if (activeInputColumnId === columnId) {
                 setActiveInputColumnId(null);
                 setCardTitle('');
@@ -480,12 +443,11 @@ const WorkspaceBoard = () => {
 
     const handleSubmitCard = useCallback(
         async (columnId: number) => {
-            console.log(columnId);
             if (isBoardClosed) return;
 
             const column = columns.find(col => col.id === columnId);
             if (!column) return;
-            const lastTask = column.tasks[column.tasks.length - 1];
+            const lastTask = useAppSelector(selectTaskById(column.taskIds[column.taskIds.length - 1]));
             const newPosition = lastTask ? lastTask.position + 1000 : 1000;
 
             try {
@@ -534,23 +496,13 @@ const WorkspaceBoard = () => {
     const deleteItem = useCallback((itemId: number) => {
         if (isBoardClosed) return;
 
-        setColumns(columns =>
-            columns.map(column => ({
-                ...column,
-                items: column.tasks.filter(item => item.id !== itemId),
-            }))
-        );
+        dispatch(taskDeleted(itemId));
     }, [isBoardClosed]);
 
-    const handleArchiveColumn = useCallback(async (columnId: number) => {
-        if (isBoardClosed) return;
-        try {
-            const result = await archiveColumn(columnId);
-            notify.success(result.message);
-            await fetchBoardData();
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        }
+    const handleArchiveColumn = useCallback(async (column: Column) => {
+        if (!isBoardClosed) {
+      dispatch(archiveColumnThunk(column) as any);
+    }
     }, [isBoardClosed]);
 
     const handleArchiveItem = useCallback(async (taskId: number) => {
@@ -589,13 +541,15 @@ const WorkspaceBoard = () => {
         }
     }, []);
 
+    const tasksByColumn = useAppSelector(selectTasksByColumns);
+
     // OPTIMIZATION: Memoize column props to prevent unnecessary rerenders
     const columnProps = useMemo(
         () =>
             columns.map(col => ({
                 key: col.id,
                 column: col,
-                items: col.tasks,
+                items: tasksByColumn[col.id] || [],
                 isAddingCard: activeInputColumnId === col.id,
                 isDragging: isDragging && dragType === 'item',
                 isBoardClosed: isBoardClosed,
@@ -629,7 +583,7 @@ const WorkspaceBoard = () => {
                                 </button>
                             </div>
                         )}
-                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} fetchBoardData={fetchBoardData}/>
+                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} />
 
                         <div className={`grow overflow-hidden ${isBoardClosed ? 'pointer-events-none opacity-60' : ''}`}>
                             <DndContext
@@ -688,16 +642,16 @@ const WorkspaceBoard = () => {
                                                 </h3>
                                                 <span className='bg-gray-300 text-gray-600 text-xs px-2 py-1 rounded-full'>
                                                     {
-                                                        activeElements.activeColumn.tasks
+                                                        activeElements.activeColumn.taskIds
                                                             .length
                                                     }
                                                 </span>
                                             </div>
                                         </div>
-                                    ) : !isBoardClosed && activeElements.activeItem ? (
+                                    ) : !isBoardClosed && activeElements.activeTask ? (
                                         <div className='bg-[rgba(0,0,0,0.6)] p-3 rounded-lg shadow-2xl opacity-95 transform rotate-2'>
                                             <span className='text-sm text-white whitespace-pre-wrap break-words'>
-                                                {activeElements.activeItem.name}
+                                                {activeElements.activeTask.name}
                                             </span>
                                         </div>
                                     ) : null}

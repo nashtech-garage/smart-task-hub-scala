@@ -4,10 +4,16 @@ import { Folder, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import ArchivedItemsModal from './ArchivedItemsModal';
-import type { Column, Item } from '@/types';
 import { deleteColumn, fetchArchivedColumns, restoreColumn } from '@/services/boardService';
 import { notify } from '@/services/toastService';
 import taskService from '@/services/taskService';
+import { useAppDispatch, useAppSelector } from '@/store';
+import { selectArchivedColumns } from '@/store/selectors/columnsSelector';
+import { selectArchivedTasks } from '@/store/selectors/tasksSelectors';
+import { fetchArchivedColumnsThunk } from '@/store/thunks/columnsThunks';
+import { fetchArchivedTasksThunk } from '@/store/thunks/tasksThunks';
+import { taskRestored } from '@/store/slices/archiveTasksSlice';
+import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
 
 // const menuItems = [
 //     { icon: <Users />, label: "Share", color: "text-gray-300" },
@@ -17,8 +23,8 @@ import taskService from '@/services/taskService';
 // ];
 
 // const powerUpItems = [
-    // { icon: <Tag />, label: "Labels", color: "text-gray-300" },
-    // { icon: <Activity />, label: "Activity", color: "text-gray-300" },
+// { icon: <Tag />, label: "Labels", color: "text-gray-300" },
+// { icon: <Activity />, label: "Activity", color: "text-gray-300" },
 // ];
 
 // const moreItems = [
@@ -30,40 +36,30 @@ interface BoardNavbarProps {
     id: number;
     name?: string;
     isBoardClosed: boolean;
-    fetchBoardData: () => Promise<void>;
 }
 
 const BoardNavbar: React.FC<BoardNavbarProps> = ({
     id,
     name,
     isBoardClosed,
-    fetchBoardData
 }) => {
 
     const { wsId, boardId } = useParams();
     const navigate = useNavigate();
-    const [archivedColumns, setArchivedColumns] = useState<Column[]>([]);
-    const [archivedTasks, setArchivedTasks] = useState<Item[]>([]);
     const [showMenu, setShowMenu] = useState(false);
     const [showVisibility, setShowVisibility] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const [showArchivedItems, setShowArchivedItems] = useState(false);
-
-    const fetchArchivedItems = async () => {
-        if(id === 0) return;
-        try {
-            const archivedColumnsResponse = await fetchArchivedColumns(id);
-            archivedColumnsResponse.data && setArchivedColumns(archivedColumnsResponse.data);
-            const archivedTasksResponse = await taskService.getArchivedTasks(id);
-            archivedTasksResponse.data && setArchivedTasks(archivedTasksResponse.data);
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        }
-    }
+    const dispatch = useAppDispatch();
+    const archivedColumns = useAppSelector(selectArchivedColumns);
+    const archivedTasks = useAppSelector(selectArchivedTasks);
 
     useEffect(() => {
-        fetchArchivedItems();
-    }, []);
+        if (id !== 0) {
+            dispatch(fetchArchivedColumnsThunk(id));
+            dispatch(fetchArchivedTasksThunk(id));
+        }
+    }, [id, dispatch]);
 
     const handleCloseMenu = () => {
         setShowCloseConfirm(false);
@@ -95,9 +91,8 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const handleRestoreTask = async (taskId: number) => {
         try {
             const result = await taskService.restoreTask(taskId);
-            setArchivedTasks(archivedTasks.filter(item => item.id !== taskId));
+            dispatch(taskRestored(taskId));
             notify.success(result.message);
-            await fetchBoardData();
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
@@ -106,9 +101,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const handleRestoreColumn = async (columnId: number) => {
         try {
             const result = await restoreColumn(columnId);
-            setArchivedColumns(archivedColumns.filter(item => item.id !== columnId));
             notify.success(result.message);
-            await fetchBoardData();
         } catch (error: any) {
             notify.error(error.response?.data?.message);
         }
@@ -117,7 +110,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const handleDeleteTask = async (taskId: number) => {
         try {
             const result = await taskService.deleteTask(taskId);
-            setArchivedTasks(archivedTasks.filter(item => item.id !== taskId));
+            // dispatch(archivedTaskDeleted(taskId));
             notify.success(result.message);
         } catch (error: any) {
             notify.error(error.response?.data?.message);
@@ -127,7 +120,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const handleDeleteColumn = async (columnId: number) => {
         try {
             const result = await deleteColumn(columnId);
-            setArchivedColumns(archivedColumns.filter(item => item.id !== columnId));
+            dispatch(columnDeleted(columnId));
             notify.success(result.message);
         } catch (error: any) {
             notify.error(error.response?.data?.message);

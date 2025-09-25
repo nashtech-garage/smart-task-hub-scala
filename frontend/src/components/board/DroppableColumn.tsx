@@ -30,7 +30,7 @@ interface DroppableColumnProps {
     onDeleteItem: (itemId: number) => void;
     onDeleteColumn: (columnId: number) => void;
     onUpdateColumnTitle: (columnId: number, newTitle: string) => void;
-    onArchiveColumn: (columnId: number) => void;
+    onArchiveColumn: (column: Column) => void;
     onArchiveAllItems: (columnId: number) => void;
     handleShowDetailTask: () => void;
     setActiveItem: (item: Item) => void;
@@ -226,8 +226,8 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
     );
 
     const handleArchiveColumn = useCallback(() => {
-        onArchiveColumn(column.id);
-    }, [column.id, onArchiveColumn]);
+        onArchiveColumn(column);
+    }, [column, onArchiveColumn]);
 
     const handleArchiveAllItems = useCallback(() => {
         onArchiveAllItems(column.id);

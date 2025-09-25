@@ -20,11 +20,28 @@ export interface Item {
     position: number
 }
 
+export interface Task {
+    id: number;
+    name: string;
+    urlPreview?: UrlPreviewData;
+    position: number
+}
+
+export interface TasksState {
+    byId: Record<number, Item>;
+    allIds: number[];
+}
+
 export interface Column {
     id: number;
     position: number;
     name: string;
-    tasks: Item[];
+    taskIds: number[];
+}
+
+export interface ColumnsState {
+  byId: Record<number, Column>;
+  allIds: number[];
 }
 
 export interface UpdateItemRequest {

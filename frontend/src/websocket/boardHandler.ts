@@ -1,7 +1,8 @@
 // store/wsHandlers/boardHandlers.ts
 import type { RootState, AppDispatch } from "@/store";
 import { columnArchived, archivedColumnRestored, columnDeleted } from "@/store/slices/archiveColumnsSlice";
-import { columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated } from "@/store/slices/columnsSlice";
+import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated } from "@/store/slices/columnsSlice";
+import { taskCreated, taskReplaced } from "@/store/slices/tasksSlice";
 
 export const handleBoardWSMessage = (
   message: any,
@@ -55,6 +56,25 @@ export const handleBoardWSMessage = (
     case "COLUMN_UPDATED": {
       const { columnId, name } = message.payload;
       dispatch(columnUpdated({ columnId, name }));
+      break;
+    }
+
+    case "TASK_CREATED": {
+      console.log("Task created", message);
+      const { columnId, name, taskPosition, taskId } = message.payload;
+      const tempTask = getState().tasks.allIds
+        .map(id => getState().tasks.byId[id])
+        .find(c => c.id < 0);
+      if (tempTask) {
+        dispatch(taskReplaced({
+          tempId: tempTask.id,
+          realTask: { id: taskId, name, position: taskPosition }
+        }));
+
+      } else {
+        dispatch(taskCreated({ id: taskId, name, position: taskPosition }));
+      }
+      dispatch(addTaskToColumn({ columnId, taskId }));
       break;
     }
 

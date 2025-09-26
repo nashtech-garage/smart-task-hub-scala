@@ -56,6 +56,7 @@ const WorkspaceBoard = () => {
     const dispatch = useDispatch();
 
     const columns = useAppSelector(selectActiveColumns);
+    const tasksByColumn = useAppSelector(selectTasksByColumns);
 
     // OPTIMIZATION: Track dragging state separately from active elements
     const [isDragging, setIsDragging] = useState(false);
@@ -129,8 +130,8 @@ const WorkspaceBoard = () => {
     useEffect(() => {
         fetchBoardData();
         connectToProjectWS(Number(boardId), (message) => {
-        handleBoardWSMessage(message, dispatch, store.getState);
-    });
+            handleBoardWSMessage(message, dispatch, store.getState);
+        });
 
         return () => {
             disconnectWS();
@@ -347,54 +348,54 @@ const WorkspaceBoard = () => {
             const overColumnIndex = columns.findIndex(col => col.id === overId);
 
             if (activeColumnIndex !== -1 && overColumnIndex !== -1) {
-            const newColumns = arrayMove(columns, activeColumnIndex, overColumnIndex);
-            const movedIndex = overColumnIndex;
+                const newColumns = arrayMove(columns, activeColumnIndex, overColumnIndex);
+                const movedIndex = overColumnIndex;
 
-            const preCol = newColumns[movedIndex - 1] || null;
-            const nextCol = newColumns[movedIndex + 1] || null;
+                const preCol = newColumns[movedIndex - 1] || null;
+                const nextCol = newColumns[movedIndex + 1] || null;
 
-            let newPosition: number;
-            if (preCol && nextCol) {
-                newPosition = (preCol.position + nextCol.position) / 2;
-            } else if (!preCol && nextCol) {
-                newPosition = nextCol.position - 1000;
-            } else if (preCol && !nextCol) {
-                newPosition = preCol.position + 1000;
-            } else {
-                newPosition = 1000;
-            }
+                let newPosition: number;
+                if (preCol && nextCol) {
+                    newPosition = (preCol.position + nextCol.position) / 2;
+                } else if (!preCol && nextCol) {
+                    newPosition = nextCol.position - 1000;
+                } else if (preCol && !nextCol) {
+                    newPosition = preCol.position + 1000;
+                } else {
+                    newPosition = 1000;
+                }
 
-            const movedColumn = { ...newColumns[movedIndex], position: Math.floor(newPosition) };
-            newColumns[movedIndex] = movedColumn;
-            dispatch(columnsReordered(newColumns));
-            updateColumnPosititon(Number(boardId), movedColumn.id, movedColumn.position);
+                const movedColumn = { ...newColumns[movedIndex], position: Math.floor(newPosition) };
+                newColumns[movedIndex] = movedColumn;
+                dispatch(columnsReordered(newColumns));
+                updateColumnPosititon(Number(boardId), movedColumn.id, movedColumn.position);
             }
         }
 
         // Handle item reordering within same column
         if (isActiveAnItem && isOverAnItem) {
             const activeColumnIndex = columns.findIndex(col =>
-          col.taskIds.includes(activeId)
-        );
-        const overColumnIndex = columns.findIndex(col =>
-          col.taskIds.includes(overId)
-        );
+                col.taskIds.includes(activeId)
+            );
+            const overColumnIndex = columns.findIndex(col =>
+                col.taskIds.includes(overId)
+            );
 
-        if (activeColumnIndex === overColumnIndex && activeColumnIndex !== -1) {
-          const newColumns = [...columns];
-          const column = { ...newColumns[activeColumnIndex] };
+            if (activeColumnIndex === overColumnIndex && activeColumnIndex !== -1) {
+                const newColumns = [...columns];
+                const column = { ...newColumns[activeColumnIndex] };
 
-          const activeItemIndex = column.taskIds.indexOf(activeId);
-          const overItemIndex = column.taskIds.indexOf(overId);
+                const activeItemIndex = column.taskIds.indexOf(activeId);
+                const overItemIndex = column.taskIds.indexOf(overId);
 
-          if (activeItemIndex !== -1 && overItemIndex !== -1) {
-            column.taskIds = arrayMove(column.taskIds, activeItemIndex, overItemIndex);
+                if (activeItemIndex !== -1 && overItemIndex !== -1) {
+                    column.taskIds = arrayMove(column.taskIds, activeItemIndex, overItemIndex);
 
-            newColumns[activeColumnIndex] = column;
+                    newColumns[activeColumnIndex] = column;
 
-            dispatch(setColumns(newColumns));
+                    dispatch(setColumns(newColumns));
+                }
             }
-          }
         }
     }, [isBoardClosed]);
 
@@ -447,13 +448,12 @@ const WorkspaceBoard = () => {
 
             const column = columns.find(col => col.id === columnId);
             if (!column) return;
-            const lastTask = useAppSelector(selectTaskById(column.taskIds[column.taskIds.length - 1]));
+            const lastTask = tasksByColumn[columnId]?.[tasksByColumn[columnId].length - 1];
             const newPosition = lastTask ? lastTask.position + 1000 : 1000;
 
             try {
                 const result = await taskService.createTask(columnId, cardTitle, newPosition)
                 notify.success(result.message);
-                await fetchBoardData();
             } catch (error: any) {
                 notify.error(error.response?.data?.message);
             }
@@ -501,8 +501,8 @@ const WorkspaceBoard = () => {
 
     const handleArchiveColumn = useCallback(async (column: Column) => {
         if (!isBoardClosed) {
-      dispatch(archiveColumnThunk(column) as any);
-    }
+            dispatch(archiveColumnThunk(column) as any);
+        }
     }, [isBoardClosed]);
 
     const handleArchiveItem = useCallback(async (taskId: number) => {
@@ -541,22 +541,7 @@ const WorkspaceBoard = () => {
         }
     }, []);
 
-    const tasksByColumn = useAppSelector(selectTasksByColumns);
-
-    // OPTIMIZATION: Memoize column props to prevent unnecessary rerenders
-    const columnProps = useMemo(
-        () =>
-            columns.map(col => ({
-                key: col.id,
-                column: col,
-                items: tasksByColumn[col.id] || [],
-                isAddingCard: activeInputColumnId === col.id,
-                isDragging: isDragging && dragType === 'item',
-                isBoardClosed: isBoardClosed,
-            })),
-        [columns, activeInputColumnId, isDragging, dragType, isBoardClosed]
-    );
-
+    console.log("worspace board")
     return (
         <div className='bg-[#283449] w-full h-full flex flex-col'>
             {
@@ -598,12 +583,12 @@ const WorkspaceBoard = () => {
                                         items={columnIds}
                                         strategy={horizontalListSortingStrategy}
                                     >
-                                        {columnProps.map(col => (
+                                        {columns.map(col => (
                                             <DroppableColumn
-                                                key={col.key}
-                                                column={col.column}
-                                                items={col.items}
-                                                isAddingCard={col.isAddingCard}
+                                                key={col.id}
+                                                column={col}
+                                                items={tasksByColumn[col.id] || []}
+                                                isAddingCard={activeInputColumnId === col.id}
                                                 cardTitle={cardTitle}
                                                 setCardTitle={setCardTitle}
                                                 onStartAddingCard={handleStartAddingCard}

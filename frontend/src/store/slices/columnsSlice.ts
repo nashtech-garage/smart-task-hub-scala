@@ -69,6 +69,13 @@ const columnsSlice = createSlice({
       Object.values(state.byId).forEach((column) => {
         column.taskIds = column.taskIds.filter((id) => id !== itemId);
       });
+    },
+    addTaskToColumn: (state, action: PayloadAction<{ columnId: number; taskId: number }>) => {
+      const { columnId, taskId } = action.payload;
+      const column = state.byId[columnId];
+      if (column) {
+        column.taskIds.push(taskId);
+      }
     }
   },
 });
@@ -81,6 +88,7 @@ export const {
   taskDeleted,
   columnsReordered,
   columnReplaced,
-  columnRestored
+  columnRestored,
+  addTaskToColumn
 } = columnsSlice.actions;
 export default columnsSlice.reducer;

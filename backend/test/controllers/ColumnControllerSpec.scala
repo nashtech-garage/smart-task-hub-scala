@@ -1,10 +1,7 @@
 package controllers
 
-import dto.request.column.{
-  CreateColumnRequest,
-  UpdateColumnPositionRequest,
-  UpdateColumnRequest
-}
+import dto.request.column.{CreateColumnRequest, UpdateColumnPositionRequest, UpdateColumnRequest}
+import dto.response.column.ColumnSummariesResponse
 import exception.AppException
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -204,6 +201,18 @@ class ColumnControllerSpec
       status(result) mustBe OK
       (contentAsJson(result) \ "message")
         .as[String] mustBe "Column archived successfully"
+    }
+
+    "should get archived columns successfully" in {
+      val request = FakeRequest(GET, "/api/projects/1/columns/archived").withCookies(
+        Cookie(cookieName, fakeToken)
+      )
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] mustBe "Archived columns retrieved"
+      val data = (contentAsJson(result) \ "data").as[Seq[ColumnSummariesResponse]]
+      data.length must be > 0
     }
 
     "restore column successfully" in {

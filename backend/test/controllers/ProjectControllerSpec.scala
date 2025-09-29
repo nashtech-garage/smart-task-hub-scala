@@ -25,6 +25,7 @@ class ProjectControllerSpec
     new GuiceApplicationBuilder()
       .configure(
         "config.resource" -> "application.test.conf",
+        "play.http.errorHandler" -> "exception.CustomErrorHandler",
         "slick.dbs.default.db.url" -> s"jdbc:h2:mem:projecttest;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE;MODE=PostgreSQL;DATABASE_TO_UPPER=false"
       )
       .build()
@@ -75,6 +76,19 @@ class ProjectControllerSpec
       (contentAsJson(result) \ "message").as[String] must include("Project created successfully")
     }
 
+    "fail when project name already exists" in {
+      val body = Json.toJson(CreateProjectRequest("New Project"))
+      val request = FakeRequest(POST, "/api/workspaces/1/projects")
+        .withCookies(Cookie(cookieName, fakeToken))
+        .withBody(body)
+
+      val ex = intercept[AppException] {
+        await(route(app, request).get)
+      }
+      ex.statusCode mustBe CONFLICT
+      ex.message must include("Project name 'New Project' already exists")
+    }
+
     "fail when workspace does not exist" in {
       val nonExistentWorkspaceId = 9999
       val body = Json.toJson(CreateProjectRequest("Orphan Project"))
@@ -99,6 +113,40 @@ class ProjectControllerSpec
       (contentAsJson(result) \ "message").as[String] mustBe "Projects retrieved"
     }
 
+    "fail when get project in workspace not exist" in {
+      val request = FakeRequest(GET, "/api/workspaces/0/projects")
+        .withCookies(Cookie(cookieName, fakeToken))
+
+        val ex = intercept[AppException] {
+        await(route(app, request).get)
+        }
+        ex.statusCode mustBe NOT_FOUND
+        ex.message must include("Workspace not found")
+    }
+
+    "retrieve projects by id" in {
+      val request = FakeRequest(GET, "/api/projects/1")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] mustBe "Project retrieved"
+      val projectId = (contentAsJson(result) \ "data" \ "id").as[Int]
+      projectId mustBe 1
+    }
+
+    "fail when get project with unexisting id" in {
+      val request = FakeRequest(GET, "/api/projects/0")
+        .withCookies(Cookie(cookieName, fakeToken))
+
+      val ex = intercept[AppException] {
+        await(route(app, request).get)
+      }
+      ex.statusCode mustBe NOT_FOUND
+      ex.message must include("Project not found")
+
+    }
+
     "complete project successfully" in {
       val projectId = 1
       val request = FakeRequest(PATCH, s"/api/projects/$projectId/complete")
@@ -120,20 +168,6 @@ class ProjectControllerSpec
       ex.statusCode mustBe NOT_FOUND
       ex.message must include("Project not found or you are not the owner")
     }
-
-//    "delete project successfully" in {
-//      val projectId = 1
-//      val completeRequest = FakeRequest(PATCH, s"/api/projects/$projectId/complete")
-//        .withCookies(Cookie(cookieName, fakeToken))
-//      status(route(app, completeRequest).get) mustBe OK
-//
-//      val request = FakeRequest(PATCH, s"/api/projects/$projectId/delete")
-//        .withCookies(Cookie(cookieName, fakeToken))
-//      val result = route(app, request).get
-//
-//      status(result) mustBe OK
-//      (contentAsJson(result) \ "message").as[String] mustBe "Project deleted successfully"
-//    }
 
     "reopen project successfully" in {
       val projectId = 1
@@ -173,6 +207,20 @@ class ProjectControllerSpec
       }
       ex.statusCode mustBe NOT_FOUND
       ex.message must include("Project not found")
+    }
+
+    "delete project successfully" in {
+      val projectId = 1
+      val completeRequest = FakeRequest(PATCH, s"/api/projects/$projectId/complete")
+        .withCookies(Cookie(cookieName, fakeToken))
+      status(route(app, completeRequest).get) mustBe OK
+
+      val request = FakeRequest(PATCH, s"/api/projects/$projectId/delete")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] mustBe "Project deleted successfully"
     }
   }
 }

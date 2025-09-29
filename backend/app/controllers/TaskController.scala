@@ -166,4 +166,20 @@ class TaskController @Inject()(
         }
     }
 
+  def search(page: Int, size: Int, keyword: String, projectIds: Option[List[Int]]): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+      taskService
+        .searchTasks(
+          projectIds,
+          Option(keyword).filter(_.nonEmpty),
+          page,
+          size,
+          userId
+        )
+        .map { tasks =>
+          Ok(Json.toJson(ApiResponse.success("Tasks retrieved successfully", tasks)))
+        }
+    }
+
 }

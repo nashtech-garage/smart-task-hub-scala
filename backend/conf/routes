@@ -57,6 +57,7 @@ DELETE  /api/tasks/:taskId             controllers.TaskController.delete(taskId:
 POST   /api/projects/:projectId/tasks/:taskId/members   controllers.TaskController.assignMember(projectId: Int, taskId: Int)
 GET    /api/projects/:projectId/columns/tasks/archived    controllers.TaskController.getArchivedTasks(projectId: Int)
 GET    /api/projects/:projectId/columns/tasks/active    controllers.TaskController.getActiveTasksInProject(projectId: Int)
+GET   /api/tasks   controllers.TaskController.search(page: Int ?= 2, size: Int ?= 10, keyword: String ?= "", projectIds: Option[List[Int]])
 
 #Web socket
 GET /ws/project/:projectId  controllers.WebSocketController.joinProject(projectId: Int)

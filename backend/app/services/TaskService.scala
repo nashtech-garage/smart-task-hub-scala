@@ -1,10 +1,9 @@
 package services
 
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
-import dto.response.task.TaskDetailResponse
-import dto.response.task.TaskSummaryResponse
+import dto.response.task.{TaskDetailResponse, TaskSearchResponse, TaskSummaryResponse}
 import dto.websocket.OutgoingMessage
-import dto.websocket.board.messageTypes.{MemberAssignedToTask, MemberAssignedToTaskPayload, TaskCreated, TaskCreatedPayload, TaskStatusUpdated, TaskStatusUpdatedPayload, TaskUpdated, TaskUpdatedPayload}
+import dto.websocket.board.messageTypes._
 import exception.AppException
 import mappers.TaskMapper
 import models.Enums.TaskStatus
@@ -263,6 +262,24 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     db.run(action.transactionally).map { tasks =>
       tasks
     }
+  }
+
+  def searchTasks(
+                   projectIds: Option[Seq[Int]],
+                   keyword: Option[String],
+                   page: Int,
+                   size: Int,
+                   userId: Int
+                 ): Future[Seq[TaskSearchResponse]] = {
+
+    val query = taskRepository.search(projectIds, keyword, userId)
+      .drop((page - 1) * size)
+      .take(size)
+
+    db.run(query.result).map(_.map {
+      case (taskId, taskName, taskDesc, projectId, projectName, columnName, updatedAt) =>
+        TaskSearchResponse(taskId, taskName, taskDesc, projectId, projectName, columnName, updatedAt)
+    })
   }
 
   private def changeStatus(taskId: Int,

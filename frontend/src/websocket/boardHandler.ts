@@ -1,8 +1,9 @@
 // store/wsHandlers/boardHandlers.ts
 import type { RootState, AppDispatch } from "@/store";
 import { columnArchived, archivedColumnRestored, columnDeleted } from "@/store/slices/archiveColumnsSlice";
-import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated } from "@/store/slices/columnsSlice";
-import { taskCreated, taskReplaced } from "@/store/slices/tasksSlice";
+import { taskArchived, taskDeleted, archivedTaskRestored } from "@/store/slices/archiveTasksSlice";
+import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated, removeTaskFromColumn } from "@/store/slices/columnsSlice";
+import { taskCreated, taskRemoved, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
 
 export const handleBoardWSMessage = (
   message: any,
@@ -60,7 +61,6 @@ export const handleBoardWSMessage = (
     }
 
     case "TASK_CREATED": {
-      console.log("Task created", message);
       const { columnId, name, taskPosition, taskId } = message.payload;
       const tempTask = getState().tasks.allIds
         .map(id => getState().tasks.byId[id])
@@ -74,7 +74,40 @@ export const handleBoardWSMessage = (
       } else {
         dispatch(taskCreated({ id: taskId, name, position: taskPosition }));
       }
-      dispatch(addTaskToColumn({ columnId, taskId }));
+      dispatch(addTaskToColumn({ columnId, taskId, index: -1 }));
+      break;
+    }
+
+    case "TASK_UPDATED": {
+      const { taskId, columnId, taskPosition, detail } = message.payload;
+      dispatch(taskUpdated({ taskId, columnId, taskPosition, detail }));
+      break;
+    }
+
+    case "TASK_STATUS_UPDATED": {
+      const { taskId, columnId, taskPosition, name, updatedStatus } = message.payload;
+      console.log("Task status updated", message);
+
+      if (updatedStatus === "archived") {
+        const task = getState().tasks.byId[taskId];
+        if (task) {
+          dispatch(removeTaskFromColumn(taskId));
+          dispatch(taskRemoved(taskId));
+          dispatch(taskArchived(task));
+        }
+      } else if (updatedStatus === "active") {
+        const task = getState().archivedTasks.byId[taskId];
+        if (task) {
+          dispatch(archivedTaskRestored(taskId));
+          dispatch(taskRestored(task));
+          
+          const column = getState().columns.byId[columnId];
+          const index = column.taskIds.findIndex(id => getState().tasks.byId[id].position > task.position);
+          dispatch(addTaskToColumn({ columnId, taskId, index: index === -1 ? -1 : index }));
+        }
+      } else if (updatedStatus === "deleted") {
+        dispatch(taskDeleted(taskId));
+      }
       break;
     }
 

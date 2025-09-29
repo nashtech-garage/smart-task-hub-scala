@@ -62,7 +62,7 @@ const columnsSlice = createSlice({
       state.byId[realColumn.id] = realColumn;
       state.allIds.push(realColumn.id);
     },
-    taskDeleted: (state, action: PayloadAction<number>) => {
+    removeTaskFromColumn: (state, action: PayloadAction<number>) => {
       const itemId = action.payload;
       state.allIds = state.allIds.filter((tid) => tid !== itemId);
 
@@ -70,13 +70,13 @@ const columnsSlice = createSlice({
         column.taskIds = column.taskIds.filter((id) => id !== itemId);
       });
     },
-    addTaskToColumn: (state, action: PayloadAction<{ columnId: number; taskId: number }>) => {
-      const { columnId, taskId } = action.payload;
+    addTaskToColumn: (state, action: PayloadAction<{ columnId: number; taskId: number, index: number }>) => {
+      const { columnId, taskId, index } = action.payload;
       const column = state.byId[columnId];
       if (column) {
-        column.taskIds.push(taskId);
+        index === -1 ? column.taskIds.push(taskId) : column.taskIds.splice(index, 0, taskId);
       }
-    }
+    },
   },
 });
 
@@ -85,7 +85,7 @@ export const {
   columnCreated,
   columnUpdated,
   columnRemoved,
-  taskDeleted,
+  removeTaskFromColumn,
   columnsReordered,
   columnReplaced,
   columnRestored,

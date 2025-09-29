@@ -11,10 +11,11 @@ import { store, useAppSelector } from '@/store';
 import { selectActiveColumns } from '@/store/selectors/columnsSelector';
 import { selectTaskById, selectTasksByColumns } from '@/store/selectors/tasksSelectors';
 import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
-import { columnsReordered, setColumns, taskDeleted } from '@/store/slices/columnsSlice';
+import { taskDeleted } from '@/store/slices/archiveTasksSlice';
+import { columnsReordered, setColumns } from '@/store/slices/columnsSlice';
 import { archiveColumnThunk, fetchColumns } from '@/store/thunks/columnsThunks';
 import { fetchTasks } from '@/store/thunks/tasksThunks';
-import type { Board, Column, Item, UpdateItemRequest } from '@/types';
+import type { Board, Column, Item, Task, UpdateItemRequest } from '@/types';
 import { handleBoardWSMessage } from '@/websocket/boardHandler';
 import {
     DndContext,
@@ -51,7 +52,7 @@ const WorkspaceBoard = () => {
     const [activeInputColumnId, setActiveInputColumnId] = useState<number | null>(null);
     const [cardTitle, setCardTitle] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
-    const [activeItem, setActiveItem] = useState<Item | null>(null);
+    const [activeItem, setActiveItem] = useState<Task | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
 
@@ -448,8 +449,8 @@ const WorkspaceBoard = () => {
 
             const column = columns.find(col => col.id === columnId);
             if (!column) return;
-            const lastTask = tasksByColumn[columnId]?.[tasksByColumn[columnId].length - 1];
-            const newPosition = lastTask ? lastTask.position + 1000 : 1000;
+            const taskWithMaxPosition = tasksByColumn[columnId].reduce((max, task) => task.position > max.position ? task : max, tasksByColumn[columnId][0]);
+            const newPosition = taskWithMaxPosition ? taskWithMaxPosition.position + 1000 : 1000;
 
             try {
                 const result = await taskService.createTask(columnId, cardTitle, newPosition)

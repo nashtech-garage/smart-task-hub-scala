@@ -24,11 +24,12 @@ export interface Task {
     id: number;
     name: string;
     urlPreview?: UrlPreviewData;
-    position: number
+    position: number;
+    detail?: TaskDetail;
 }
 
 export interface TasksState {
-    byId: Record<number, Item>;
+    byId: Record<number, Task>;
     allIds: number[];
 }
 
@@ -40,8 +41,8 @@ export interface Column {
 }
 
 export interface ColumnsState {
-  byId: Record<number, Column>;
-  allIds: number[];
+    byId: Record<number, Column>;
+    allIds: number[];
 }
 
 export interface UpdateItemRequest {
@@ -51,4 +52,18 @@ export interface UpdateItemRequest {
 
 export interface ItemDetail extends Item {
     description?: string;
+}
+
+export interface TaskDetail {
+    name: string;
+    description?: string;
+    startDate?: string;
+    endDate?: string;
+    priority?: "LOW" | "MEDIUM" | "HIGH";
+    status: "active" | "archived" | "deleted";
+    columnId: number;
+    position: number;
+    isCompleted: boolean;
+    createdAt: string;
+    updatedAt: string;
 }

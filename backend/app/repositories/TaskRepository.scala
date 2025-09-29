@@ -4,15 +4,15 @@ import db.MyPostgresProfile.api.{columnStatusTypeMapper, projectStatusTypeMapper
 import dto.response.task.AssignMemberToTaskResponse
 import dto.response.task.TaskSummaryResponse
 import models.Enums.{ColumnStatus, ProjectStatus, TaskStatus}
-import models.entities.{Column, Task, User, UserProject, UserTask}
-import models.entities.{Project, Task}
-import models.tables.TaskTable
+import models.entities.{Task, UserTask}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
 import models.tables.TableRegistry.{columns, projects, tasks, userProjects, userTasks, users}
+
+import java.time.Instant
 
 @Singleton
 class TaskRepository@Inject()(
@@ -114,6 +114,50 @@ class TaskRepository@Inject()(
   def insertUserBatchIntoTask(entries: Seq[UserTask]): Future[Unit] = {
     val insertQuery = userTasks ++= entries
     db.run(insertQuery).map(_ => ())
+  }
+
+  def search(
+              projectIds: Option[Seq[Int]] = None,
+              keyword: Option[String] = None,
+              userId: Int
+            ): Query[(Rep[Int],
+    Rep[String],
+    Rep[Option[String]],
+    Rep[Int],
+    Rep[String],
+    Rep[String],
+    Rep[Instant]),
+    (Int, String, Option[String], Int, String, String, Instant),
+    Seq] = {
+
+    val baseQuery =
+      for {
+        (((t, c), p), up) <- tasks
+          .join(columns)
+          .on(_.columnId === _.id)
+          .join(projects)
+          .on(_._2.projectId === _.id)
+          .join(userProjects)
+          .on(_._2.id === _.projectId)
+        if up.userId === userId
+      } yield (t, c, p)
+
+    val filtered = baseQuery
+      .filterOpt(projectIds.filter(_.nonEmpty)) {
+        case ((_, _, p), ids) =>
+          p.id inSet ids
+      }
+      .filterOpt(keyword.filter(_.nonEmpty)) {
+        case ((t, _, _), kw) =>
+          t.name.toLowerCase like s"%${kw.toLowerCase}%"
+      }
+
+    filtered
+      .sortBy { case (t, _, _) => t.updatedAt.desc }
+      .map {
+        case (t, c, p) =>
+          (t.id, t.name, t.description, p.id, p.name, c.name, t.updatedAt)
+      }
   }
 
 }

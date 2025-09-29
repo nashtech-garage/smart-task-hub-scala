@@ -3,7 +3,7 @@ package controllers
 import dto.request.column.CreateColumnRequest
 import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskRequest}
 import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
-import dto.response.task.TaskSummaryResponse
+import dto.response.task.{TaskSearchResponse, TaskSummaryResponse}
 import exception.AppException
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -237,6 +237,29 @@ class TaskControllerSpec
         .as[String] mustBe "Active tasks retrieved successfully"
       val tasks = (contentAsJson(result) \ "data").as[Seq[TaskSummaryResponse]]
       tasks.exists(task => task.id == taskId && task.name == "Active Task") mustBe true
+    }
+
+    "search tasks successfully" in {
+      val taskService = inject[TaskService]
+
+      // Create a new task in the existing column
+      val taskId = await(
+        taskService.createNewTask(
+          CreateTaskRequest("search Task", 1502),
+          1,
+          1
+        )
+      )
+
+      val request = FakeRequest(GET, "/api/tasks?page=1&size=10&keyword=search")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message")
+        .as[String] mustBe "Tasks retrieved successfully"
+      val tasks = (contentAsJson(result) \ "data").as[Seq[TaskSearchResponse]]
+      tasks.length must be > 0
     }
   }
 }

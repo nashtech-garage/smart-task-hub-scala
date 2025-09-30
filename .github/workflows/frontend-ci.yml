@@ -50,8 +50,8 @@ jobs:
       - name: Build & Deploy
         run: |
           npm run build
-        #   npx vercel --prod --yes --token=${{ secrets.TRELLO_FRONTEND_VERCEL_TOKEN }}
-        # env:
-        #   VERCEL_ORG_ID: ${{ vars.TRELLO_FRONTEND_VERCEL_ORG_ID }}
-        #   VERCEL_PROJECT_ID: ${{ vars.TRELLO_FRONTEND_VERCEL_PROJECT_ID }}
-        #   VITE_TRELLO_LIKE_API_URL: ${{ vars.VITE_TRELLO_LIKE_API_URL }}
+          npx vercel --prod --yes --token=${{ secrets.TRELLO_FRONTEND_VERCEL_TOKEN }}
+        env:
+          VERCEL_ORG_ID: ${{ vars.TRELLO_FRONTEND_VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ vars.TRELLO_FRONTEND_VERCEL_PROJECT_ID }}
+          VITE_TRELLO_LIKE_API_URL: ${{ vars.VITE_TRELLO_LIKE_API_URL }}

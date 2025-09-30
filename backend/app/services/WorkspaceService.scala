@@ -95,7 +95,7 @@ class WorkspaceService @Inject() (
             isWorkspaceNameExists <- workspaceRepo.isWorkspaceNameUsedByUser(workspace.name, updatedBy)
             result <- if (isWorkspaceNameExists) {
                 DBIO.failed(AppException(
-                  message = "Workspace name already exists",
+                  message = "Duplicate workspace name",
                   statusCode = Status.CONFLICT
                 ))
             } else {

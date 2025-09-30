@@ -1,8 +1,10 @@
 package controllers
 
-import dto.request.column.CreateColumnRequest
-import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskRequest}
-import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
+import dto.request.task.{
+  AssignMemberRequest,
+  CreateTaskRequest,
+  UpdateTaskRequest
+}
 import dto.response.task.{TaskSearchResponse, TaskSummaryResponse}
 import exception.AppException
 import org.scalatest.BeforeAndAfterAll
@@ -18,7 +20,7 @@ import play.api.{Application, Configuration}
 import services._
 
 class TaskControllerSpec
-  extends PlaySpec
+    extends PlaySpec
     with GuiceOneAppPerSuite
     with Injecting
     with ScalaFutures
@@ -86,6 +88,21 @@ class TaskControllerSpec
       )
     }
 
+    "fail when creating task with unexisting column id" in {
+      val body = Json.toJson(CreateTaskRequest("Task 1", 1))
+      val request = FakeRequest(POST, "/api/columns/0/tasks")
+        .withCookies(Cookie(cookieName, fakeToken))
+        .withBody(body)
+
+      val ex = intercept[AppException] {
+        await(route(app, request).get)
+      }
+      ex.statusCode mustBe NOT_FOUND
+      ex.message must include(
+        "Column with ID 0 does not exist or is not active"
+      )
+    }
+
     "assign member into a task successfully" in {
       val body = Json.toJson(AssignMemberRequest(1))
       val request = FakeRequest(POST, "/api/projects/1/tasks/1/members")
@@ -98,6 +115,20 @@ class TaskControllerSpec
       (contentAsJson(result) \ "message").as[String] must include(
         "Member assigned to task successfully"
       )
+    }
+
+    "fail when assign member with unexist task id" in {
+      val body = Json.toJson(AssignMemberRequest(1))
+      val request = FakeRequest(POST, "/api/projects/1/tasks/0/members")
+        .withCookies(Cookie(cookieName, fakeToken))
+        .withBody(body)
+
+      val ex = intercept[AppException] {
+        await(route(app, request).get)
+      }
+
+      ex.statusCode mustBe NOT_FOUND
+      ex.message must include("Task with ID 0 does not exist")
     }
 
     "fail when creating task with duplicate position in same column" in {
@@ -117,7 +148,9 @@ class TaskControllerSpec
 
     "update task successfully" in {
       val body =
-        Json.toJson(UpdateTaskRequest("Updated Task", None, None, None, None, None))
+        Json.toJson(
+          UpdateTaskRequest("Updated Task", None, None, None, None, None)
+        )
       val request = FakeRequest(PATCH, "/api/tasks/1")
         .withCookies(Cookie(cookieName, fakeToken))
         .withBody(body)
@@ -130,10 +163,30 @@ class TaskControllerSpec
         .as[String] mustBe "Task updated successfully"
     }
 
+    "fail when updating task with unexist task id" in {
+      val body =
+        Json.toJson(
+          UpdateTaskRequest("Updated Task", None, None, None, None, None)
+        )
+      val request = FakeRequest(PATCH, "/api/tasks/0")
+        .withCookies(Cookie(cookieName, fakeToken))
+        .withBody(body)
+        .withHeaders(CONTENT_TYPE -> "application/json")
+
+      val ex = intercept[AppException] {
+        await(route(app, request).get)
+      }
+
+      ex.statusCode mustBe NOT_FOUND
+      ex.message must include("Task with ID 0 does not exist")
+    }
+
     "fail to update non-existent task" in {
       val nonExistentTaskId = 9999
       val body =
-        Json.toJson(UpdateTaskRequest("Some Task", None, None, None, None, None))
+        Json.toJson(
+          UpdateTaskRequest("Some Task", None, None, None, None, None)
+        )
       val request = FakeRequest(PATCH, s"/api/tasks/$nonExistentTaskId")
         .withCookies(Cookie(cookieName, fakeToken))
         .withBody(body)
@@ -197,11 +250,7 @@ class TaskControllerSpec
 
       // Create and archive a task in the new column
       val taskId = await(
-        taskService.createNewTask(
-          CreateTaskRequest("Task to Archive", 1),
-          1,
-          1
-        )
+        taskService.createNewTask(CreateTaskRequest("Task to Archive", 1), 1, 1)
       )
       await(taskService.archiveTask(taskId, 1))
 
@@ -216,16 +265,24 @@ class TaskControllerSpec
       tasks.exists(task => task.id == taskId && task.name == "Task to Archive") mustBe true
     }
 
+    "fail when get archived tasks with unexist project id" in {
+      val request = FakeRequest(GET, "/api/projects/0/columns/tasks/archived")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      val ex = intercept[AppException] {
+        await(result)
+      }
+      ex.statusCode mustBe NOT_FOUND
+      ex.message must include("Project not found")
+    }
+
     "get active tasks successfully" in {
       val taskService = inject[TaskService]
 
       // Create a new task in the existing column
       val taskId = await(
-        taskService.createNewTask(
-          CreateTaskRequest("Active Task", 1),
-          1,
-          1
-        )
+        taskService.createNewTask(CreateTaskRequest("Active Task", 1), 1, 1)
       )
 
       val request = FakeRequest(GET, "/api/projects/1/columns/tasks/active")
@@ -239,16 +296,24 @@ class TaskControllerSpec
       tasks.exists(task => task.id == taskId && task.name == "Active Task") mustBe true
     }
 
+    "fail get active tasks with unexist project id" in {
+      val request = FakeRequest(GET, "/api/projects/0/columns/tasks/active")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      val ex = intercept[AppException] {
+        await(result)
+      }
+      ex.statusCode mustBe NOT_FOUND
+      ex.message must include("Project not found")
+    }
+
     "search tasks successfully" in {
       val taskService = inject[TaskService]
 
       // Create a new task in the existing column
       val taskId = await(
-        taskService.createNewTask(
-          CreateTaskRequest("search Task", 1502),
-          1,
-          1
-        )
+        taskService.createNewTask(CreateTaskRequest("search Task", 1502), 1, 1)
       )
 
       val request = FakeRequest(GET, "/api/tasks?page=1&size=10&keyword=search")

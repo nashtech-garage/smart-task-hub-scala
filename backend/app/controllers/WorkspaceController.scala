@@ -114,18 +114,6 @@ class WorkspaceController @Inject()(
                 Json.toJson(ApiResponse[Unit]("Workspace updated successfully"))
               )
             }
-      }.recover {
-        case ex: AppException => BadRequest(
-          Json.obj(
-            "message" -> "Duplicate workspace name",
-            "errors" -> Json.arr(
-              Json.obj(
-                "field" -> "name",
-                "message" -> ex.message
-              )
-            )
-          )
-        )
       }
     }
 }

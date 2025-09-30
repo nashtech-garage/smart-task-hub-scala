@@ -1,7 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import CreateWorkspaceModal from '@/components/shared/CreateModal';
+import { useDebounce } from "use-debounce";
+import taskService from '@/services/taskService';
+import type { TaskSearchResponse } from '@/types';
+import { StickyNote } from 'lucide-react';
 
 interface ProfileDropdownProps {
     userName?: string;
@@ -74,7 +78,7 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
                     </div> */}
 
                     <button
-                        onClick={handleCreateWorkspace} 
+                        onClick={handleCreateWorkspace}
                         className='w-full text-left border-t border-gray-600 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded flex items-center'>
                         <svg
                             className='w-4 h-4 mr-2'
@@ -110,6 +114,13 @@ const Navbar: React.FC = () => {
     const { user, logout } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [keyword, setKeyword] = useState('');
+    const [debounceQuery] = useDebounce(keyword, 500);
+    const [isLoading, setIsLoading] = useState(false);
+    const [results, setResults] = useState<TaskSearchResponse[]>([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
 
     const handleCreateWorkspace = () => {
         setIsModalOpen(true);
@@ -119,6 +130,49 @@ const Navbar: React.FC = () => {
     const handleLogout = async () => {
         await logout();
     };
+
+    const handleSearch = async (keyword: string) => {
+        try {
+            if (!keyword.trim()) {
+                setResults([]);
+                return;
+            }
+            setIsLoading(true);
+            const res = await taskService.searchTasks(keyword.trim());
+            setResults(res.data || []);
+            setIsDropdownOpen(true);
+        } catch (error) {
+            console.error('Search error:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                searchRef.current &&
+                !searchRef.current.contains(event.target as Node)
+            ) {
+                setIsDropdownOpen(false);
+                setKeyword('');
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (debounceQuery) {
+            handleSearch(debounceQuery);
+        } else {
+            setResults([]);
+            setIsDropdownOpen(false);
+        }
+    }, [debounceQuery]);
 
     return (
         <nav className='bg-[#1E2125] border-b border-gray-700 px-4 py-2'>
@@ -156,7 +210,7 @@ const Navbar: React.FC = () => {
                 </div>
 
                 {/* Center - Search */}
-                <div className='flex-1 max-w-lg mx-4'>
+                <div className='flex-1 max-w-xl mx-4' ref={searchRef}>
                     <div className='relative'>
                         <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
                             <svg
@@ -176,10 +230,54 @@ const Navbar: React.FC = () => {
                         <input
                             type='text'
                             placeholder='Search'
+                            value={keyword}
+                            onChange={(e) => setKeyword(e.target.value)}
                             className='block w-full pl-10 pr-3 py-1.5 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
                         />
                     </div>
+
+                    {/* Dropdown results */}
+                    {isDropdownOpen && (
+                        <div className='absolute mt-1 w-full max-w-xl bg-[#1E2125] border border-gray-700 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto'>
+                            {isLoading ? (
+                                <div className='p-2 text-gray-400 text-sm'>Loading...</div>
+                            ) : results.length > 0 ? (
+                                results.map((task) => (
+                                    <div
+                                        key={task.taskId}
+                                        className="flex items-start px-3 py-2 cursor-pointer hover:bg-gray-700 mb-1"
+                                        onClick={() => {
+                                            // console.log("Clicked task:", task);
+                                            setIsDropdownOpen(false);
+                                            setKeyword('');
+                                            navigate(`/board/${task.projectId}`);
+                                        }}
+                                    >
+                                        {/* Icon bên trái */}
+                                        <div className="flex-shrink-0 mt-0.5 text-gray-400">
+                                            <StickyNote />
+                                        </div>
+
+                                        {/* Nội dung task */}
+                                        <div className="ml-2">
+                                            <div className="text-white text-sm font-medium">
+                                                {task.taskName}
+                                            </div>
+                                            <div className="text-gray-400 text-xs">
+                                                {task.projectName}: {task.columnName}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                ))
+                            ) : (
+                                <div className='p-2 text-gray-400 text-sm'>No results</div>
+                            )}
+                        </div>
+                    )}
                 </div>
+
+
 
                 {/* Right side - Actions and Profile */}
                 <div className='flex items-center space-x-2'>

@@ -34,7 +34,7 @@ const AdminLayout = () => (
     </ProtectedRoute>
 );
 
-const   UserLayout = () => (
+const UserLayout = () => (
     <ProtectedRoute requiredRole='user' fallback={<UnauthorizedFallback />}>
         <MainLayout>
             <Outlet />
@@ -103,7 +103,7 @@ const router = createBrowserRouter([
                 ]
             },
             {
-                path: 'workspace/:wsId/board/:boardId',
+                path: 'board/:boardId',
                 element: <WorkspaceBoard />,
             },
             {
@@ -122,7 +122,7 @@ const router = createBrowserRouter([
                         path: 'setting/:id',
                         element: <Setting />,
                     },
-                    
+
                 ]
             },
         ],

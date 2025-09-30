@@ -1,4 +1,4 @@
-import type { ApiResponse, Item, ItemDetail, UpdateItemRequest } from "@/types";
+import type { ApiResponse, Item, ItemDetail, TaskSearchResponse, UpdateItemRequest } from "@/types";
 import axiosClients from "./axiosClient";
 
 const projectUrl = 'projects';
@@ -47,6 +47,17 @@ const taskService = {
     removeMember(projectId: number, taskId: number, memberId: number): Promise<ApiResponse<null>> {
         return axiosClients.delete(`/${projectUrl}/${projectId}/${taskUrl}/${taskId}/members/${memberId}`);
     },
+    searchTasks(keyword: string, projectIds?: number[], page: number = 1, size: number = 10): Promise<ApiResponse<TaskSearchResponse[]>> {
+        return axiosClients.get("/tasks", {
+            params: {
+                page,
+                size,
+                keyword,
+                projectIds
+            }
+        });
+    }
+
 }
 
 export default taskService;

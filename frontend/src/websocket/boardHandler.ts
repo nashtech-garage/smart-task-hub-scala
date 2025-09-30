@@ -79,8 +79,9 @@ export const handleBoardWSMessage = (
     }
 
     case "TASK_UPDATED": {
-      const { taskId, columnId, taskPosition, detail } = message.payload;
-      dispatch(taskUpdated({ taskId, columnId, taskPosition, detail }));
+      console.log("Task updated", message);
+      const { taskId, columnId, taskPosition, detail, name } = message.payload;
+      dispatch(taskUpdated({ taskId, columnId, taskPosition, detail, name }));
       break;
     }
 
@@ -100,7 +101,7 @@ export const handleBoardWSMessage = (
         if (task) {
           dispatch(archivedTaskRestored(taskId));
           dispatch(taskRestored(task));
-          
+
           const column = getState().columns.byId[columnId];
           const index = column.taskIds.findIndex(id => getState().tasks.byId[id].position > task.position);
           dispatch(addTaskToColumn({ columnId, taskId, index: index === -1 ? -1 : index }));

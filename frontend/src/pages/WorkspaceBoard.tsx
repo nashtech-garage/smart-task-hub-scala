@@ -1,3 +1,4 @@
+import BoardClosedBanner from '@/components/board/BoardClosedBanner';
 import BoardNavbar from '@/components/board/BoardNavbar';
 import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
@@ -8,7 +9,7 @@ import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
 import { store, useAppSelector } from '@/store';
-import { selectActiveColumns } from '@/store/selectors/columnsSelector';
+import { selectActiveColumns, selectColumnById } from '@/store/selectors/columnsSelector';
 import { selectTaskById, selectTasksByColumns } from '@/store/selectors/tasksSelectors';
 import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
 import { taskDeleted } from '@/store/slices/archiveTasksSlice';
@@ -551,24 +552,7 @@ const WorkspaceBoard = () => {
                         <LoadingContent />
                     </div> :
                     <>
-                        {/* Board Closed Banner */}
-                        {boardDetail?.status === 'completed' && (
-                            <div className='bg-red-500 text-white px-4 py-3 flex items-center justify-between'>
-                                <div className='flex items-center gap-2'>
-                                    <Lock size={18} />
-                                    <span className='font-medium'>
-                                        This board is closed. Reopen the board to make changes.
-                                    </span>
-                                </div>
-                                <button
-                                    onClick={handleReopenBoard}
-                                    className='bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-md flex items-center gap-2 transition-colors font-medium'
-                                >
-                                    <Unlock size={16} />
-                                    Reopen board
-                                </button>
-                            </div>
-                        )}
+                        <BoardClosedBanner status={boardDetail?.status} handleReopenBoard={handleReopenBoard} />'
                         <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} />
 
                         <div className={`grow overflow-hidden ${isBoardClosed ? 'pointer-events-none opacity-60' : ''}`}>
@@ -649,6 +633,7 @@ const WorkspaceBoard = () => {
                             <TaskDetailModal
                                 onClose={handleHideDetailModal}
                                 itemId={activeItem?.id || 0}
+                                // item={activeItem}
                                 onArchive={handleArchiveItem}
                                 onUpdate={handleUpdateTask}
                             />

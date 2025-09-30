@@ -42,7 +42,7 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
   //   }
   // };
 
-  const fetchTaskDetail = async (taskId: number) => {
+  const fetchTaskDetail = async () => {
     setIsLoading(true);
     try {
       const response = await taskService.getTaskDetail(itemId);
@@ -56,9 +56,11 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
     }
   }
 
+  console.log("Rendering TaskDetailModal for itemId:", itemId, item);
+
 
   useEffect(() => {
-    fetchTaskDetail(itemId);
+    fetchTaskDetail();
   }, [itemId]);
 
   return (

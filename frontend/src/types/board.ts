@@ -60,10 +60,10 @@ export interface TaskDetail {
     startDate?: string;
     endDate?: string;
     priority?: "LOW" | "MEDIUM" | "HIGH";
-    status: "active" | "archived" | "deleted";
-    columnId: number;
-    position: number;
-    isCompleted: boolean;
-    createdAt: string;
-    updatedAt: string;
+    status?: "active" | "archived" | "deleted";
+    // columnId: number;
+    // position: number;
+    isCompleted?: boolean;
+    createdAt?: string;
+    updatedAt?: string;
 }

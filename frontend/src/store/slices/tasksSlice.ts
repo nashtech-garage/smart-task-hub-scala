@@ -18,13 +18,13 @@ const tasksSlice = createSlice({
       state.byId[task.id] = task;
       state.allIds.push(task.id);
     },
-    taskUpdated: (state, action: PayloadAction<{ taskId: number; columnId: string; taskPosition: number; detail: TaskDetail }>) => {
-      const { taskId, detail, taskPosition } = action.payload;
+    taskUpdated: (state, action: PayloadAction<{ taskId: number; columnId: string; taskPosition: number; name: string; detail: TaskDetail }>) => {
+      const { taskId, detail, taskPosition, name } = action.payload;
 
       const task = state.byId[taskId];
       if (task) {
         task.detail = detail;
-        task.name = detail.name;
+        task.name = name || detail?.name;
         task.position = taskPosition;
       }
     },

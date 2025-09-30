@@ -46,7 +46,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         transition,
     };
 
-    // console.log("Rendering DraggableItem:", item.id, item.name);
+    console.log("Rendering DraggableItem:", item.id, item.name);
     return (
         <div
             ref={setNodeRef}

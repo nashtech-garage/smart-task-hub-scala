@@ -82,6 +82,8 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
 
     const itemIds = useMemo(() => items.map(item => item.id), [items]);
 
+    console.log('Rendering DroppableColumn:', column.id, column.name);
+
     useEffect(() => {
         if (isAddingCard && inputRef.current) {
             inputRef.current.focus();

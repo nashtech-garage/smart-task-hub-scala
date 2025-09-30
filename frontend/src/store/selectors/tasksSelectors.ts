@@ -2,7 +2,7 @@ import { createSelector } from "@reduxjs/toolkit";
 import type { RootState } from "..";
 import { selectAllColumnIds, selectColumnsById } from "./columnsSelector";
 
-const selectTasksById = (state: RootState) => state.columns.byId;
+const selectTasksById = (state: RootState) => state.tasks.byId;
 const selectAllArchivedTaskIds = (state: RootState) => state.archivedTasks.allIds;
 const selectArchivedTasksById = (state: RootState) => state.archivedTasks.byId;
 

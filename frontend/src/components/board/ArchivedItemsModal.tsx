@@ -28,6 +28,7 @@ const ArchivedItemsModal: React.FC<ArchivedItemsModalProps> = ({
     const modalRef = useRef<HTMLDivElement>(null);
 
     const currentItems = currentView === 'tasks' ? archivedTasks : archivedColumns;
+    console.log("Rendering ArchivedItemsModal, currentView:", currentView);
 
     return (
         <div

@@ -21,7 +21,7 @@ const archivedTasksSlice = createSlice({
         state.allIds.push(task.id);
       }
     },
-    taskRestored: (state, action: PayloadAction<number>) => {
+    archivedTaskRestored: (state, action: PayloadAction<number>) => {
       const id = action.payload;
       delete state.byId[id];
       state.allIds = state.allIds.filter((tid) => tid !== id);
@@ -34,7 +34,7 @@ const archivedTasksSlice = createSlice({
   },
 });
 
-export const { setArchivedTasks, taskArchived, taskRestored, taskDeleted } =
+export const { setArchivedTasks, taskArchived, archivedTaskRestored, taskDeleted } =
   archivedTasksSlice.actions;
 
 export default archivedTasksSlice.reducer;

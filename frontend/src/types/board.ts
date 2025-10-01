@@ -52,6 +52,12 @@ export interface UpdateItemRequest {
 
 export interface ItemDetail extends Item {
     description?: string;
+    assignedMembers?: Member[];
+}
+
+export interface Member {
+    id: number;
+    name: string;
 }
 
 export interface TaskDetail {

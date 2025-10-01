@@ -1,12 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   X, Calendar, Users,
   List, Edit3, Archive,
   // Eye, Paperclip, Copy, Trash2, MessageSquareText 
 } from 'lucide-react';
 import LoadingContent from '../ui/LoadingContent';
-import type { Item, ItemDetail } from '@/types';
+import type { ItemDetail } from '@/types';
 import taskService from '@/services/taskService';
+import AssignMembers from './AssignMembers';
 
 interface TaskModalProps {
   onClose: () => void;
@@ -54,7 +55,7 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
     finally {
       setIsLoading(false);
     }
-  }
+  };
 
   console.log("Rendering TaskDetailModal for itemId:", itemId, item);
 
@@ -64,11 +65,11 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
   }, [itemId]);
 
   return (
-    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-50 pt-8 px-4">
-      <div className="bg-[#282e3e] rounded-lg w-full max-w-3xl max-h-[calc(100vh-4rem)] overflow-hidden flex shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-40 pt-8 px-4">
+      <div className="bg-[#282e3e] rounded-lg w-full max-w-3xl max-h-[calc(100vh-4rem)] flex shadow-2xl">
         {
           isLoading ?
-            <div className="flex-1 flex items-center justify-center min-h-[300px]">
+            <div className="flex-1 flex items-center justify-center min-h-[300px] overflow-y-auto">
               <LoadingContent />
             </div> :
             <>
@@ -116,22 +117,27 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
                       <List size={14} />
                       Checklist
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-white text-sm rounded">
+                    {/* <button className="flex items-center gap-2 px-3 py-2 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-white text-sm rounded">
                       <Users size={14} />
                       Members
-                    </button>
+                    </button> */}
+                  </div>
+                </div>
+                <div className="pl-6 flex flex-wrap gap-2">
+
+                  {/* Member section */}
+                  <AssignMembers assignedMembers={item?.assignedMembers} taskId={itemId}/>
+
+                  {/* Labels Section */}
+                  <div className="pb-4">
+                    <h3 className="text-sm font-medium text-white mb-2">Labels</h3>
+                    <div className="flex items-center gap-1 mb-1">
+                      <span className="px-2 py-2 bg-green-600 text-white text-xs font-medium rounded">BE</span>
+                      <button className="w-8 h-8 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-gray-300 text-lg rounded flex items-center justify-center leading-none">+</button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Labels Section */}
-                <div className="px-6 pb-4">
-                  <h3 className="text-sm font-medium text-white mb-2">Labels</h3>
-                  <div className="flex items-center gap-2 mb-1">
-                    {/* <span className="px-2 py-1 bg-green-600 text-white text-xs font-medium rounded">BE</span> */}
-                    <button className="w-6 h-6 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-gray-300 text-lg rounded flex items-center justify-center leading-none">+</button>
-                  </div>
-                  <div className="text-xs text-gray-500 mt-1">Story Points</div>
-                </div>
 
                 {/* Description Section */}
                 <div className="px-6 pb-4">

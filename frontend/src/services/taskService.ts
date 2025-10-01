@@ -1,5 +1,6 @@
 import type { ApiResponse, Item, ItemDetail, TaskSearchResponse, UpdateItemRequest } from "@/types";
 import axiosClients from "./axiosClient";
+import qs from "qs";
 
 const projectUrl = 'projects';
 const columnUrl = 'columns';
@@ -53,8 +54,10 @@ const taskService = {
                 page,
                 size,
                 keyword,
-                projectIds
-            }
+                projectIds,
+            },
+            paramsSerializer: (params) =>
+                qs.stringify(params, { arrayFormat: "repeat" }),
         });
     }
 

@@ -5,12 +5,7 @@ import dto.response.ApiResponse
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{
-  Action,
-  AnyContent,
-  MessagesAbstractController,
-  MessagesControllerComponents
-}
+import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
 import services.ProjectService
 import utils.WritesExtras.unitWrites
 import validations.ValidationHandler
@@ -121,6 +116,16 @@ class ProjectController @Inject()(
       projectService.getProjectById(projectId, userId).map { project =>
         val apiResponse =
           ApiResponse.success("Project retrieved", project)
+        Ok(Json.toJson(apiResponse))
+      }
+    }
+
+  def getProjectsByUser: Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+      projectService.getProjectsByUserId(userId).map { projects =>
+        val apiResponse =
+          ApiResponse.success("Projects retrieved", projects)
         Ok(Json.toJson(apiResponse))
       }
     }

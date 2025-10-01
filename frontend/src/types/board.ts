@@ -78,8 +78,9 @@ export interface TaskSearchResponse {
     taskId: number;
     taskName: string;
     taskDescription?: string;
+    taskStatus: string;
     projectId: number;
     projectName: string;
     columnName: string;
-    // updatedAt: string;
+    updatedAt: string;
 }

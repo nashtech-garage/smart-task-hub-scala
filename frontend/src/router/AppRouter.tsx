@@ -24,6 +24,7 @@ import WorkspaceBoard from '@/pages/WorkspaceBoard';
 import HomeBoards from '@/pages/HomeBoards';
 import Boards from '@/pages/workspace/Board';
 import WorkspaceDetail from '@/pages/workspace/WorkspaceDetail';
+import SearchPage from '@/pages/SearchPage';
 
 // Layout wrappers for different roles
 const AdminLayout = () => (
@@ -125,6 +126,11 @@ const router = createBrowserRouter([
 
                 ]
             },
+            {
+                path: 'search',
+                element: <SearchPage />,
+            },
+            
         ],
     },
 

@@ -2,14 +2,14 @@ import { Lock, Unlock } from "lucide-react";
 import type React from "react";
 
 interface BoardClosedBannerProps {
-    status?: string;
+    isBoardClosed: boolean;
     handleReopenBoard: () => void;
 }
 
-const BoardClosedBanner: React.FC<BoardClosedBannerProps> = ({ status, handleReopenBoard }) => {
+const BoardClosedBanner: React.FC<BoardClosedBannerProps> = ({ isBoardClosed, handleReopenBoard }) => {
     return (
         <>
-            {status && status === 'completed' ? (
+            {isBoardClosed ? (
                 <div className='bg-red-500 text-white px-4 py-3 flex items-center justify-between'>
                     <div className='flex items-center gap-2'>
                         <Lock size={18} />

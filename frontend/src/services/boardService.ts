@@ -16,6 +16,10 @@ const fetchBoardDetail = async (id: number): Promise<ApiResponse<Board>> => {
     return axiosClients.get(`${projectUrl}/${id}`);
 };
 
+const fetchAllBoards = async (): Promise<ApiResponse<Board[]>> => {
+    return axiosClients.get(`${projectUrl}`);
+}
+
 const fetchBoardColumns = async (id: number): Promise<ApiResponse<Column[]>> => {
     return axiosClients.get(`${projectUrl}/${id}/columns`);
 };

@@ -9,14 +9,14 @@ import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard } from '@/services/workspaceService';
 import { store, useAppSelector } from '@/store';
-import { selectActiveColumns, selectColumnById } from '@/store/selectors/columnsSelector';
+import { selectActiveColumns } from '@/store/selectors/columnsSelector';
 import { selectTaskById, selectTasksByColumns } from '@/store/selectors/tasksSelectors';
 import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
 import { taskDeleted } from '@/store/slices/archiveTasksSlice';
 import { columnsReordered, setColumns } from '@/store/slices/columnsSlice';
 import { archiveColumnThunk, fetchColumns } from '@/store/thunks/columnsThunks';
 import { fetchTasks } from '@/store/thunks/tasksThunks';
-import type { Board, Column, Item, Task, UpdateItemRequest } from '@/types';
+import type { Board, Column, Task, UpdateItemRequest } from '@/types';
 import { handleBoardWSMessage } from '@/websocket/boardHandler';
 import {
     DndContext,
@@ -38,7 +38,7 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
-import { GripVertical, Plus, Lock, Unlock } from 'lucide-react';
+import { GripVertical, Plus } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
@@ -102,12 +102,12 @@ const WorkspaceBoard = () => {
 
     // OPTIMIZATION: Memoize active elements only when activeId changes
     const activeTask = useAppSelector(
-    activeId ? selectTaskById(activeId as number) : () => null
+        activeId ? selectTaskById(activeId as number) : () => null
     );
 
     const activeColumn = useMemo(() => {
-    if (!activeId) return null;
-    return columns.find(col => col.id === activeId) ?? null;
+        if (!activeId) return null;
+        return columns.find(col => col.id === activeId) ?? null;
     }, [activeId, columns]);
 
     const activeElements = { activeColumn, activeTask };
@@ -552,8 +552,8 @@ const WorkspaceBoard = () => {
                         <LoadingContent />
                     </div> :
                     <>
-                        <BoardClosedBanner status={boardDetail?.status} handleReopenBoard={handleReopenBoard} />'
-                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} />
+                        <BoardClosedBanner isBoardClosed={isBoardClosed} handleReopenBoard={handleReopenBoard} />'
+                        <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} setIsBoardClosed={setIsBoardClosed} />
 
                         <div className={`grow overflow-hidden ${isBoardClosed ? 'pointer-events-none opacity-60' : ''}`}>
                             <DndContext

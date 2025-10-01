@@ -4,6 +4,7 @@ import dto.request.project.CreateProjectRequest
 import dto.response.project.{ProjectResponse, ProjectSummariesResponse}
 import dto.response.user.UserInProjectResponse
 import exception.AppException
+import mappers.ProjectMapper
 import models.Enums.ProjectStatus.ProjectStatus
 import models.Enums.{ProjectStatus, ProjectVisibility}
 import models.entities.Project
@@ -205,6 +206,12 @@ class ProjectService @Inject()(
 
   def isUserInActiveProject(userId: Int, projectId: Int): Future[Boolean] = {
     db.run(projectRepository.isUserInActiveProject(userId, projectId))
+  }
+
+  def getProjectsByUserId(userId: Int): Future[Seq[ProjectResponse]] = {
+    db.run(projectRepository.getProjectsByUser(userId)).map {
+      _.map(ProjectMapper.toProjectResponse)
+    }
   }
 
 }

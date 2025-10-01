@@ -1,8 +1,7 @@
 package repositories
 
 import db.MyPostgresProfile.api.{columnStatusTypeMapper, projectStatusTypeMapper, taskStatusTypeMapper}
-import dto.response.task.AssignMemberToTaskResponse
-import dto.response.task.TaskSummaryResponse
+import dto.response.task.{AssignMemberToTaskResponse, AssignedMemberResponse, TaskSummaryResponse}
 import models.Enums.{ColumnStatus, ProjectStatus, TaskStatus}
 import models.entities.{Task, UserTask}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
@@ -43,6 +42,15 @@ class TaskRepository@Inject()(
     } yield (t, p.id)
 
     query.result.headOption
+  }
+
+  def findAssignedMembers(taskId: Int): DBIO[Seq[AssignedMemberResponse]] = {
+    val query = for {
+      ut <- userTasks if ut.taskId === taskId
+      u  <- users if u.id === ut.assignedTo
+    } yield (u.id, u.name)
+
+    query.result.map(_.map { case (id, name) => AssignedMemberResponse(id, name) })
   }
 
   def update(task: Task): DBIO[Int] = {

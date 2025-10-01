@@ -38,6 +38,15 @@ const taskService = {
         return axiosClients.delete(`/${taskUrl}/${taskId}`);
     },
 
+    assignMember(projectId: number, taskId: number, memberId: number): Promise<ApiResponse<null>> {
+        return axiosClients.post(`/${projectUrl}/${projectId}/${taskUrl}/${taskId}/members`, {
+            userId: memberId
+        });
+    },
+
+    removeMember(projectId: number, taskId: number, memberId: number): Promise<ApiResponse<null>> {
+        return axiosClients.delete(`/${projectUrl}/${projectId}/${taskUrl}/${taskId}/members/${memberId}`);
+    },
 }
 
 export default taskService;

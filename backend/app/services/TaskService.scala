@@ -124,11 +124,13 @@ class TaskService @Inject()(taskRepository: TaskRepository,
 
   def getTaskDetailById(taskId: Int, userId: Int): Future[Option[TaskDetailResponse]] = {
     val action = for {
-      result <- getTaskAndProjectByTaskId(taskId, userId)
-    } yield result
+      (task, _)        <- getTaskAndProjectByTaskId(taskId, userId)
+      assignedMembers  <- taskRepository.findAssignedMembers(taskId)
+    } yield (task, assignedMembers)
 
     db.run(action.transactionally).map {
-      case (task, _) => Some(TaskMapper.toDetailResponse(task))
+      case (task, assignedMembers) =>
+        Some(TaskMapper.toDetailWithAssignMembersResponse(task, assignedMembers))
     }
   }
 

@@ -1,115 +1,29 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import CreateWorkspaceModal from '@/components/shared/CreateModal';
-
-interface ProfileDropdownProps {
-    userName?: string;
-    email?: string;
-    handleLogout: () => void;
-    handleCreateWorkspace: () => void;
-}
-
-const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
-    userName,
-    email,
-    handleLogout,
-    handleCreateWorkspace,
-}) => {
-
-    return (
-        <div className='absolute right-0 mt-2 w-80 bg-[#1E2125] rounded-lg shadow-lg shadow-[0px_8px_12px_#091e4226,0px_0px_1px_#091e424f] border border-gray-600 z-50'>
-            <div className='p-4'>
-                <div className='text-xs text-[#B6C2CF] uppercase tracking-wide font-semibold mb-3'>
-                    ACCOUNT
-                </div>
-
-                <div className='flex items-center space-x-3 mb-4'>
-                    <div className='w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold'>
-                        {userName
-                            ?.charAt(0)
-                            .toUpperCase() || 'VT'}
-                    </div>
-                    <div>
-                        <div className='font-medium text-[#B6C2CF]'>
-                            {userName || 'Vu Tran'}
-                        </div>
-                        <div className='text-sm text-[#B6C2CF]'>
-                            {email ||
-                                'tranmster5000@gmail.com'}
-                        </div>
-                    </div>
-                </div>
-
-                <div className='border-t border-gray-600 pt-4'>
-                    {/* <div className='space-y-1 mb-4'>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
-                            Profile and visibility
-                        </button>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
-                            Activity
-                        </button>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
-                            Cards
-                        </button>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
-                            Settings
-                        </button>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded flex items-center justify-between'>
-                            Theme
-                            <svg
-                                className='w-4 h-4'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                stroke='currentColor'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M9 5l7 7-7 7'
-                                />
-                            </svg>
-                        </button>
-                    </div> */}
-
-                    <button
-                        onClick={handleCreateWorkspace} 
-                        className='w-full text-left border-t border-gray-600 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded flex items-center'>
-                        <svg
-                            className='w-4 h-4 mr-2'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'
-                        >
-                            <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                strokeWidth={2}
-                                d='M12 6v6m0 0v6m0-6h6m-6 0H6'
-                            />
-                        </svg>
-                        Create Workspace
-                    </button>
-                </div>
-
-                <div className='border-t border-gray-600 pt-4'>
-                    <button
-                        onClick={handleLogout}
-                        className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'
-                    >
-                        Log out
-                    </button>
-                </div>
-            </div>
-        </div>
-    )
-}
+import { useDebounce } from "use-debounce";
+import taskService from '@/services/taskService';
+import type { TaskSearchResponse } from '@/types';
+import { StickyNote } from 'lucide-react';
+import { SearchContext } from '../MainLayout';
+import ProfileDropDown from './ProfileDropDown';
 
 const Navbar: React.FC = () => {
     const { user, logout } = useAuth();
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isProfileOpen, setIsProfileOpen] = useState(false);
+    const [keyword, setKeyword] = useState('');
+    const [debounceQuery] = useDebounce(keyword, 500);
+    const [isLoading, setIsLoading] = useState(false);
+    const [results, setResults] = useState<TaskSearchResponse[]>([]);
+    const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+    const searchRef = useRef<HTMLDivElement>(null);
+    const navigate = useNavigate();
+    const searchContext = useContext(SearchContext);
+
+    if (!searchContext) return null;
+    const { showSearch } = searchContext;
 
     const handleCreateWorkspace = () => {
         setIsModalOpen(true);
@@ -119,6 +33,49 @@ const Navbar: React.FC = () => {
     const handleLogout = async () => {
         await logout();
     };
+
+    const handleSearch = async (keyword: string) => {
+        try {
+            if (!keyword.trim()) {
+                setResults([]);
+                return;
+            }
+            setIsLoading(true);
+            const res = await taskService.searchTasks(keyword.trim());
+            setResults(res.data || []);
+            setIsDropdownOpen(true);
+        } catch (error) {
+            console.error('Search error:', error);
+        } finally {
+            setIsLoading(false);
+        }
+    }
+
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                searchRef.current &&
+                !searchRef.current.contains(event.target as Node)
+            ) {
+                setIsDropdownOpen(false);
+                setKeyword('');
+            }
+        };
+
+        document.addEventListener("mousedown", handleClickOutside);
+        return () => {
+            document.removeEventListener("mousedown", handleClickOutside);
+        };
+    }, []);
+
+    useEffect(() => {
+        if (debounceQuery) {
+            handleSearch(debounceQuery);
+        } else {
+            setResults([]);
+            setIsDropdownOpen(false);
+        }
+    }, [debounceQuery]);
 
     return (
         <nav className='bg-[#1E2125] border-b border-gray-700 px-4 py-2'>
@@ -156,30 +113,90 @@ const Navbar: React.FC = () => {
                 </div>
 
                 {/* Center - Search */}
-                <div className='flex-1 max-w-lg mx-4'>
-                    <div className='relative'>
-                        <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
-                            <svg
-                                className='h-4 w-4 text-gray-400'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                stroke='currentColor'
-                            >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
-                                />
-                            </svg>
+                {showSearch &&
+                    <div className='flex-1 max-w-xl mx-4' ref={searchRef}>
+                        <div className='relative'>
+                            <div className='absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none'>
+                                <svg
+                                    className='h-4 w-4 text-gray-400'
+                                    fill='none'
+                                    viewBox='0 0 24 24'
+                                    stroke='currentColor'
+                                >
+                                    <path
+                                        strokeLinecap='round'
+                                        strokeLinejoin='round'
+                                        strokeWidth={2}
+                                        d='M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z'
+                                    />
+                                </svg>
+                            </div>
+                            <input
+                                type='text'
+                                placeholder='Search'
+                                value={keyword}
+                                onChange={(e) => setKeyword(e.target.value)}
+                                className='block w-full pl-10 pr-3 py-1.5 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
+                            />
                         </div>
-                        <input
-                            type='text'
-                            placeholder='Search'
-                            className='block w-full pl-10 pr-3 py-1.5 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
-                        />
+
+                        {/* Dropdown results */}
+                        {isDropdownOpen && (
+                            <div className="absolute mt-1 w-full max-w-xl bg-[#1E2125] border border-gray-700 rounded-md shadow-lg z-50">
+                                {/* Scrollable list */}
+                                <div className="max-h-[50%] overflow-y-auto">
+                                    {isLoading ? (
+                                        <div className="p-2 text-gray-400 text-sm">Loading...</div>
+                                    ) : results.length > 0 ? (
+                                        results.map((task) => (
+                                            <div
+                                                key={task.taskId}
+                                                className="flex items-start px-3 py-2 cursor-pointer hover:bg-gray-700 mb-1"
+                                                onClick={() => {
+                                                    setIsDropdownOpen(false);
+                                                    setKeyword('');
+                                                    navigate(`/board/${task.projectId}`);
+                                                }}
+                                            >
+                                                {/* Icon bên trái */}
+                                                <div className="flex-shrink-0 mt-0.5 text-gray-400">
+                                                    <StickyNote />
+                                                </div>
+
+                                                {/* Nội dung task */}
+                                                <div className="ml-2">
+                                                    <div className="text-white text-sm font-medium">
+                                                        {task.taskName}
+                                                    </div>
+                                                    <div className="text-gray-400 text-xs">
+                                                        {task.projectName}: {task.columnName} {task.taskStatus === 'archived' && `• ${task.taskStatus}`}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        ))
+                                    ) : (
+                                        <div className="p-2 text-gray-400 text-sm">No results</div>
+                                    )}
+                                </div>
+
+                                {/* Advanced Search link */}
+                                <div
+                                    className="border-t border-gray-700 px-3 py-2 text-blue-400 text-sm cursor-pointer hover:bg-gray-800"
+                                    onClick={() => {
+                                        setIsDropdownOpen(false);
+                                        setKeyword('');
+                                        navigate(`/search`);
+                                    }}
+                                >
+                                    Advanced Search
+                                </div>
+                            </div>
+                        )}
+
                     </div>
-                </div>
+                }
+
+
 
                 {/* Right side - Actions and Profile */}
                 <div className='flex items-center space-x-2'>

@@ -36,12 +36,14 @@ interface BoardNavbarProps {
     id: number;
     name?: string;
     isBoardClosed: boolean;
+    setIsBoardClosed: (closed: boolean) => void;
 }
 
 const BoardNavbar: React.FC<BoardNavbarProps> = ({
     id,
     name,
     isBoardClosed,
+    setIsBoardClosed
 }) => {
 
     const { wsId, boardId } = useParams();
@@ -71,7 +73,8 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
         if (!boardId) return;
         await completedBoard(Number(boardId));
         handleCloseMenu();
-        navigate(`/workspace/boards/${wsId}`)
+        // navigate(`/board/${id}`, { replace: true });
+        setIsBoardClosed(true);
     };
 
     const cancelCloseBoard = () => {

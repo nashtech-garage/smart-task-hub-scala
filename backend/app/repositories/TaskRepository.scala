@@ -2,6 +2,9 @@ package repositories
 
 import db.MyPostgresProfile.api.{columnStatusTypeMapper, projectStatusTypeMapper, taskStatusTypeMapper}
 import dto.response.task.{AssignMemberToTaskResponse, AssignedMemberResponse, TaskSummaryResponse}
+import dto.response.task.AssignMemberToTaskResponse
+import dto.response.task.TaskSummaryResponse
+import models.Enums.TaskStatus.TaskStatus
 import models.Enums.{ColumnStatus, ProjectStatus, TaskStatus}
 import models.entities.{Task, UserTask}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
@@ -131,11 +134,12 @@ class TaskRepository@Inject()(
             ): Query[(Rep[Int],
     Rep[String],
     Rep[Option[String]],
+    Rep[TaskStatus],
     Rep[Int],
     Rep[String],
     Rep[String],
     Rep[Instant]),
-    (Int, String, Option[String], Int, String, String, Instant),
+    (Int, String, Option[String], TaskStatus, Int, String, String, Instant),
     Seq] = {
 
     val baseQuery =
@@ -147,7 +151,7 @@ class TaskRepository@Inject()(
           .on(_._2.projectId === _.id)
           .join(userProjects)
           .on(_._2.id === _.projectId)
-        if up.userId === userId
+        if up.userId === userId && t.status =!= TaskStatus.deleted && p.status =!= ProjectStatus.deleted && c.status =!= ColumnStatus.deleted
       } yield (t, c, p)
 
     val filtered = baseQuery
@@ -164,7 +168,7 @@ class TaskRepository@Inject()(
       .sortBy { case (t, _, _) => t.updatedAt.desc }
       .map {
         case (t, c, p) =>
-          (t.id, t.name, t.description, p.id, p.name, c.name, t.updatedAt)
+          (t.id, t.name, t.description, t.status, p.id, p.name, c.name, t.updatedAt)
       }
   }
 

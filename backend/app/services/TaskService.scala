@@ -279,8 +279,8 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       .take(size)
 
     db.run(query.result).map(_.map {
-      case (taskId, taskName, taskDesc, projectId, projectName, columnName, updatedAt) =>
-        TaskSearchResponse(taskId, taskName, taskDesc, projectId, projectName, columnName, updatedAt)
+      case (taskId, taskName, taskDesc, taskStatus, projectId, projectName, columnName, updatedAt) =>
+        TaskSearchResponse(taskId, taskName, taskDesc, taskStatus, projectId, projectName, columnName, updatedAt)
     })
   }
 

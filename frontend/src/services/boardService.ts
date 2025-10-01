@@ -16,6 +16,10 @@ const fetchBoardDetail = async (id: number): Promise<ApiResponse<Board>> => {
     return axiosClients.get(`${projectUrl}/${id}`);
 };
 
+const fetchAllBoards = async (): Promise<ApiResponse<Board[]>> => {
+    return axiosClients.get(`${projectUrl}`);
+}
+
 const fetchBoardColumns = async (id: number): Promise<ApiResponse<Column[]>> => {
     return axiosClients.get(`${projectUrl}/${id}/columns`);
 };
@@ -63,9 +67,9 @@ const deleteColumn = async (columnId: number): Promise<ApiResponse<null>> => {
     return axiosClients.delete(`/columns/${columnId}`);
 };
 
-export { 
-    fetchUrlPreview, fetchBoardDetail, createNewColumn, 
-    updateColumn, archiveColumn, restoreColumn, 
-    deleteColumn, updateColumnPosititon, fetchBoardColumns, 
-    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers
+export {
+    fetchUrlPreview, fetchBoardDetail, createNewColumn,
+    updateColumn, archiveColumn, restoreColumn,
+    deleteColumn, updateColumnPosititon, fetchBoardColumns,
+    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers, fetchAllBoards
 };

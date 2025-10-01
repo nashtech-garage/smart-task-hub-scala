@@ -38,7 +38,7 @@ const Boards = () => {
     };
 
     const handleBoardNavigate = (boardId: number) => {
-        navigate(`/workspace/${id}/board/${boardId}`, { replace: true });
+        navigate(`/board/${boardId}`, { replace: true });
     };
 
     const onEditingButtonClick = () => {

@@ -222,5 +222,14 @@ class ProjectControllerSpec
       status(result) mustBe OK
       (contentAsJson(result) \ "message").as[String] mustBe "Project deleted successfully"
     }
+
+    "get all projects by user successfully" in {
+      val request = FakeRequest(GET, s"/api/projects")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] mustBe "Projects retrieved"
+    }
   }
 }

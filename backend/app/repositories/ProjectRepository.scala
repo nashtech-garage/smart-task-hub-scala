@@ -135,4 +135,15 @@ class ProjectRepository @Inject()(
     val action = insertQuery ++= entries
     db.run(action)
   }
+
+  def getProjectsByUser(userId: Int): DBIO[Seq[Project]] = {
+    val q = for {
+      up <- userProjects
+      if up.userId === userId && (up.role === UserProjectRole.owner || up.role === UserProjectRole.member)
+      p <- projects if p.id === up.projectId && p.status =!= ProjectStatus.deleted
+      w <- workspaces if w.id === p.workspaceId && !w.isDeleted
+    } yield p
+
+    q.result
+  }
 }

@@ -2,8 +2,6 @@ package repositories
 
 import db.MyPostgresProfile.api.{columnStatusTypeMapper, projectStatusTypeMapper, taskStatusTypeMapper}
 import dto.response.task.{AssignMemberToTaskResponse, AssignedMemberResponse, TaskSummaryResponse}
-import dto.response.task.AssignMemberToTaskResponse
-import dto.response.task.TaskSummaryResponse
 import models.Enums.TaskStatus.TaskStatus
 import models.Enums.{ColumnStatus, ProjectStatus, TaskStatus}
 import models.entities.{Task, UserTask}
@@ -68,6 +66,11 @@ class TaskRepository@Inject()(
     )
     userTasks += userTask
   }
+
+  def unassignMemberFromTask(taskId: Int, userId: Int): DBIO[Int] = {
+    userTasks.filter(ut => ut.taskId === taskId && ut.assignedTo === userId).delete
+  }
+
   def findArchivedTasksByProjectId(projectId: Int): DBIO[Seq[TaskSummaryResponse]] = {
     val query = for {
       ((t, c), p) <- tasks
@@ -93,10 +96,10 @@ class TaskRepository@Inject()(
       up <- userProjects if up.userId === userId && up.projectId === c.projectId
       u  <- users if u.id === userId
       if !(userTasks.filter(ut => ut.taskId === taskId && ut.assignedTo === userId)).exists
-    } yield (u.id, u.name, c.id)
+    } yield (u.id, u.name, t.id)
 
-    query.result.headOption.map(_.map { case (uid, uname, colId) =>
-      AssignMemberToTaskResponse(uid, uname, colId)
+    query.result.headOption.map(_.map { case (uid, uname, taskId) =>
+      AssignMemberToTaskResponse(uid, uname, taskId)
     })
   }
 

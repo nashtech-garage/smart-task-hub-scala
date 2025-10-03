@@ -1,43 +1,49 @@
 package controllers
 
-import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskRequest}
+import dto.request.task.{
+  AssignMemberRequest,
+  CreateTaskRequest,
+  UpdateTaskRequest
+}
 import dto.response.ApiResponse
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
+import play.api.mvc.{
+  Action,
+  AnyContent,
+  MessagesAbstractController,
+  MessagesControllerComponents
+}
 import services.TaskService
-import validations.ValidationHandler
 import utils.WritesExtras.unitWrites
+import validations.ValidationHandler
 
 import javax.inject.Inject
 import scala.concurrent.ExecutionContext
 
 class TaskController @Inject()(
-                                cc: MessagesControllerComponents,
-                                taskService: TaskService,
-                                authenticatedActionWithUser: AuthenticatedActionWithUser
-                              )(implicit ec: ExecutionContext)
-  extends MessagesAbstractController(cc)
+  cc: MessagesControllerComponents,
+  taskService: TaskService,
+  authenticatedActionWithUser: AuthenticatedActionWithUser
+)(implicit ec: ExecutionContext)
+    extends MessagesAbstractController(cc)
     with ValidationHandler {
 
   def create(columnId: Int): Action[JsValue] =
     authenticatedActionWithUser.async(parse.json) { request =>
       implicit val messages: Messages = request.messages
       val createdBy = request.userToken.userId
-      handleJsonValidation[CreateTaskRequest](request.body) {
-        createColumnDto =>
-          taskService
-            .createNewTask(createColumnDto, columnId, createdBy)
-            .map { taskId =>
-              Created(
-                Json.toJson(
-                  ApiResponse[Unit](
-                    s"Task created successfully with ID: $taskId"
-                  )
-                )
+      handleJsonValidation[CreateTaskRequest](request.body) { createColumnDto =>
+        taskService
+          .createNewTask(createColumnDto, columnId, createdBy)
+          .map { taskId =>
+            Created(
+              Json.toJson(
+                ApiResponse[Unit](s"Task created successfully with ID: $taskId")
               )
-            }
+            )
+          }
       }
     }
 
@@ -45,19 +51,12 @@ class TaskController @Inject()(
     authenticatedActionWithUser.async(parse.json) { request =>
       implicit val messages: Messages = request.messages
       val updatedBy = request.userToken.userId
-      handleJsonValidation[UpdateTaskRequest](request.body) {
-        updateTaskDto =>
-          taskService
-            .updateTask(taskId, updateTaskDto, updatedBy)
-            .map { _ =>
-              Ok(
-                Json.toJson(
-                  ApiResponse[Unit](
-                    s"Task updated successfully"
-                  )
-                )
-              )
-            }
+      handleJsonValidation[UpdateTaskRequest](request.body) { updateTaskDto =>
+        taskService
+          .updateTask(taskId, updateTaskDto, updatedBy)
+          .map { _ =>
+            Ok(Json.toJson(ApiResponse[Unit](s"Task updated successfully")))
+          }
       }
     }
 
@@ -81,13 +80,7 @@ class TaskController @Inject()(
       taskService
         .archiveTask(taskId, archivedBy)
         .map { _ =>
-          Ok(
-            Json.toJson(
-              ApiResponse[Unit](
-                s"Task archived successfully"
-              )
-            )
-          )
+          Ok(Json.toJson(ApiResponse[Unit](s"Task archived successfully")))
         }
     }
 
@@ -97,13 +90,7 @@ class TaskController @Inject()(
       taskService
         .restoreTask(taskId, restoredBy)
         .map { _ =>
-          Ok(
-            Json.toJson(
-              ApiResponse[Unit](
-                s"Task restored successfully"
-              )
-            )
-          )
+          Ok(Json.toJson(ApiResponse[Unit](s"Task restored successfully")))
         }
     }
 
@@ -117,7 +104,7 @@ class TaskController @Inject()(
         }
     }
 
-  def assignMember(projectId:Int, taskId: Int): Action[JsValue] = {
+  def assignMember(projectId: Int, taskId: Int): Action[JsValue] = {
     authenticatedActionWithUser.async(parse.json) { request =>
       val assignedBy = request.userToken.userId
       handleJsonValidation[AssignMemberRequest](request.body) {
@@ -136,6 +123,22 @@ class TaskController @Inject()(
     }
   }
 
+  def unassignMember(projectId: Int,
+                     taskId: Int,
+                     userId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val unassignedBy = request.userToken.userId
+      taskService
+        .unassignMemberFromTask(projectId, taskId, userId, unassignedBy)
+        .map { _ =>
+          Ok(
+            Json.toJson(
+              ApiResponse[Unit](s"Member unassigned from task successfully")
+            )
+          )
+        }
+    }
+
   def getArchivedTasks(projectId: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
       implicit val messages: Messages = request.messages
@@ -145,7 +148,8 @@ class TaskController @Inject()(
         .map { tasks =>
           Ok(
             Json.toJson(
-              ApiResponse.success("Archived tasks retrieved successfully", tasks)
+              ApiResponse
+                .success("Archived tasks retrieved successfully", tasks)
             )
           )
         }
@@ -166,7 +170,10 @@ class TaskController @Inject()(
         }
     }
 
-  def search(page: Int, size: Int, keyword: String, projectIds: Option[List[Int]]): Action[AnyContent] =
+  def search(page: Int,
+             size: Int,
+             keyword: String,
+             projectIds: Option[List[Int]]): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
       val userId = request.userToken.userId
       taskService
@@ -178,7 +185,11 @@ class TaskController @Inject()(
           userId
         )
         .map { tasks =>
-          Ok(Json.toJson(ApiResponse.success("Tasks retrieved successfully", tasks)))
+          Ok(
+            Json.toJson(
+              ApiResponse.success("Tasks retrieved successfully", tasks)
+            )
+          )
         }
     }
 

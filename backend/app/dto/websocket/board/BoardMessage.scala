@@ -18,6 +18,7 @@ object BoardMessage {
           case TaskMoved(p)            => Json.toJson(p)
           case TaskCreated(p)          => Json.toJson(p)
           case MemberAssignedToTask(p) => Json.toJson(p)
+          case MemberUnassignedFromTask(p) => Json.toJson(p)
           case TaskUpdated(p)          => Json.toJson(p)
           case TaskStatusUpdated(p)    => Json.toJson(p)
           case ColumnCreated(p)        => Json.toJson(p)

@@ -243,6 +243,41 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     db.run(action)
   }
 
+  def unassignMemberFromTask(projectId:Int, taskId: Int, userId: Int, unassignedBy: Int): Future[Int] = {
+    val action = for {
+      isUserInProject    <- projectRepository.isUserInActiveProject(
+        unassignedBy,
+        projectId
+      )
+
+      _ <- if (isUserInProject) {
+        DBIO.successful(())
+      } else {
+        DBIO.failed(AppException(
+          message = s"You do not have permission to unassign members from this task",
+          statusCode = Status.FORBIDDEN))
+      }
+
+      deletionCheck <- taskRepository.unassignMemberFromTask(taskId, userId)
+      _ <- deletionCheck match {
+        case 1 => {
+          val unassignedMemberFromTaskMessage = MemberUnassignedFromTask(MemberUnassignedFromTaskPayload(
+            taskId,
+            userId)
+          )
+          broadcastService.broadcastToProject(projectId, unassignedMemberFromTaskMessage)
+          DBIO.successful(())
+        }
+        case 0 => DBIO.failed(AppException(
+          message = s"User with ID $userId is not in the project or not assigned to the task",
+          statusCode = Status.BAD_REQUEST)
+        )
+      }
+    } yield deletionCheck
+
+    db.run(action)
+  }
+
   def getActiveTasksInProject(projectId: Int, userId: Int): Future[Seq[TaskSummaryResponse]] = {
     val action = for {
       isUserInActiveProject <- projectRepository.isUserInActiveProject(

@@ -131,6 +131,48 @@ class TaskControllerSpec
       ex.message must include("Task with ID 0 does not exist")
     }
 
+    "unassign member from a task successfully" in {
+      val request = FakeRequest(DELETE, "/api/projects/1/tasks/1/members/1")
+        .withCookies(Cookie(cookieName, fakeToken))
+
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] must include(
+        "Member unassigned from task successfully"
+      )
+    }
+
+    "fail when unassigning member from a task with user not assign to a task" in {
+      val request = FakeRequest(DELETE, "/api/projects/1/tasks/1/members/0")
+        .withCookies(Cookie(cookieName, fakeToken))
+
+      val result = route(app, request).get
+
+      val ex = intercept[AppException] {
+        await(result)
+      }
+      ex.statusCode mustBe BAD_REQUEST
+      ex.message must include(
+        "User with ID 0 is not in the project or not assigned to the task"
+      )
+    }
+
+    "fail when unassigning member from a task with user not in project" in {
+      val request = FakeRequest(DELETE, "/api/projects/2/tasks/1/members/0")
+        .withCookies(Cookie(cookieName, fakeToken))
+
+      val result = route(app, request).get
+
+      val ex = intercept[AppException] {
+        await(result)
+      }
+      ex.statusCode mustBe FORBIDDEN
+      ex.message must include(
+        "You do not have permission to unassign members from this task"
+      )
+    }
+
     "fail when creating task with duplicate position in same column" in {
       val body = Json.toJson(CreateTaskRequest("Task 1", 1))
       val request = FakeRequest(POST, "/api/columns/1/tasks")

@@ -12,7 +12,7 @@ interface AssignMembersProps {
 }
 
 const AssignMembers: React.FC<AssignMembersProps> = (props) => {
-    const {boardId} = useParams();
+    const { boardId } = useParams();
     const [assignedMembers, setAssignedMembers] = useState<Member[]>(props?.assignedMembers || []);
     const [members, setMembers] = useState<Member[]>([])
     const [isOpen, setIsOpen] = useState(false);
@@ -31,24 +31,24 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
     }
 
     const toggleAssign = async (member: Member) => {
-    try {
-        const isAssigned = assignedMembers.some(am => am.id === member.id);
+        try {
+            const isAssigned = assignedMembers.some(am => am.id === member.id);
 
-        if (isAssigned) {
-            // remove
-            await taskService.removeMember(Number(boardId), props.taskId, member.id);
-            setAssignedMembers(prev => prev.filter(am => am.id !== member.id));
-            notify.success(`${member.name} removed`);
-        } else {
-            // assign
-            await taskService.assignMember(Number(boardId), props.taskId, member.id);
-            setAssignedMembers(prev => [...prev, member]);
-            notify.success(`${member.name} assigned`);
+            if (isAssigned) {
+                // remove
+                await taskService.removeMember(Number(boardId), props.taskId, member.id);
+                setAssignedMembers(prev => prev.filter(am => am.id !== member.id));
+                notify.success(`${member.name} removed`);
+            } else {
+                // assign
+                await taskService.assignMember(Number(boardId), props.taskId, member.id);
+                setAssignedMembers(prev => [...prev, member]);
+                notify.success(`${member.name} assigned`);
+            }
+        } catch (error: any) {
+            notify.error(error.response?.data?.message || "Something went wrong");
         }
-    } catch (error: any) {
-        notify.error(error.response?.data?.message || "Something went wrong");
-    }
-};
+    };
 
     useEffect(() => {
         fetchMemebers();
@@ -164,7 +164,7 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
                                                 <li
                                                     key={m.id}
                                                     onClick={() => toggleAssign(m)}
-                                                    className="flex items-center justify-between px-2 py-1 rounded bg-gray-800"
+                                                    className="flex items-center justify-between px-2 py-1 rounded bg-gray-800 cursor-pointer hover:bg-gray-700"
                                                 >
                                                     <span className="text-white">{m.name}</span>
                                                     <span className="text-green-400 text-xs">✓</span>

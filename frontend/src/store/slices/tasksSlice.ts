@@ -63,8 +63,19 @@ const tasksSlice = createSlice({
     assignedMemberToTask: (state, action: PayloadAction<{ taskId: number; memberId: number }>) => {
       const { taskId, memberId } = action.payload;
       const task = state.byId[taskId];
-      if (task) {
+      if (task && !task.memberIds.includes(memberId)) {
         task.memberIds.push(memberId);
+      }
+    },
+
+    removeMemberFromTask: (state, action: PayloadAction<{ taskId: number; userId: number }>) => {
+      const { taskId, userId } = action.payload;
+      const task = state.byId[taskId];
+      if (task && task.memberIds.includes(userId)) {
+        const index = task.memberIds.indexOf(userId);
+        if (index !== -1) {
+          task.memberIds.splice(index, 1);
+        }
       }
     }
   }
@@ -78,5 +89,6 @@ export const {
   taskRemoved,
   taskRestored,
   assignedMemberToTask,
+  removeMemberFromTask
 } = tasksSlice.actions;
 export default tasksSlice.reducer;

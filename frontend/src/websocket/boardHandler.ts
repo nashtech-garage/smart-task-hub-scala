@@ -3,7 +3,7 @@ import type { RootState, AppDispatch } from "@/store";
 import { columnArchived, archivedColumnRestored, columnDeleted } from "@/store/slices/archiveColumnsSlice";
 import { taskArchived, taskDeleted, archivedTaskRestored } from "@/store/slices/archiveTasksSlice";
 import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated, removeTaskFromColumn } from "@/store/slices/columnsSlice";
-import { assignedMemberToTask, taskCreated, taskRemoved, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
+import { assignedMemberToTask, removeMemberFromTask, taskCreated, taskRemoved, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
 
 export const handleBoardWSMessage = (
   message: any,
@@ -115,10 +115,14 @@ export const handleBoardWSMessage = (
     case "MEMBER_ASSIGNED_TO_TASK": {
       console.log("Member assigned to task", message);
       const { taskId, assignData }: { taskId: number, assignData: { userId: number, username: string } } = message.payload;
-      const task = getState().tasks.byId[taskId];
-      if (task && !task.memberIds.includes(assignData.userId)) {
-        dispatch(assignedMemberToTask({ taskId, memberId: assignData.userId }));
-      }
+      dispatch(assignedMemberToTask({ taskId, memberId: assignData.userId }));
+      break;
+    }
+
+    case "MEMBER_UNASSIGNED_TO_TASK": {
+      console.log("Member unassigned to task", message);
+      const { taskId, userId } = message.payload;
+      dispatch(removeMemberFromTask({ taskId, userId }));
       break;
     }
 

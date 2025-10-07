@@ -1,4 +1,4 @@
-import type { ApiResponse, Board, Column, Member, UrlPreviewData } from '@/types';
+import type { ApiResponse, Board, Column, Member, Task, UrlPreviewData } from '@/types';
 import axiosClients from './axiosClient';
 
 const previewUrl = '/url-preview';
@@ -28,7 +28,7 @@ const fetchBoardMembers = async (id: number): Promise<ApiResponse<Member[]>> => 
     return axiosClients.get(`${projectUrl}/${id}/members`);
 };
 
-const fetchActiveBoardTasks = async (id: number): Promise<ApiResponse<Column[]>> => {
+const fetchActiveBoardTasks = async (id: number): Promise<ApiResponse<Task[]>> => {
     return axiosClients.get(`${projectUrl}/${id}/columns/tasks/active`);
 };
 

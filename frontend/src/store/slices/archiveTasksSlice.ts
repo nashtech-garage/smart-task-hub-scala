@@ -1,5 +1,5 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
-import type { Item, TasksState } from "@/types";
+import type { Task, TasksState } from "@/types";
 import { normalizeTasks } from "@/utils/normalize";
 
 const initialState: TasksState = {
@@ -11,14 +11,14 @@ const archivedTasksSlice = createSlice({
   name: "archivedTasks",
   initialState,
   reducers: {
-    setArchivedTasks: (state, action: PayloadAction<Item[]>) => {
+    setArchivedTasks: (state, action: PayloadAction<Task[]>) => {
       return normalizeTasks(action.payload);
     },
-    taskArchived: (state, action: PayloadAction<Item>) => {
+    taskArchived: (state, action: PayloadAction<Task>) => {
       const task = action.payload;
       state.byId[task.id] = task;
       if (!state.allIds.includes(task.id)) {
-        state.allIds.push(task.id);
+        state.allIds.unshift(task.id);
       }
     },
     archivedTaskRestored: (state, action: PayloadAction<number>) => {

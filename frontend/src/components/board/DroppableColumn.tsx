@@ -1,4 +1,4 @@
-import type { Column, Item } from '@/types';
+import type { Column, Task } from '@/types';
 import {
     SortableContext,
     useSortable,
@@ -20,7 +20,7 @@ import ColumnOptionsMenu from './ColumnOptionsMenu';
 
 interface DroppableColumnProps {
     column: Column;
-    items: Item[];
+    items: Task[];
     isAddingCard: boolean;
     cardTitle: string;
     setCardTitle: (title: string) => void;
@@ -33,7 +33,7 @@ interface DroppableColumnProps {
     onArchiveColumn: (column: Column) => void;
     onArchiveAllItems: (columnId: number) => void;
     handleShowDetailTask: () => void;
-    setActiveItem: (item: Item) => void;
+    setActiveItem: (item: Task) => void;
 }
 
 const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
@@ -290,20 +290,17 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                 strategy={verticalListSortingStrategy}
             >
                 <div className='overflow-y-auto space-y-3 pr-1'>
-                    {items.map(item => (
-                        <DraggableItem
-                            key={item.id}
-                            item={item}
-                            onDelete={onDeleteItem}
-                            handleShowDetailTask={handleShowDetailTask}
-                            setActiveItem={setActiveItem}
-                        // label='FE'
-                        // assignedMember={{ 
-                        //     name: "John Doe", 
-                        //     initials: "JD",
-                        // }}
-                        />
-                    ))}
+                    <div className="overflow-y-auto space-y-3 pr-1">
+                        {items?.map(item => (
+                            <DraggableItem
+                                key={item.id}
+                                itemId={item.id}
+                                onDelete={onDeleteItem}
+                                handleShowDetailTask={handleShowDetailTask}
+                                setActiveItem={setActiveItem}
+                            />
+                        ))}
+                    </div>
                 </div>
             </SortableContext>
 

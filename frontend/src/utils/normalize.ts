@@ -1,4 +1,4 @@
-import type { Column, ColumnsState, Item, TasksState } from "@/types";
+import type { Column, ColumnsState, Item, Task, TasksState } from "@/types";
 
 export const normalizeColumns = (columns: Column[]): ColumnsState => {
     return {
@@ -10,12 +10,12 @@ export const normalizeColumns = (columns: Column[]): ColumnsState => {
     };
 };
 
-export const normalizeTasks = (items: Item[]): TasksState => {
+export const normalizeTasks = (items: Task[]): TasksState => {
     return {
         byId: items.reduce((acc, item) => {
             acc[item.id] = item;
             return acc;
-        }, {} as Record<number, Item>),
+        }, {} as Record<number, Task>),
         allIds: items.map((item) => item.id),
     };
 }

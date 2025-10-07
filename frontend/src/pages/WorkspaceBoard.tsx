@@ -3,21 +3,15 @@ import BoardNavbar from '@/components/board/BoardNavbar';
 import DroppableColumn from '@/components/board/DroppableColumn';
 import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
-import { createNewColumn, fetchBoardDetail, updateColumn, updateColumnPosititon } from '@/services/boardService';
-import taskService from '@/services/taskService';
-import { notify } from '@/services/toastService';
-import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
-import { reopenBoard } from '@/services/workspaceService';
-import { store, useAppSelector } from '@/store';
+import { useBoardData } from '@/hooks/useBoardData';
+import { useBoardOperations } from '@/hooks/useBoardOperations';
+import { useCardOperations } from '@/hooks/useTaskOperations';
+import { updateColumnPosititon } from '@/services/boardService';
+import { useAppSelector } from '@/store';
 import { selectActiveColumns } from '@/store/selectors/columnsSelector';
 import { selectTaskById, selectTasksByColumns } from '@/store/selectors/tasksSelectors';
-import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
-import { taskDeleted } from '@/store/slices/archiveTasksSlice';
 import { columnsReordered, setColumns } from '@/store/slices/columnsSlice';
-import { archiveColumnThunk, fetchColumns } from '@/store/thunks/columnsThunks';
-import { fetchTasks } from '@/store/thunks/tasksThunks';
-import type { Board, Column, Task, UpdateItemRequest } from '@/types';
-import { handleBoardWSMessage } from '@/websocket/boardHandler';
+import type { Column, Task } from '@/types';
 import {
     DndContext,
     DragOverlay,
@@ -46,19 +40,53 @@ import { useParams } from 'react-router-dom';
 const WorkspaceBoard = () => {
 
     const { boardId } = useParams();
-    const [isBoardClosed, setIsBoardClosed] = useState(false);
-    const [boardDetail, setBoardDetail] = useState<Board>({ id: 0, name: '', status: undefined });
-    const [isLoading, setIsLoading] = useState(false);
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-    const [activeInputColumnId, setActiveInputColumnId] = useState<number | null>(null);
-    const [cardTitle, setCardTitle] = useState('');
     const [showDetailModal, setShowDetailModal] = useState(false);
     const [activeItem, setActiveItem] = useState<Task | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
-
     const columns = useAppSelector(selectActiveColumns);
     const tasksByColumn = useAppSelector(selectTasksByColumns);
+
+    const {
+        boardDetail,
+        isLoading,
+        isBoardClosed,
+        setIsBoardClosed,
+        refetch,
+        reopenBoard,
+    } = useBoardData(Number(boardId));
+
+    const {
+        addColumn,
+        updateColumnTitle,
+        updateColumnPosition,
+        deleteColumn,
+        archiveColumn,
+    } = useBoardOperations({
+        boardId: Number(boardId),
+        isBoardClosed,
+        columns,
+    });
+
+    const {
+        activeInputColumnId,
+        setActiveInputColumnId,
+        cardTitle,
+        setCardTitle,
+        startAddingCard,
+        submitCard,
+        cancelCard,
+        updateTask,
+        deleteTask,
+        archiveTask,
+        archiveAllTasksInColumn,
+    } = useCardOperations({
+        boardId: Number(boardId),
+        isBoardClosed,
+        columns,
+        tasksByColumn,
+    });
 
     // OPTIMIZATION: Track dragging state separately from active elements
     const [isDragging, setIsDragging] = useState(false);
@@ -111,34 +139,6 @@ const WorkspaceBoard = () => {
     }, [activeId, columns]);
 
     const activeElements = { activeColumn, activeTask };
-
-    const fetchBoardData = async () => {
-        setIsLoading(true);
-        try {
-            const boardData = await fetchBoardDetail(Number(boardId));
-            setBoardDetail(boardData.data);
-            setIsBoardClosed(boardData.data?.status === 'completed');
-            if (boardData.data?.status === 'active') {
-                dispatch(fetchColumns(Number(boardId)) as any);
-                dispatch(fetchTasks(Number(boardId)) as any);
-            }
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        } finally {
-            setIsLoading(false);
-        }
-    }
-
-    useEffect(() => {
-        fetchBoardData();
-        connectToProjectWS(Number(boardId), (message) => {
-            handleBoardWSMessage(message, dispatch, store.getState);
-        });
-
-        return () => {
-            disconnectWS();
-        };
-    }, [boardId, dispatch]);
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -401,126 +401,11 @@ const WorkspaceBoard = () => {
         }
     }, [isBoardClosed]);
 
-    const addColumn = useCallback(async () => {
-        if (isBoardClosed) return;
-
-        const lastColumn = columns[columns.length - 1];
-        const newPosition = lastColumn ? lastColumn.position + 1000 : 1000;
-
-        try {
-            const result = await createNewColumn(Number(boardId), 'New Column', newPosition)
-            notify.success(result.message);
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        }
-    }, [isBoardClosed, columns, boardId]);
-
-    const handleUpdateColumnTitle = useCallback(async (columnId: number, newTitle: string) => {
-        if (isBoardClosed) return;
-        await updateColumn(Number(boardId), columnId, newTitle)
-            .then(data => {
-                notify.success(data.message)
-            })
-            .catch(err => notify.success(err.response?.data?.message))
-    }, [isBoardClosed]);
-
-    const deleteColumn = useCallback(
-        (columnId: number) => {
-            if (isBoardClosed) return;
-
-            dispatch(columnDeleted(columnId));
-            if (activeInputColumnId === columnId) {
-                setActiveInputColumnId(null);
-                setCardTitle('');
-            }
-        },
-        [activeInputColumnId, isBoardClosed]
-    );
-
     const handleStartAddingCard = useCallback((columnId: number) => {
         if (isBoardClosed) return;
 
         setActiveInputColumnId(columnId);
         setCardTitle('');
-    }, [isBoardClosed]);
-
-    const handleSubmitCard = useCallback(
-        async (columnId: number) => {
-            if (isBoardClosed) return;
-
-            const column = columns.find(col => col.id === columnId);
-            if (!column) return;
-            const taskWithMaxPosition = tasksByColumn[columnId].reduce((max, task) => task.position > max.position ? task : max, tasksByColumn[columnId][0]);
-            const newPosition = taskWithMaxPosition ? taskWithMaxPosition.position + 1000 : 1000;
-
-            try {
-                const result = await taskService.createTask(columnId, cardTitle, newPosition)
-                notify.success(result.message);
-            } catch (error: any) {
-                notify.error(error.response?.data?.message);
-            }
-
-            setActiveInputColumnId(null);
-            setCardTitle('');
-            // if (cardTitle.trim()) {
-            //     const newItem: Item = {
-            //         id: `item-${Date.now()}`,
-            //         content: cardTitle.trim(),
-            //     };
-
-            //     setColumns(columns =>
-            //         columns.map(column =>
-            //             column.id === columnId
-            //                 ? { ...column, items: [...column.items, newItem] }
-            //                 : column
-            //         )
-            //     );
-            // }
-        },
-        [cardTitle, isBoardClosed]
-    );
-
-    const handleCancelCard = useCallback(() => {
-        setActiveInputColumnId(null);
-        setCardTitle('');
-    }, []);
-
-    const handleUpdateTask = useCallback(async (taskId: number, data: UpdateItemRequest) => {
-        if (isBoardClosed) return;
-        await taskService.updateTask(taskId, data)
-            .then(data => {
-                notify.success(data.message)
-            })
-            .catch(err => notify.success(err.response?.data?.message))
-        await fetchBoardData();
-    }, [isBoardClosed]);
-
-    const deleteItem = useCallback((itemId: number) => {
-        if (isBoardClosed) return;
-
-        dispatch(taskDeleted(itemId));
-    }, [isBoardClosed]);
-
-    const handleArchiveColumn = useCallback(async (column: Column) => {
-        if (!isBoardClosed) {
-            dispatch(archiveColumnThunk(column) as any);
-        }
-    }, [isBoardClosed]);
-
-    const handleArchiveItem = useCallback(async (taskId: number) => {
-        if (isBoardClosed) return;
-        try {
-            const result = await taskService.archiveTask(taskId);
-            notify.success(result.message);
-            await fetchBoardData();
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        }
-    }, [isBoardClosed]);
-
-    const handleArchiveAllItemInColumns = useCallback((columnId: number) => {
-        if (isBoardClosed) return;
-        console.log("archived all items", columnId);
     }, [isBoardClosed]);
 
     const handleHideDetailModal = useCallback(() => {
@@ -529,18 +414,6 @@ const WorkspaceBoard = () => {
 
     const handleShowDetailModal = useCallback(() => {
         setShowDetailModal(true);
-    }, []);
-
-    const handleReopenBoard = useCallback(async () => {
-        setIsLoading(true);
-        try {
-            const result = await reopenBoard(Number(boardId));
-            notify.success(result.message);
-            await fetchBoardData();
-            setIsLoading(false);
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        }
     }, []);
 
     console.log("worspace board")
@@ -552,7 +425,7 @@ const WorkspaceBoard = () => {
                         <LoadingContent />
                     </div> :
                     <>
-                        <BoardClosedBanner isBoardClosed={isBoardClosed} handleReopenBoard={handleReopenBoard} />'
+                        <BoardClosedBanner isBoardClosed={isBoardClosed} handleReopenBoard={reopenBoard} />'
                         <BoardNavbar id={boardDetail.id} name={boardDetail?.name} isBoardClosed={isBoardClosed} setIsBoardClosed={setIsBoardClosed} />
 
                         <div className={`grow overflow-hidden ${isBoardClosed ? 'pointer-events-none opacity-60' : ''}`}>
@@ -577,13 +450,13 @@ const WorkspaceBoard = () => {
                                                 cardTitle={cardTitle}
                                                 setCardTitle={setCardTitle}
                                                 onStartAddingCard={handleStartAddingCard}
-                                                onSubmitCard={handleSubmitCard}
-                                                onCancelCard={handleCancelCard}
-                                                onDeleteItem={deleteItem}
+                                                onSubmitCard={submitCard}
+                                                onCancelCard={cancelCard}
+                                                onDeleteItem={deleteTask}
                                                 onDeleteColumn={deleteColumn}
-                                                onUpdateColumnTitle={handleUpdateColumnTitle}
-                                                onArchiveColumn={handleArchiveColumn}
-                                                onArchiveAllItems={handleArchiveAllItemInColumns}
+                                                onUpdateColumnTitle={updateColumnTitle}
+                                                onArchiveColumn={archiveColumn}
+                                                onArchiveAllItems={archiveAllTasksInColumn}
                                                 handleShowDetailTask={handleShowDetailModal}
                                                 setActiveItem={setActiveItem}
                                             />
@@ -634,8 +507,8 @@ const WorkspaceBoard = () => {
                                 onClose={handleHideDetailModal}
                                 itemId={activeItem?.id || 0}
                                 // item={activeItem}
-                                onArchive={handleArchiveItem}
-                                onUpdate={handleUpdateTask}
+                                onArchive={archiveTask}
+                                onUpdate={updateTask}
                             />
                         }
                     </>

@@ -26,6 +26,7 @@ export interface Task {
     urlPreview?: UrlPreviewData;
     position: number;
     detail?: TaskDetail;
+    memberIds: number[];
 }
 
 export interface TasksState {

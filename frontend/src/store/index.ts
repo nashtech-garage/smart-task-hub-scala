@@ -5,6 +5,7 @@ import { combineReducers } from '@reduxjs/toolkit';
 import authSlice from './slices/authSlice';
 import columnsReducer from "./slices/columnsSlice";
 import tasksReducer from "./slices/tasksSlice";
+import membersReducer from "./slices/membersSlice";
 import archivedColumnsReducer from "./slices/archiveColumnsSlice";
 import archivedTasksReducer from "./slices/archiveTasksSlice";
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
@@ -22,6 +23,7 @@ const rootReducer = combineReducers({
     tasks: tasksReducer,
     archivedColumns: archivedColumnsReducer,
     archivedTasks: archivedTasksReducer,
+    members: membersReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);
@@ -42,8 +44,8 @@ export const persistor = persistStore(store);
 export type RootState = ReturnType<typeof store.getState>;
 export type AppDispatch = typeof store.dispatch;
 export type AppThunk<ReturnType = void> = (
-  dispatch: AppDispatch,
-  getState: () => RootState
+    dispatch: AppDispatch,
+    getState: () => RootState
 ) => ReturnType;
 
 export const useAppDispatch = () => useDispatch<AppDispatch>();

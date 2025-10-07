@@ -1,4 +1,4 @@
-import type { ApiResponse, Item, ItemDetail, TaskSearchResponse, UpdateItemRequest } from "@/types";
+import type { ApiResponse, Item, ItemDetail, Task, TaskSearchResponse, UpdateItemRequest } from "@/types";
 import axiosClients from "./axiosClient";
 import qs from "qs";
 
@@ -27,7 +27,7 @@ const taskService = {
         return axiosClients.patch(`/${taskUrl}/${taskId}/archive`);
     },
 
-    getArchivedTasks(boardId: number): Promise<ApiResponse<Item[]>> {
+    getArchivedTasks(boardId: number): Promise<ApiResponse<Task[]>> {
         return axiosClients.get(`${projectUrl}/${boardId}/${columnUrl}/${taskUrl}/archived`);
     },
 

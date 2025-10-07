@@ -14,7 +14,7 @@ case class Task(
                  startDate: Option[Instant] = None,
                  endDate: Option[Instant] = None,
                  priority: Option[TaskPriority] = None,
-                 position: Option[Int] = None,
+                 position: Int,
                  createdBy: Option[Int] = None,
                  updatedBy: Option[Int] = None,
                  createdAt: Instant = Instant.now(),

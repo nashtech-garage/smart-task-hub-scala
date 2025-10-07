@@ -1,31 +1,29 @@
-import type { Item } from '@/types';
+import type { Item, Task } from '@/types';
 import { detectUrl } from '@/utils/UrlPreviewUtils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X } from 'lucide-react';
 import UrlPreview from './UrlPreview';
+import { useAppSelector, type RootState } from '@/store';
+import { useSelector } from 'react-redux';
+import { selectTaskById } from '@/store/selectors/tasksSelectors';
 
 interface DraggableItemProps {
-    item: Item;
     onDelete: (itemId: number) => void;
     handleShowDetailTask: () => void;
     label?: string; // e.g., "FE", "BE"
-    assignedMember?: {
-        name: string;
-        avatar?: string;
-        initials?: string;
-    };
-    setActiveItem: (item: Item) => void;
+    setActiveItem: (item: Task) => void;
+    itemId: number;
 }
 
 const DraggableItem: React.FC<DraggableItemProps> = ({
-    item,
     onDelete,
     handleShowDetailTask,
     label,
-    assignedMember,
     setActiveItem,
+    itemId
 }) => {
+    const item = useAppSelector((state) => selectTaskById(itemId)(state));
     const {
         attributes,
         listeners,
@@ -46,7 +44,9 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         transition,
     };
 
-    console.log("Rendering DraggableItem:", item.id, item.name);
+    const members = useSelector((state: RootState) => state.members);
+
+    // console.log("Rendering DraggableItem:", item.id, item.name);
     return (
         <div
             ref={setNodeRef}
@@ -108,19 +108,30 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                 </span>
             )}
 
-            {/* Assigned member icon in bottom right corner */}
-            {assignedMember && (
-                <div className='self-end'>
-                    {assignedMember.avatar ? (
-                        <img
-                            src={assignedMember.avatar}
-                            alt={assignedMember.name}
-                            className='w-6 h-6 rounded-full border-2 border-white shadow-sm'
-                        />
-                    ) : (
-                        <div className='w-6 h-6 rounded-full bg-gray-600 border-2 border-white shadow-sm flex items-center justify-center'>
-                            <span className='text-xs text-white font-medium'>
-                                {assignedMember.initials || assignedMember.name.charAt(0).toUpperCase()}
+            {/* Assigned members in bottom right corner */}
+            {item.memberIds && item.memberIds.length > 0 && (
+                <div className="self-end flex -space-x-2 mt-1">
+                    {item.memberIds.slice(0, 5).map(memberId => {
+                        const member = members.find(m => m.id === memberId);
+                        if (!member) return null;
+
+                        return (
+                            <div
+                                key={member.id}
+                                title={member.name}
+                                className="w-6 h-6 rounded-full bg-gray-600 border-2 border-white shadow-sm flex items-center justify-center"
+                            >
+                                <span className="text-xs text-white font-medium">
+                                    {member.name.charAt(0).toUpperCase()}
+                                </span>
+                            </div>
+                        );
+                    })}
+
+                    {item.memberIds.length > 5 && (
+                        <div className="w-6 h-6 rounded-full bg-gray-500 border-2 border-white shadow-sm flex items-center justify-center">
+                            <span className="text-xs text-white font-medium">
+                                +{item.memberIds.length - 5}
                             </span>
                         </div>
                     )}

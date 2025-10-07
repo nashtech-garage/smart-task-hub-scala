@@ -58,8 +58,16 @@ const tasksSlice = createSlice({
       // add real
       state.byId[realTask.id] = realTask;
       state.allIds.push(realTask.id);
+    },
+
+    assignedMemberToTask: (state, action: PayloadAction<{ taskId: number; memberId: number }>) => {
+      const { taskId, memberId } = action.payload;
+      const task = state.byId[taskId];
+      if (task) {
+        task.memberIds.push(memberId);
+      }
     }
-  },
+  }
 });
 
 export const {
@@ -68,6 +76,7 @@ export const {
   taskReplaced,
   taskUpdated,
   taskRemoved,
-  taskRestored
+  taskRestored,
+  assignedMemberToTask,
 } = tasksSlice.actions;
 export default tasksSlice.reducer;

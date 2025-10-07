@@ -3,7 +3,7 @@ import type { RootState, AppDispatch } from "@/store";
 import { columnArchived, archivedColumnRestored, columnDeleted } from "@/store/slices/archiveColumnsSlice";
 import { taskArchived, taskDeleted, archivedTaskRestored } from "@/store/slices/archiveTasksSlice";
 import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated, removeTaskFromColumn } from "@/store/slices/columnsSlice";
-import { taskCreated, taskRemoved, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
+import { assignedMemberToTask, taskCreated, taskRemoved, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
 
 export const handleBoardWSMessage = (
   message: any,
@@ -68,11 +68,11 @@ export const handleBoardWSMessage = (
       if (tempTask) {
         dispatch(taskReplaced({
           tempId: tempTask.id,
-          realTask: { id: taskId, name, position: taskPosition }
+          realTask: { id: taskId, name, position: taskPosition, memberIds: [] }
         }));
 
       } else {
-        dispatch(taskCreated({ id: taskId, name, position: taskPosition }));
+        dispatch(taskCreated({ id: taskId, name, position: taskPosition, memberIds: [] }));
       }
       dispatch(addTaskToColumn({ columnId, taskId, index: -1 }));
       break;
@@ -108,6 +108,16 @@ export const handleBoardWSMessage = (
         }
       } else if (updatedStatus === "deleted") {
         dispatch(taskDeleted(taskId));
+      }
+      break;
+    }
+
+    case "MEMBER_ASSIGNED_TO_TASK": {
+      console.log("Member assigned to task", message);
+      const { taskId, assignData }: { taskId: number, assignData: { userId: number, username: string } } = message.payload;
+      const task = getState().tasks.byId[taskId];
+      if (task && !task.memberIds.includes(assignData.userId)) {
+        dispatch(assignedMemberToTask({ taskId, memberId: assignData.userId }));
       }
       break;
     }

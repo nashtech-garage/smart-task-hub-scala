@@ -13,7 +13,6 @@ interface TaskModalProps {
   onClose: () => void;
   itemId: number;
   onUpdate: (itemId: number, updates: any) => void;
-  onDelete?: (itemId: string) => void;
   onArchive: (itemId: number) => void;
 }
 
@@ -21,7 +20,6 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
   onClose,
   itemId,
   onUpdate,
-  // onDelete 
   onArchive,
 }) => {
   const [isLoading, setIsLoading] = useState(false);
@@ -35,13 +33,6 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
     setIsEditingTitle(false);
     onUpdate(item.id, item);
   };
-
-  // const handleDeleteTask = () => {
-  //   if (window.confirm('Are you sure you want to delete this task?')) {
-  //     onDelete?.(item.id);
-  //     onClose();
-  //   }
-  // };
 
   const fetchTaskDetail = async () => {
     setIsLoading(true);

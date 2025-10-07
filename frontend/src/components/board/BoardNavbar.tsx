@@ -2,18 +2,19 @@ import { completedBoard } from '@/services/workspaceService';
 // import { Activity, Copy, EarthIcon, Eye, Folder, Globe, Image, Menu, Settings, Tag, Users, X } from 'lucide-react';
 import { Folder, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ArchivedItemsModal from './ArchivedItemsModal';
-import { deleteColumn, fetchArchivedColumns, restoreColumn } from '@/services/boardService';
+import { deleteColumn, restoreColumn } from '@/services/boardService';
 import { notify } from '@/services/toastService';
 import taskService from '@/services/taskService';
-import { useAppDispatch, useAppSelector } from '@/store';
+import { useAppDispatch, useAppSelector, type RootState } from '@/store';
 import { selectArchivedColumns } from '@/store/selectors/columnsSelector';
 import { selectArchivedTasks } from '@/store/selectors/tasksSelectors';
 import { fetchArchivedColumnsThunk } from '@/store/thunks/columnsThunks';
 import { fetchArchivedTasksThunk } from '@/store/thunks/tasksThunks';
 import { archivedTaskRestored } from '@/store/slices/archiveTasksSlice';
 import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
+import { useSelector } from 'react-redux';
 
 // const menuItems = [
 //     { icon: <Users />, label: "Share", color: "text-gray-300" },
@@ -46,8 +47,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     setIsBoardClosed
 }) => {
 
-    const { wsId, boardId } = useParams();
-    const navigate = useNavigate();
+    const { boardId } = useParams();
     const [showMenu, setShowMenu] = useState(false);
     const [showVisibility, setShowVisibility] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
@@ -55,6 +55,13 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const dispatch = useAppDispatch();
     const archivedColumns = useAppSelector(selectArchivedColumns);
     const archivedTasks = useAppSelector(selectArchivedTasks);
+
+    // const members = useAppSelector(selectBoardMembers); // array member objects
+    const members = useSelector((state: RootState) => state.members);
+
+    const MAX_VISIBLE = 5;
+    const visibleMembers = members.slice(0, MAX_VISIBLE);
+    const extraCount = members.length - MAX_VISIBLE;
 
     useEffect(() => {
         if (id !== 0) {
@@ -71,10 +78,14 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
     const confirmCloseBoard = async () => {
         if (!boardId) return;
-        await completedBoard(Number(boardId));
-        handleCloseMenu();
-        // navigate(`/board/${id}`, { replace: true });
-        setIsBoardClosed(true);
+        try {
+            await completedBoard(Number(boardId));
+            handleCloseMenu();
+            setIsBoardClosed(true);
+        }
+        catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const cancelCloseBoard = () => {
@@ -143,6 +154,24 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                 >
                     <Globe className="w-5 h-5" />
                 </button> */}
+
+                {/* Avatars */}
+                {visibleMembers.map((m) => (
+                    <div
+                        key={m.id}
+                        title={m.name}
+                        className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-xs font-medium overflow-hidden"
+                    >
+                        {m.name.charAt(0).toUpperCase()}
+                    </div>
+                ))}
+
+                {/* +n if there are more than 5 members */}
+                {extraCount > 0 && (
+                    <div className="w-8 h-8 rounded-full bg-gray-500 text-white flex items-center justify-center text-xs font-medium">
+                        +{extraCount}
+                    </div>
+                )}
 
                 <button
                     onClick={() => setShowMenu(!showMenu)}

@@ -73,19 +73,27 @@ class TaskRepository@Inject()(
 
   def findArchivedTasksByProjectId(projectId: Int): DBIO[Seq[TaskSummaryResponse]] = {
     val query = for {
-      ((t, c), p) <- tasks
+      (((t, c), p), utOpt) <- tasks
         .join(columns).on(_.columnId === _.id)
-        .join(projects).on { case ((t, c), p) => c.projectId === p.id }
+        .join(projects).on { case ((_, c), p) => c.projectId === p.id }
+        .joinLeft(userTasks).on { case (((t, _), _), ut) => ut.taskId === t.id }
       if p.id === projectId &&
         t.status === TaskStatus.archived &&
         c.status === ColumnStatus.active &&
         p.status === ProjectStatus.active
-    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt)
+    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt, utOpt.map(_.assignedTo))
 
-    query.sortBy(_._5.desc.nullsLast).result.map { rows =>
-      rows.map { case (id, name, position, columnId, _) =>
-        TaskSummaryResponse(id, name, position.get, columnId)
-      }
+    query.result.map { rows =>
+      rows
+        .groupBy { case (id, name, pos, colId, updatedAt, _) =>
+          (id, name, pos, colId, updatedAt)
+        }
+        .map { case ((id, name, pos, colId, updatedAt), group) =>
+          val memberIds = group.flatMap(_._6).distinct
+          TaskSummaryResponse(id, name, pos.get, colId, memberIds, updatedAt)
+        }
+        .toSeq
+        .sortBy(_.updatedAt).reverse
     }
   }
 
@@ -105,19 +113,27 @@ class TaskRepository@Inject()(
 
   def findActiveTaskByProjectId(projectId: Int): DBIO[Seq[TaskSummaryResponse]] = {
     val query = for {
-      ((t, c), p) <- tasks
+      (((t, c), p), utOpt) <- tasks
         .join(columns).on(_.columnId === _.id)
-        .join(projects).on { case ((t, c), p) => c.projectId === p.id }
+        .join(projects).on { case ((_, c), p) => c.projectId === p.id }
+        .joinLeft(userTasks).on { case (((t, _), _), ut) => ut.taskId === t.id }
       if p.id === projectId &&
         t.status === TaskStatus.active &&
         c.status === ColumnStatus.active &&
         p.status === ProjectStatus.active
-    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt)
+    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt, utOpt.map(_.assignedTo))
 
-    query.sortBy(_._4.asc.nullsLast).result.map { rows =>
-      rows.map { case (id, name, position, columnId, _) =>
-        TaskSummaryResponse(id, name, position.get, columnId)
-      }
+    query.result.map { rows =>
+      rows
+        .groupBy { case (id, name, pos, colId, updatedAt, _) =>
+          (id, name, pos, colId, updatedAt)
+        }
+        .map { case ((id, name, pos, colId, updatedAt), group) =>
+          val memberIds = group.flatMap(_._6).distinct
+          TaskSummaryResponse(id, name, pos.get, colId, memberIds, updatedAt)
+        }
+        .toSeq
+        .sortBy(_.columnId)
     }
   }
 

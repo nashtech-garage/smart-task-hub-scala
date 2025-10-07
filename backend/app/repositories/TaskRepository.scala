@@ -34,8 +34,8 @@ class TaskRepository@Inject()(
     val query = for {
       (((t, c), p), up) <- tasks
         .join(columns).on(_.columnId === _.id)
-        .join(projects).on { case ((t, c), p) => c.projectId === p.id }
-        .join(userProjects).on { case (((t, c), p), up) => p.id === up.projectId }
+        .join(projects).on { case ((_, c), p) => c.projectId === p.id }
+        .join(userProjects).on { case (((_, _), p), up) => p.id === up.projectId }
       if t.id === taskId &&
         c.status === ColumnStatus.active &&
         p.status === ProjectStatus.active &&
@@ -90,7 +90,7 @@ class TaskRepository@Inject()(
         }
         .map { case ((id, name, pos, colId, updatedAt), group) =>
           val memberIds = group.flatMap(_._6).distinct
-          TaskSummaryResponse(id, name, pos.get, colId, memberIds, updatedAt)
+          TaskSummaryResponse(id, name, pos, colId, memberIds, updatedAt)
         }
         .toSeq
         .sortBy(_.updatedAt).reverse
@@ -103,7 +103,7 @@ class TaskRepository@Inject()(
       c <- columns if c.id === t.columnId
       up <- userProjects if up.userId === userId && up.projectId === c.projectId
       u  <- users if u.id === userId
-      if !(userTasks.filter(ut => ut.taskId === taskId && ut.assignedTo === userId)).exists
+      if !userTasks.filter(ut => ut.taskId === taskId && ut.assignedTo === userId).exists
     } yield (u.id, u.name, t.id)
 
     query.result.headOption.map(_.map { case (uid, uname, taskId) =>
@@ -130,7 +130,7 @@ class TaskRepository@Inject()(
         }
         .map { case ((id, name, pos, colId, updatedAt), group) =>
           val memberIds = group.flatMap(_._6).distinct
-          TaskSummaryResponse(id, name, pos.get, colId, memberIds, updatedAt)
+          TaskSummaryResponse(id, name, pos, colId, memberIds, updatedAt)
         }
         .toSeq
         .sortBy(_.columnId)
@@ -189,6 +189,13 @@ class TaskRepository@Inject()(
         case (t, c, p) =>
           (t.id, t.name, t.description, t.status, p.id, p.name, c.name, t.updatedAt)
       }
+  }
+
+  def updatePosition(taskId: Int, position: Int, columnId: Int): DBIO[Int] = {
+    tasks
+      .filter(_.id === taskId)
+      .map(t => (t.position, t.columnId))
+      .update((position, columnId))
   }
 
 }

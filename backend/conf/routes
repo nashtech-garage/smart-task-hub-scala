@@ -57,6 +57,7 @@ PATCH  /api/tasks/:taskId/restore      controllers.TaskController.restore(taskId
 DELETE  /api/tasks/:taskId             controllers.TaskController.delete(taskId: Int)
 POST   /api/projects/:projectId/tasks/:taskId/members   controllers.TaskController.assignMember(projectId: Int, taskId: Int)
 DELETE /api/projects/:projectId/tasks/:taskId/members/:userId controllers.TaskController.unassignMember(projectId: Int, taskId: Int, userId: Int)
+PATCH  /api/tasks/:taskId/position     controllers.TaskController.updatePosition(taskId: Int)
 GET    /api/projects/:projectId/columns/tasks/archived    controllers.TaskController.getArchivedTasks(projectId: Int)
 GET    /api/projects/:projectId/columns/tasks/active    controllers.TaskController.getActiveTasksInProject(projectId: Int)
 GET   /api/tasks   controllers.TaskController.search(page: Int ?= 2, size: Int ?= 10, keyword: String ?= "", projectIds: Option[List[Int]])

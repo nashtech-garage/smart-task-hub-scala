@@ -1,10 +1,6 @@
 package controllers
 
-import dto.request.task.{
-  AssignMemberRequest,
-  CreateTaskRequest,
-  UpdateTaskRequest
-}
+import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskPositionRequest, UpdateTaskRequest}
 import dto.response.task.{TaskSearchResponse, TaskSummaryResponse}
 import exception.AppException
 import org.scalatest.BeforeAndAfterAll
@@ -16,7 +12,7 @@ import play.api.libs.json.Json
 import play.api.mvc.Cookie
 import play.api.test.Helpers._
 import play.api.test._
-import play.api.{Application, Configuration}
+import play.api.{Application, Configuration, Logger}
 import services._
 
 class TaskControllerSpec
@@ -287,7 +283,6 @@ class TaskControllerSpec
     }
 
     "get archived tasks successfully" in {
-      val columnService = inject[ColumnService]
       val taskService = inject[TaskService]
 
       // Create and archive a task in the new column
@@ -354,7 +349,7 @@ class TaskControllerSpec
       val taskService = inject[TaskService]
 
       // Create a new task in the existing column
-      val taskId = await(
+      await(
         taskService.createNewTask(CreateTaskRequest("search Task", 1502), 1, 1)
       )
 
@@ -367,6 +362,28 @@ class TaskControllerSpec
         .as[String] mustBe "Tasks retrieved successfully"
       val tasks = (contentAsJson(result) \ "data").as[Seq[TaskSearchResponse]]
       tasks.length must be > 0
+    }
+
+    "update task position successfully" in {
+      val taskService = inject[TaskService]
+
+      // Create a new task in the existing column
+      val taskId = await(
+        taskService.createNewTask(CreateTaskRequest("search Task", 12), 1, 1)
+      )
+
+      val body = Json.toJson(UpdateTaskPositionRequest(99, 1))
+
+      val request = FakeRequest(PATCH, s"/api/tasks/$taskId/position")
+        .withCookies(Cookie(cookieName, fakeToken))
+        .withBody(body)
+
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] must include(
+        "Task position updated successfully"
+      )
     }
   }
 }

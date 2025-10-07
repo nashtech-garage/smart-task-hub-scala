@@ -1,6 +1,6 @@
 package services
 
-import dto.request.task.{CreateTaskRequest, UpdateTaskRequest}
+import dto.request.task.{CreateTaskRequest, UpdateTaskPositionRequest, UpdateTaskRequest}
 import dto.response.task.{TaskDetailResponse, TaskSearchResponse, TaskSummaryResponse}
 import dto.websocket.OutgoingMessage
 import dto.websocket.board.messageTypes._
@@ -57,7 +57,7 @@ class TaskService @Inject()(taskRepository: TaskRepository,
           columnId = columnId,
           createdBy = Some(createdBy),
           updatedBy = Some(createdBy),
-          position = Some(request.position)
+          position = request.position
         )
         taskRepository.create(newTask)
       }
@@ -113,7 +113,7 @@ class TaskService @Inject()(taskRepository: TaskRepository,
         val message = TaskUpdated(TaskUpdatedPayload(
           taskId = task.id.get,
           columnId = task.columnId,
-          taskPosition = task.position.getOrElse(0),
+          taskPosition = task.position,
           detail = TaskMapper.toDetailResponse(task))
         )
         broadcastService.broadcastToProject(project, message)
@@ -319,6 +319,24 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     })
   }
 
+  def updatePosition(taskId: Int, req: UpdateTaskPositionRequest, userId: Int): Future[Int] = {
+    val action = for {
+      (task, _) <- getTaskAndProjectByTaskId(taskId, userId)
+
+      _ <- if (task.status == TaskStatus.active) {
+        DBIO.successful(())
+      } else {
+        DBIO.failed(AppException(
+          message = s"Task with ID $taskId is not active",
+          statusCode = Status.NOT_FOUND))
+      }
+
+      updatedRows <- taskRepository.updatePosition(taskId, req.position, req.columnId)
+    } yield updatedRows
+
+    db.run(action.transactionally)
+  }
+
   private def changeStatus(taskId: Int,
                            userId: Int,
                            validFrom: Set[TaskStatus],
@@ -347,7 +365,7 @@ class TaskService @Inject()(taskRepository: TaskRepository,
             msg.copy(
               payload = msg.payload.copy(
                 columnId = task.columnId,
-                taskPosition = task.position.getOrElse(0),
+                taskPosition = task.position,
                 name = task.name
               )
             )

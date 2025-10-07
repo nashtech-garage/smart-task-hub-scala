@@ -16,7 +16,7 @@ class TaskTable(tag: Tag) extends Table[Task](tag, "tasks") {
   def startDate = column[Option[Instant]]("start_date")
   def endDate = column[Option[Instant]]("end_date")
   def priority = column[Option[TaskPriority]]("priority")
-  def position = column[Option[Int]]("position")
+  def position = column[Int]("position")
   def createdBy = column[Option[Int]]("created_by")
   def updatedBy = column[Option[Int]]("updated_by")
   def createdAt = column[Instant]("created_at")

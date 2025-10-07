@@ -217,7 +217,7 @@ class DataSeeder @Inject()(
           columnId = col.id.get,
           name = s"Seed task $projectId-$i",
           description = Some(s"Auto generated task #$i for project $projectId"),
-          position = Some(i * 1000),
+          position = i * 1000,
           createdBy = Some(createdBy),
           updatedBy = Some(createdBy),
           createdAt = now,

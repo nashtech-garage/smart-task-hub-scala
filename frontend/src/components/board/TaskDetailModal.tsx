@@ -1,43 +1,66 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import {
   X, Calendar, Users,
   List, Edit3, Archive,
   // Eye, Paperclip, Copy, Trash2, MessageSquareText 
 } from 'lucide-react';
 import LoadingContent from '../ui/LoadingContent';
-import type { ItemDetail } from '@/types';
+import type { ItemDetail, UpdateItemRequest } from '@/types';
 import taskService from '@/services/taskService';
 import AssignMembers from './AssignMembers';
+import { hideTaskModal } from '@/store/slices/taskModalSlice';
+import { useAppDispatch } from '@/store';
+import { useSelector } from 'react-redux';
+import { selectTaskModalState } from '@/store/selectors/modalSelector';
+import { notify } from '@/services/toastService';
 
-interface TaskModalProps {
-  onClose: () => void;
-  itemId: number;
-  onUpdate: (itemId: number, updates: any) => void;
-  onArchive: (itemId: number) => void;
-}
-
-const TaskDetailModal: React.FC<TaskModalProps> = ({
-  onClose,
-  itemId,
-  onUpdate,
-  onArchive,
-}) => {
+const TaskDetailModal: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [item, setItem] = useState<ItemDetail>(null as any);
   const [isEditingTitle, setIsEditingTitle] = useState(false);
   const [isEditingDescription, setIsEditingDescription] = useState(false);
   // const [comment, setComment] = useState('');
 
+  const dispatch = useAppDispatch();
+  const { taskId } = useSelector(selectTaskModalState);
+
+  const onModalClose = useCallback(() => {
+    dispatch(hideTaskModal());
+  }, [dispatch]);
+
+  const archiveTask = useCallback(
+    async (taskId: number) => {
+      try {
+        const result = await taskService.archiveTask(taskId);
+        notify.success(result.message);
+      } catch (error: any) {
+        notify.error(error.response?.data?.message || 'Failed to archive task');
+      }
+    },
+    []
+  );
+
+  const updateTask = useCallback(
+    async (taskId: number, data: UpdateItemRequest) => {
+      try {
+        const result = await taskService.updateTask(taskId, data);
+        notify.success(result.message);
+      } catch (error: any) {
+        notify.error(error.response?.data?.message || 'Failed to update task');
+      }
+    },
+    []
+  );
 
   const handleUpdate = () => {
     setIsEditingTitle(false);
-    onUpdate(item.id, item);
+    updateTask(item.id, { name: item.name, description: item.description as string });
   };
 
   const fetchTaskDetail = async () => {
     setIsLoading(true);
     try {
-      const response = await taskService.getTaskDetail(itemId);
+      const response = await taskService.getTaskDetail(Number(taskId));
       setItem(response.data);
     }
     catch (error) {
@@ -48,12 +71,20 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
     }
   };
 
-  console.log("Rendering TaskDetailModal for itemId:", itemId, item);
+  // Close modal on Escape key press
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") onModalClose();
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onModalClose]);
 
+  console.log("Rendering TaskDetailModal for taskId:", taskId, item);
 
   useEffect(() => {
     fetchTaskDetail();
-  }, [itemId]);
+  }, [taskId]);
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-40 pt-8 px-4">
@@ -88,7 +119,7 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
                       </h1>
                     )}
                     <button
-                      onClick={onClose}
+                      onClick={onModalClose}
                       className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-600 hover:bg-opacity-50"
                     >
                       <X size={18} />
@@ -117,7 +148,7 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
                 <div className="pl-6 flex flex-wrap gap-2">
 
                   {/* Member section */}
-                  <AssignMembers assignedMembers={item?.assignedMembers} taskId={itemId}/>
+                  <AssignMembers assignedMembers={item?.assignedMembers} taskId={Number(taskId)} />
 
                   {/* Labels Section */}
                   <div className="pb-4">
@@ -272,8 +303,8 @@ const TaskDetailModal: React.FC<TaskModalProps> = ({
                       <button
                         className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2"
                         onClick={() => {
-                          onArchive(item.id);
-                          onClose();
+                          archiveTask(item.id);
+                          onModalClose();
                         }}
                       >
                         <Archive size={14} />

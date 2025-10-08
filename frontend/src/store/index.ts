@@ -8,6 +8,8 @@ import tasksReducer from "./slices/tasksSlice";
 import membersReducer from "./slices/membersSlice";
 import archivedColumnsReducer from "./slices/archiveColumnsSlice";
 import archivedTasksReducer from "./slices/archiveTasksSlice";
+import taskModalReducer from "./slices/taskModalSlice";
+
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
 
 // Persist configuration
@@ -24,6 +26,7 @@ const rootReducer = combineReducers({
     archivedColumns: archivedColumnsReducer,
     archivedTasks: archivedTasksReducer,
     members: membersReducer,
+    taskModal: taskModalReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

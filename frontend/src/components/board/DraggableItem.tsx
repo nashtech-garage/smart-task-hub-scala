@@ -1,26 +1,22 @@
-import type { Item, Task } from '@/types';
 import { detectUrl } from '@/utils/UrlPreviewUtils';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { X } from 'lucide-react';
 import UrlPreview from './UrlPreview';
-import { useAppSelector, type RootState } from '@/store';
+import { useAppDispatch, useAppSelector, type RootState } from '@/store';
 import { useSelector } from 'react-redux';
 import { selectTaskById } from '@/store/selectors/tasksSelectors';
+import { showTaskModal } from '@/store/slices/taskModalSlice';
 
 interface DraggableItemProps {
     onDelete: (itemId: number) => void;
-    handleShowDetailTask: () => void;
     label?: string; // e.g., "FE", "BE"
-    setActiveItem: (item: Task) => void;
     itemId: number;
 }
 
 const DraggableItem: React.FC<DraggableItemProps> = ({
     onDelete,
-    handleShowDetailTask,
     label,
-    setActiveItem,
     itemId
 }) => {
     const item = useAppSelector((state) => selectTaskById(itemId)(state));
@@ -45,6 +41,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     };
 
     const members = useSelector((state: RootState) => state.members);
+    const dispatch = useAppDispatch();
 
     // console.log("Rendering DraggableItem:", item.id, item.name);
     return (
@@ -54,8 +51,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             {...attributes}
             {...listeners}
             onClick={() => {
-                detectUrl(item.name) ? undefined : handleShowDetailTask();
-                setActiveItem(item);
+                detectUrl(item.name) ? undefined : dispatch(showTaskModal(item.id));
             }}
             className={`
                 select-none bg-[#222f44] p-2 rounded-lg 

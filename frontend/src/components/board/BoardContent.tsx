@@ -1,7 +1,6 @@
 import BoardClosedBanner from '@/components/board/BoardClosedBanner';
 import BoardNavbar from '@/components/board/BoardNavbar';
 import DroppableColumn from '@/components/board/DroppableColumn';
-import TaskDetailModal from '@/components/board/TaskDetailModal';
 import LoadingContent from '@/components/ui/LoadingContent';
 import { useBoardData } from '@/hooks/useBoardData';
 import { useBoardOperations } from '@/hooks/useBoardOperations';
@@ -11,7 +10,7 @@ import { useAppSelector } from '@/store';
 import { selectActiveColumns } from '@/store/selectors/columnsSelector';
 import { selectTaskById, selectTasksByColumns } from '@/store/selectors/tasksSelectors';
 import { columnsReordered, setColumns } from '@/store/slices/columnsSlice';
-import type { Column, Task } from '@/types';
+import type { Column } from '@/types';
 import {
     DndContext,
     DragOverlay,
@@ -33,7 +32,7 @@ import {
     sortableKeyboardCoordinates,
 } from '@dnd-kit/sortable';
 import { GripVertical, Plus } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useParams } from 'react-router-dom';
 
@@ -41,8 +40,6 @@ const WorkspaceBoard = () => {
 
     const { boardId } = useParams();
     const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-    const [showDetailModal, setShowDetailModal] = useState(false);
-    const [activeItem, setActiveItem] = useState<Task | null>(null);
     const containerRef = useRef<HTMLDivElement>(null);
     const dispatch = useDispatch();
     const columns = useAppSelector(selectActiveColumns);
@@ -408,15 +405,7 @@ const WorkspaceBoard = () => {
         setCardTitle('');
     }, [isBoardClosed]);
 
-    const handleHideDetailModal = useCallback(() => {
-        setShowDetailModal(false);
-    }, []);
-
-    const handleShowDetailModal = useCallback(() => {
-        setShowDetailModal(true);
-    }, []);
-
-    console.log("worspace board")
+    console.log("worspace board: " + boardId);
     return (
         <div className='bg-[#283449] w-full h-full flex flex-col'>
             {
@@ -457,8 +446,6 @@ const WorkspaceBoard = () => {
                                                 onUpdateColumnTitle={updateColumnTitle}
                                                 onArchiveColumn={archiveColumn}
                                                 onArchiveAllItems={archiveAllTasksInColumn}
-                                                handleShowDetailTask={handleShowDetailModal}
-                                                setActiveItem={setActiveItem}
                                             />
                                         ))}
                                     </SortableContext>
@@ -501,20 +488,10 @@ const WorkspaceBoard = () => {
                                 </DragOverlay>
                             </DndContext>
                         </div>
-                        {
-                            showDetailModal &&
-                            <TaskDetailModal
-                                onClose={handleHideDetailModal}
-                                itemId={activeItem?.id || 0}
-                                // item={activeItem}
-                                onArchive={archiveTask}
-                                onUpdate={updateTask}
-                            />
-                        }
                     </>
             }
         </div>
     );
 };
 
-export default WorkspaceBoard;
+export default memo(WorkspaceBoard);

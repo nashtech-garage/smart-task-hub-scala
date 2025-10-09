@@ -80,7 +80,7 @@ const TaskDetailModal: React.FC = () => {
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [onModalClose]);
 
-  console.log("Rendering TaskDetailModal for taskId:", taskId, item);
+  // console.log("Rendering TaskDetailModal for taskId:", taskId, item);
 
   useEffect(() => {
     fetchTaskDetail();

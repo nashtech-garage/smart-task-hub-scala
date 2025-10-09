@@ -4,7 +4,6 @@ import DroppableColumn from '@/components/board/DroppableColumn';
 import LoadingContent from '@/components/ui/LoadingContent';
 import { useBoardData } from '@/hooks/useBoardData';
 import { useBoardOperations } from '@/hooks/useBoardOperations';
-import { useCardOperations } from '@/hooks/useTaskOperations';
 import { updateColumnPosititon } from '@/services/boardService';
 import { useAppSelector } from '@/store';
 import { selectActiveColumns } from '@/store/selectors/columnsSelector';
@@ -50,39 +49,15 @@ const WorkspaceBoard = () => {
         isLoading,
         isBoardClosed,
         setIsBoardClosed,
-        refetch,
         reopenBoard,
     } = useBoardData(Number(boardId));
 
     const {
         addColumn,
-        updateColumnTitle,
-        updateColumnPosition,
-        deleteColumn,
-        archiveColumn,
     } = useBoardOperations({
         boardId: Number(boardId),
         isBoardClosed,
         columns,
-    });
-
-    const {
-        activeInputColumnId,
-        setActiveInputColumnId,
-        cardTitle,
-        setCardTitle,
-        startAddingCard,
-        submitCard,
-        cancelCard,
-        updateTask,
-        deleteTask,
-        archiveTask,
-        archiveAllTasksInColumn,
-    } = useCardOperations({
-        boardId: Number(boardId),
-        isBoardClosed,
-        columns,
-        tasksByColumn,
     });
 
     // OPTIMIZATION: Track dragging state separately from active elements
@@ -137,26 +112,6 @@ const WorkspaceBoard = () => {
 
     const activeElements = { activeColumn, activeTask };
 
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (
-                containerRef.current &&
-                !containerRef.current.contains(event.target as Node)
-            ) {
-                setActiveInputColumnId(null);
-                setCardTitle('');
-            }
-        };
-
-        if (activeInputColumnId && !isBoardClosed) {
-            document.addEventListener('mousedown', handleClickOutside);
-        }
-
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
-    }, [activeInputColumnId, isBoardClosed]);
-
     const handleDragStart = useCallback(
         (event: DragStartEvent) => {
             // Prevent drag operations when board is closed
@@ -178,10 +133,6 @@ const WorkspaceBoard = () => {
                 currentColumns: columns,
                 hasChanged: false,
             };
-
-            // Close any active input when starting drag
-            setActiveInputColumnId(null);
-            setCardTitle('');
         },
         [columns, isBoardClosed]
     );
@@ -398,13 +349,6 @@ const WorkspaceBoard = () => {
         }
     }, [isBoardClosed]);
 
-    const handleStartAddingCard = useCallback((columnId: number) => {
-        if (isBoardClosed) return;
-
-        setActiveInputColumnId(columnId);
-        setCardTitle('');
-    }, [isBoardClosed]);
-
     console.log("worspace board: " + boardId);
     return (
         <div className='bg-[#283449] w-full h-full flex flex-col'>
@@ -435,17 +379,6 @@ const WorkspaceBoard = () => {
                                                 key={col.id}
                                                 column={col}
                                                 items={tasksByColumn[col.id] || []}
-                                                isAddingCard={activeInputColumnId === col.id}
-                                                cardTitle={cardTitle}
-                                                setCardTitle={setCardTitle}
-                                                onStartAddingCard={handleStartAddingCard}
-                                                onSubmitCard={submitCard}
-                                                onCancelCard={cancelCard}
-                                                onDeleteItem={deleteTask}
-                                                onDeleteColumn={deleteColumn}
-                                                onUpdateColumnTitle={updateColumnTitle}
-                                                onArchiveColumn={archiveColumn}
-                                                onArchiveAllItems={archiveAllTasksInColumn}
                                             />
                                         ))}
                                     </SortableContext>

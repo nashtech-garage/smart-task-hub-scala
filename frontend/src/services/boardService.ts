@@ -43,8 +43,8 @@ const createNewColumn = async (id: number, name: string, position: number): Prom
     });
 };
 
-const updateColumn = async (id: number, boardId: number, name: string): Promise<ApiResponse<null>> => {
-    return axiosClients.patch(`${projectUrl}/${id}/columns/${boardId}`, {
+const updateColumn = async (projectId: number, columnId: number, name: string): Promise<ApiResponse<null>> => {
+    return axiosClients.patch(`${projectUrl}/${projectId}/columns/${columnId}`, {
         name
     });
 };

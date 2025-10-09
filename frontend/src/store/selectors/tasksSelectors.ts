@@ -32,6 +32,28 @@ export const selectTasksByColumns = createSelector(
 export const selectTaskById = (id: number) =>
   (state: RootState) => state.tasks.byId[id];
 
+/**
+ * Selector get max position of task in a column.
+ * @param columnId ID of the column
+ * @returns Maximum position value among tasks in the specified column, or 0 if no tasks exist.
+ */
+export const selectMaxTaskPositionByColumn = (columnId: number) =>
+  createSelector(
+    [(state: RootState) => state.columns.byId, (state: RootState) => state.tasks.byId],
+    (columnsById, tasksById) => {
+      const column = columnsById[columnId];
+      if (!column || column.taskIds.length === 0) return 0;
+
+      const tasksInColumn = column.taskIds
+        .map(id => tasksById[id])
+        .filter(Boolean);
+
+      const maxPosition = Math.max(...tasksInColumn.map(task => task.position));
+      return isFinite(maxPosition) ? maxPosition : 0;
+    }
+  );
+
+
 export const selectArchivedTasks = createSelector(
   selectArchivedTasksById,
   selectAllArchivedTaskIds,

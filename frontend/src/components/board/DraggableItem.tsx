@@ -7,15 +7,15 @@ import { useAppDispatch, useAppSelector, type RootState } from '@/store';
 import { useSelector } from 'react-redux';
 import { selectTaskById } from '@/store/selectors/tasksSelectors';
 import { showTaskModal } from '@/store/slices/taskModalSlice';
+import { memo, useCallback } from 'react';
+import { taskDeleted } from '@/store/slices/archiveTasksSlice';
 
 interface DraggableItemProps {
-    onDelete: (itemId: number) => void;
     label?: string; // e.g., "FE", "BE"
     itemId: number;
 }
 
 const DraggableItem: React.FC<DraggableItemProps> = ({
-    onDelete,
     label,
     itemId
 }) => {
@@ -43,7 +43,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     const members = useSelector((state: RootState) => state.members);
     const dispatch = useAppDispatch();
 
-    // console.log("Rendering DraggableItem:", item.id, item.name);
+    console.log("Rendering DraggableItem:", item.id, item.name);
     return (
         <div
             ref={setNodeRef}
@@ -75,7 +75,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             <button
                 onClick={e => {
                     e.stopPropagation();
-                    onDelete(item.id);
+                    dispatch(taskDeleted(item.id));
                 }}
                 className='
                     opacity-0 group-hover:opacity-100 
@@ -137,4 +137,4 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
     );
 };
 
-export default DraggableItem;
+export default memo(DraggableItem);

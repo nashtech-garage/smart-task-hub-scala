@@ -24,7 +24,7 @@ const columnsSlice = createSlice({
 
       const column = state.byId[columnId];
       if (column) {
-          column.name = name;
+        column.name = name;
       }
     },
     columnRemoved: (state, action: PayloadAction<number>) => {
@@ -43,11 +43,9 @@ const columnsSlice = createSlice({
         state.allIds.splice(index, 0, column.id);
       }
     },
-    columnsReordered: (state, action: PayloadAction<Column[]>) => {
-      action.payload.forEach(col => {
-        state.byId[col.id] = col;
-      });
-      state.allIds = action.payload.map(col => col.id);
+    columnsReordered: (state, action: PayloadAction<{ columnId: number, newPosition: number }>) => {
+      state.byId[action.payload.columnId].position = action.payload.newPosition;
+      state.allIds.sort((a, b) => state.byId[a].position - state.byId[b].position);
     },
     columnReplaced: (
       state,

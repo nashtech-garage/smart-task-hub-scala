@@ -2,7 +2,7 @@
 import type { RootState, AppDispatch } from "@/store";
 import { columnArchived, archivedColumnRestored, columnDeleted } from "@/store/slices/archiveColumnsSlice";
 import { taskArchived, taskDeleted, archivedTaskRestored } from "@/store/slices/archiveTasksSlice";
-import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnUpdated, removeTaskFromColumn } from "@/store/slices/columnsSlice";
+import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnsReordered, columnUpdated, removeTaskFromColumn } from "@/store/slices/columnsSlice";
 import { assignedMemberToTask, removeMemberFromTask, taskCreated, taskRemoved, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
 
 export const handleBoardWSMessage = (
@@ -13,6 +13,11 @@ export const handleBoardWSMessage = (
   switch (message.type) {
     case "COLUMN_MOVED":
       console.log("Column moved", message);
+      const { columnId, newPosition } = message.payload;
+      const column = getState().columns.byId[columnId];
+      if (column) {
+        dispatch(columnsReordered({ columnId, newPosition }));
+      }
       break;
 
     case "COLUMN_CREATED": {

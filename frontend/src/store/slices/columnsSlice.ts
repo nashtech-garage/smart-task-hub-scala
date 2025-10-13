@@ -24,7 +24,7 @@ const columnsSlice = createSlice({
 
       const column = state.byId[columnId];
       if (column) {
-          column.name = name;
+        column.name = name;
       }
     },
     columnRemoved: (state, action: PayloadAction<number>) => {
@@ -43,11 +43,9 @@ const columnsSlice = createSlice({
         state.allIds.splice(index, 0, column.id);
       }
     },
-    columnsReordered: (state, action: PayloadAction<Column[]>) => {
-      action.payload.forEach(col => {
-        state.byId[col.id] = col;
-      });
-      state.allIds = action.payload.map(col => col.id);
+    columnsReordered: (state, action: PayloadAction<{ columnId: number, newPosition: number }>) => {
+      state.byId[action.payload.columnId].position = action.payload.newPosition;
+      state.allIds.sort((a, b) => state.byId[a].position - state.byId[b].position);
     },
     columnReplaced: (
       state,
@@ -62,13 +60,9 @@ const columnsSlice = createSlice({
       state.byId[realColumn.id] = realColumn;
       state.allIds.push(realColumn.id);
     },
-    removeTaskFromColumn: (state, action: PayloadAction<number>) => {
-      const itemId = action.payload;
-      state.allIds = state.allIds.filter((tid) => tid !== itemId);
-
-      Object.values(state.byId).forEach((column) => {
-        column.taskIds = column.taskIds.filter((id) => id !== itemId);
-      });
+    removeTaskFromColumn: (state, action: PayloadAction<{ taskId: number, columnId: number }>) => {
+      const { taskId, columnId } = action.payload;
+      state.byId[columnId].taskIds = state.byId[columnId].taskIds.filter(id => id !== taskId);
     },
     addTaskToColumn: (state, action: PayloadAction<{ columnId: number; taskId: number, index: number }>) => {
       const { columnId, taskId, index } = action.payload;

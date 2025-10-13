@@ -48,6 +48,7 @@ const taskService = {
     removeMember(projectId: number, taskId: number, memberId: number): Promise<ApiResponse<null>> {
         return axiosClients.delete(`/${projectUrl}/${projectId}/${taskUrl}/${taskId}/members/${memberId}`);
     },
+
     searchTasks(keyword: string, projectIds?: number[], page: number = 1, size: number = 10): Promise<ApiResponse<TaskSearchResponse[]>> {
         return axiosClients.get("/tasks", {
             params: {
@@ -59,6 +60,13 @@ const taskService = {
             paramsSerializer: (params) =>
                 qs.stringify(params, { arrayFormat: "repeat" }),
         });
+    },
+
+    updateTaskPosition(taskId: number, columnId: number, position: number): Promise<ApiResponse<null>> {
+        return axiosClients.patch(`/${taskUrl}/${taskId}/position`, {
+            columnId,
+            position
+        })
     }
 
 }

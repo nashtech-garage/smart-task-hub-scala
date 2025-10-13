@@ -24,7 +24,7 @@ export const selectTasksByColumns = createSelector(
     Object.fromEntries(
       allIds.map(id => [
         id,
-        (columnsById[id].taskIds ?? []).map(tid => tasksById[tid]).filter(Boolean)
+        (columnsById[id].taskIds ?? []).map(tid => tasksById[tid]).filter(Boolean).sort((a, b) => a.position - b.position)
       ])
     )
 );

@@ -31,7 +31,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
         id: item.id,
         data: {
             type: 'item',
-            item,
+            data: item,
         },
     });
 

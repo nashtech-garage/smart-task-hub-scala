@@ -18,6 +18,7 @@ const AddTask: React.FC<AddTaskProps> = ({ columnId }) => {
   const [taskTitle, setTaskTitle] = useState("");
   const [detectedUrl, setDetectedUrl] = useState<string | null>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   const { isAddingTask, columnId: currentToggleColumn } = useSelector(selectColumnToggleStates);
   const maxPosition = useSelector(selectMaxTaskPositionByColumn(columnId));
@@ -35,10 +36,11 @@ const AddTask: React.FC<AddTaskProps> = ({ columnId }) => {
       const result = await taskService.createTask(columnId, taskTitle.trim(), newPosition);
       notify.success(result.message);
       setTaskTitle("");
+      dispatch(resetcolumnToggleStates());
     } catch (error: any) {
       notify.error(error.response?.data?.message || "Failed to create card");
     }
-  }, [columnId, maxPosition, taskTitle]);
+  }, [columnId, maxPosition, taskTitle, dispatch]);
 
   const handleRemoveUrlPreview = useCallback(() => {
     if (detectedUrl) {
@@ -70,9 +72,16 @@ const AddTask: React.FC<AddTaskProps> = ({ columnId }) => {
     [handleSubmitAddTask, cancelAddingTask]
   );
 
-  const handleBlur = useCallback(() => {
-    dispatch(resetcolumnToggleStates());
-  }, []);
+  // Cancel adding task when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (formRef.current && !formRef.current.contains(e.target as Node)) {
+        dispatch(resetcolumnToggleStates());
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [dispatch]);
 
   useEffect(() => {
     if (isAddingTask) {
@@ -94,7 +103,6 @@ const AddTask: React.FC<AddTaskProps> = ({ columnId }) => {
             value={taskTitle}
             onChange={(e) => setTaskTitle(e.target.value)}
             onKeyDown={handleKeyDown}
-            onBlur={handleBlur}
             placeholder="Enter a title or paste a link"
             className="w-full p-2 text-sm bg-[#22272B] text-[#B6C2CF] border border-[#394B59] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}

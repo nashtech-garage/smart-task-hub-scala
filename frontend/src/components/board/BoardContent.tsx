@@ -5,15 +5,16 @@ import LoadingContent from '@/components/ui/LoadingContent';
 import { useBoardData } from '@/hooks/useBoardData';
 import { useBoardOperations } from '@/hooks/useBoardOperations';
 import { updateColumnPosititon } from '@/services/boardService';
+import taskService from '@/services/taskService';
 import { useAppSelector } from '@/store';
 import { selectActiveColumns } from '@/store/selectors/columnsSelector';
 import { selectTasksByColumns } from '@/store/selectors/tasksSelectors';
-import { columnsReordered, setColumns } from '@/store/slices/columnsSlice';
-import type { Column } from '@/types';
+import { addTaskToColumn, removeTaskFromColumn, setColumns } from '@/store/slices/columnsSlice';
+import { taskReordered } from '@/store/slices/tasksSlice';
+import type { Column, Task } from '@/types';
 import {
   DndContext,
   DragOverlay,
-  KeyboardCode,
   KeyboardSensor,
   PointerSensor,
   pointerWithin,
@@ -40,14 +41,14 @@ const WorkspaceBoard = () => {
   const dispatch = useDispatch();
 
   const columns = useAppSelector(selectActiveColumns); // Column[]
-  const tasksByColumn = useAppSelector(selectTasksByColumns); // Record<number, Task[]>
-
+  const tasks = useAppSelector(state => state.tasks);
   const {
     boardDetail,
     isLoading,
     isBoardClosed,
     setIsBoardClosed,
     reopenBoard,
+    setIsLoading
   } = useBoardData(Number(boardId));
 
   const { addColumn } = useBoardOperations({
@@ -56,10 +57,22 @@ const WorkspaceBoard = () => {
     columns,
   });
 
+  const [dragData, setDragData] = useState<
+    {
+      id: UniqueIdentifier | null;
+      type: 'column' | 'item' | null;
+      data: Column | Task | null;
+    }
+    | null
+  >();
+
+  // const [overData, setOverData] = useRef<Task>(null);
+
+  console.log("Rendering BoardContent: ", boardId);
+  console.log("DragData: ", dragData)
+
   // Drag state for overlay & quick lookup (local, detached from Redux)
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
-  const [activeType, setActiveType] = useState<'column' | 'item' | null>(null);
-  const [activeData, setActiveData] = useState<any>(null); // can be Column or Task
+
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -69,51 +82,22 @@ const WorkspaceBoard = () => {
   // columnIds memo to avoid unnecessary SortableContext re-renders
   const columnIds = useMemo(() => columns.map((c) => c.id), [columns]);
 
-  // helpers
-  const findColumnIdByItemId = useCallback(
-    (itemId: UniqueIdentifier): number | undefined => {
-      // itemId might be a column id (number) or task id (number)
-      // Check if any column.id === itemId
-      const asNum = Number(itemId);
-      if (columns.some((c) => c.id === asNum)) return asNum;
-      // Else find which column contains the task id
-      const col = columns.find((c) => c.taskIds.includes(asNum));
-      return col ? col.id : undefined;
-    },
-    [columns]
-  );
-
   // ---------- Handlers ----------
   const handleDragStart = useCallback(
     (event: DragStartEvent) => {
       if (isBoardClosed) return;
 
-      setActiveId(event.active.id);
+      console.log("drag start ", event);
 
-      // Prefer using data.current.type if provided by draggable; otherwise fallback to lookup
-      const typeFromData = event.active.data?.current?.type as 'column' | 'item' | undefined;
+      setDragData({
+        id: event.active.id,
+        type: event.active.data?.current?.type as 'column' | 'item',
+        data: event.active.data?.current?.data
+      });
 
-      if (typeFromData === 'column' || columns.some((c) => c.id === Number(event.active.id))) {
-        setActiveType('column');
-        const col = columns.find((c) => c.id === Number(event.active.id)) ?? null;
-        setActiveData(col);
-      } else {
-        setActiveType('item');
-        // find active task from tasksByColumn
-        const asNum = Number(event.active.id);
-        let foundTask = null;
-        for (const colId of Object.keys(tasksByColumn)) {
-          const arr = tasksByColumn[Number(colId)] || [];
-          const t = arr.find((it: any) => it.id === asNum);
-          if (t) {
-            foundTask = t;
-            break;
-          }
-        }
-        setActiveData(foundTask);
-      }
+      console.log("end of drag data")
     },
-    [isBoardClosed, columns, tasksByColumn]
+    [isBoardClosed]
   );
 
   const handleDragOver = useCallback(
@@ -121,166 +105,217 @@ const WorkspaceBoard = () => {
       if (isBoardClosed) return;
       const { active, over } = event;
       if (!over) return;
+      if (active.id === over.id && active.data?.current?.type === over.data?.current?.type) return;
+
+      console.log("drag over ", event)
 
       // If dragging columns (reordering columns), we don't need onDragOver for visual move because sortable handles it.
-      const typeFromData = active.data?.current?.type as 'column' | 'item' | undefined;
 
       // If dragging an item, and over is a column or item in another column -> move item optimistically
-      if (typeFromData === 'item' || activeType === 'item') {
+      if (active.data?.current?.type === 'item') {
         const activeItemId = Number(active.id);
         const overIdNum = Number(over.id);
+        const fromColumn = columns.find((c) => c.taskIds.includes(activeItemId));
 
-        const fromColumnIndex = columns.findIndex((c) => c.taskIds.includes(activeItemId));
-        const toColumnIndex =
-          columns.findIndex((c) => c.taskIds.includes(overIdNum)) !== -1
-            ? columns.findIndex((c) => c.taskIds.includes(overIdNum))
-            : columns.findIndex((c) => c.id === overIdNum);
+        if (!fromColumn) return;
 
-        if (fromColumnIndex === -1 || toColumnIndex === -1) return;
+        if (over.data?.current?.type === 'item') {
+          // If still same column and over item same, do nothing
+          const toColumn = columns.find((c) => c.taskIds.includes(overIdNum));
+          if (!toColumn || fromColumn.id === toColumn.id) return;
 
-        // If still same column and over item same, do nothing
-        if (fromColumnIndex === toColumnIndex) return;
+          // Move item from source column -> target column
+          console.log("drag item in different column")
+          const toIndex = toColumn.taskIds.indexOf(overIdNum);
+          const prevItem = tasks.byId[toColumn.taskIds[toIndex - 1]] ?? null;
+          const nextItem = tasks.byId[toColumn.taskIds[toIndex]] ?? null;
 
-        // Move item from source column -> target column (append to end)
-        const newColumns = columns.map((c) => ({ ...c, taskIds: [...c.taskIds] }));
+          let newPosition: number;
+          if (prevItem && nextItem) {
+            newPosition = Math.floor((prevItem.position + nextItem.position) / 2);
+          } else if (!prevItem && nextItem) {
+            newPosition = Math.floor(nextItem.position / 2);
+          } else if (prevItem && !nextItem) {
+            newPosition = prevItem.position + 1000;
+          } else {
+            newPosition = 1000;
+          }
 
-        // remove from source
-        const fromCol = newColumns[fromColumnIndex];
-        const idxInFrom = fromCol.taskIds.indexOf(activeItemId);
-        if (idxInFrom !== -1) fromCol.taskIds.splice(idxInFrom, 1);
-
-        // insert into target at end (you can adjust to insert at specific index if over is item)
-        const toCol = newColumns[toColumnIndex];
-        toCol.taskIds = [...toCol.taskIds, activeItemId];
-
-        // dispatch update (optimistic)
-        dispatch(setColumns(newColumns));
+          dispatch(removeTaskFromColumn({ taskId: activeItemId, columnId: fromColumn.id }));
+          dispatch(taskReordered({ taskId: activeItemId, newPosition }));
+          dispatch(addTaskToColumn({ columnId: toColumn.id, taskId: activeItemId, index: toIndex }))
+        }
+        // drag item into empty column
+        else if (over.data?.current?.type === 'column' && fromColumn.id !== overIdNum && over.data.current.data.taskIds.length === 0) {
+          console.log("drag item into empty column")
+          dispatch(removeTaskFromColumn({ taskId: activeItemId, columnId: fromColumn.id }));
+          dispatch(addTaskToColumn({
+            columnId: Number(over.id),
+            taskId: Number(activeItemId),
+            index: -1
+          }));
+        }
       }
 
       // For column dragging we rely on SortableContext default behavior — no custom onDragOver required
     },
-    [isBoardClosed, columns, dispatch, activeType, tasksByColumn]
+    [isBoardClosed, columns, dispatch]
   );
 
-  const handleDragEnd = useCallback(
-    async (event: DragEndEvent) => {
-      const { active, over } = event;
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event;
+    console.log("drag end ", event);
+    setDragData(null);
 
-      // reset overlay state first so DragOverlay disappears smoothly
-      setActiveId(null);
-      setActiveType(null);
-      setActiveData(null);
+    if (!over || isBoardClosed) return;
 
-      if (!over) {
-        // nothing to do (cancelled)
-        return;
+    const activeIdNum = Number(active.id);
+    const overIdNum = Number(over.id);
+
+    const activeIsColumn = active.data?.current?.type === 'column';
+    const overIsColumn = over.data?.current?.type === 'column';
+
+    // ==============================
+    // 1️⃣ COLUMN REORDER
+    // ==============================
+    if (activeIsColumn && overIsColumn && activeIdNum !== overIdNum) {
+      const oldIndex = columns.findIndex(c => c.id === activeIdNum);
+      const newIndex = columns.findIndex(c => c.id === overIdNum);
+      const newColumns = arrayMove(columns, oldIndex, newIndex);
+
+      const movedIndex = newIndex;
+      const preCol = newColumns[movedIndex - 1] ?? null;
+      const nextCol = newColumns[movedIndex + 1] ?? null;
+
+      let newPosition: number;
+      if (preCol && nextCol) newPosition = Math.floor((preCol.position + nextCol.position) / 2);
+      else if (!preCol && nextCol) newPosition = Math.floor(nextCol.position / 2);
+      else if (preCol && !nextCol) newPosition = preCol.position + 1000;
+      else newPosition = 1000;
+
+      try {
+        setIsLoading(true);
+        await updateColumnPosititon(Number(boardId), activeIdNum, newPosition);
+      } catch (err) {
+        console.error('updateColumnPosititon failed', err);
+      } finally {
+        setIsLoading(false);
       }
+      return;
+    }
 
-      if (isBoardClosed) {
-        // optionally reload original columns from server or keep as-is
-        return;
-      }
+    // ==============================
+    // 2️⃣ TASK REORDER
+    // ==============================
+    if (!activeIsColumn && !overIsColumn) {
+      const fromCol = columns.find(c => c.taskIds.includes(activeIdNum));
+      const toCol = columns.find(c => c.taskIds.includes(overIdNum));
+      if (!fromCol || !toCol) return;
 
-      const activeIdNum = Number(active.id);
-      const overIdNum = Number(over.id);
+      // ===== SAME COLUMN =====
+      if (fromCol.id === toCol.id) {
+        const tasksInCol = [...fromCol.taskIds];
+        const oldIndex = tasksInCol.indexOf(activeIdNum);
+        const newIndex = tasksInCol.indexOf(overIdNum);
 
-      const activeIsColumn = columns.some((c) => c.id === activeIdNum);
-      const overIsColumn = columns.some((c) => c.id === overIdNum);
+        // ✅ find direction (before / after)
+        const activeRect = active.rect.current.translated;
+        const overRect = over.rect;
+        const isAfter = activeRect && overRect
+          ? activeRect.top > overRect.top + overRect.height / 2
+          : false;
 
-      // --- Column reorder ---
-      if (activeIsColumn && overIsColumn && activeIdNum !== overIdNum) {
-        const oldIndex = columns.findIndex((c) => c.id === activeIdNum);
-        const newIndex = columns.findIndex((c) => c.id === overIdNum);
-        const newColumns = arrayMove(columns, oldIndex, newIndex);
+        // move task into temp array
+        tasksInCol.splice(oldIndex, 1);
+        const targetIndex = isAfter ? newIndex + 1 : newIndex;
+        tasksInCol.splice(targetIndex, 0, activeIdNum);
 
-        // quick optimistic update in redux
+        // ✅ find prev/next to calculate position
+        const movedIndex = tasksInCol.indexOf(activeIdNum);
+        const prevTaskId = tasksInCol[movedIndex - 1];
+        const nextTaskId = tasksInCol[movedIndex + 1];
 
-        // compute new position for moved column (same logic as your original)
-        const movedIndex = newIndex;
-        const preCol = newColumns[movedIndex - 1] ?? null;
-        const nextCol = newColumns[movedIndex + 1] ?? null;
+        const prevItem = prevTaskId ? tasks.byId[prevTaskId] : null;
+        const nextItem = nextTaskId ? tasks.byId[nextTaskId] : null;
 
         let newPosition: number;
-        if (preCol && nextCol) {
-          newPosition = Math.floor((preCol.position + nextCol.position) / 2);
-        } else if (!preCol && nextCol) {
-          newPosition = Math.floor(nextCol.position / 2);
-        } else if (preCol && !nextCol) {
-          newPosition = preCol.position + 1000;
-        } else {
-          newPosition = 1000;
-        }
+        if (prevItem && nextItem)
+          newPosition = Math.floor((prevItem.position + nextItem.position) / 2);
+        else if (!prevItem && nextItem)
+          newPosition = Math.floor(nextItem.position / 2);
+        else if (prevItem && !nextItem)
+          newPosition = prevItem.position + 1000;
+        else newPosition = 1000;
 
-        dispatch(columnsReordered({ columnId: Number(active.id), newPosition }));
-        const movedColumn = { ...newColumns[movedIndex], position: Math.floor(newPosition) };
-        // update local array with final pos
-        const finalColumns = newColumns.map((c, idx) => (idx === movedIndex ? movedColumn : c));
-        dispatch(setColumns(finalColumns));
-
-        // Persist to backend (fire-and-forget; handle errors in service)
+        // Persist + update UI
         try {
-          await updateColumnPosititon(Number(boardId), movedColumn.id, movedColumn.position);
+          setIsLoading(true);
+          await taskService.updateTaskPosition(activeIdNum, fromCol.id, newPosition);
+          dispatch(taskReordered({ taskId: activeIdNum, newPosition }));
+          dispatch(setColumns(
+            columns.map(c =>
+              c.id === fromCol.id ? { ...c, taskIds: tasksInCol } : c
+            )
+          ));
         } catch (err) {
-          // error handling: you might want to refetch columns here or rollback
-          console.error('updateColumnPosititon failed', err);
+          console.error('updateTaskPosititon failed', err);
+        } finally {
+          setIsLoading(false);
         }
-
         return;
       }
 
-      // --- Task reorder inside same column (or between items in same column) ---
-      const activeIsItem = active.data?.current?.type === 'item' || !activeIsColumn;
-      const overIsItem = over.data?.current?.type === 'item' || !overIsColumn;
+      // ===== DIFFERENT COLUMN =====
+      if (fromCol.id !== toCol.id) {
+        const newColumns = columns.map(c => ({ ...c, taskIds: [...c.taskIds] }));
+        const from = newColumns.find(c => c.id === fromCol.id)!;
+        const to = newColumns.find(c => c.id === toCol.id)!;
 
-      if (activeIsItem && overIsItem) {
-        // find source & target column
-        const fromColIndex = columns.findIndex((c) => c.taskIds.includes(activeIdNum));
-        const toColIndex =
-          columns.findIndex((c) => c.taskIds.includes(overIdNum)) !== -1
-            ? columns.findIndex((c) => c.taskIds.includes(overIdNum))
-            : columns.findIndex((c) => c.id === overIdNum);
+        from.taskIds = from.taskIds.filter(id => id !== activeIdNum);
 
-        if (fromColIndex === -1 || toColIndex === -1) return;
+        // ✅ xác định hướng before/after để insert đúng chỗ
+        const overIndex = to.taskIds.indexOf(overIdNum);
+        const activeRect = active.rect.current.translated;
+        const overRect = over.rect;
+        const isAfter = activeRect && overRect
+          ? activeRect.top > overRect.top + overRect.height / 2
+          : false;
 
-        // same column reorder (when both in same column)
-        if (fromColIndex === toColIndex) {
-          const newColumns = columns.map((c) => ({ ...c, taskIds: [...c.taskIds] }));
-          const col = newColumns[fromColIndex];
-          const oldIndex = col.taskIds.indexOf(activeIdNum);
-          const newIndex = col.taskIds.indexOf(overIdNum);
-          if (oldIndex !== -1 && newIndex !== -1 && oldIndex !== newIndex) {
-            col.taskIds = arrayMove(col.taskIds, oldIndex, newIndex);
-            dispatch(setColumns(newColumns));
-          }
-        } else {
-          // moved across columns - here we already did optimistic move in onDragOver in many cases,
-          // but ensure final state is correct: remove from source, insert before/after over item in target
-          const newColumns = columns.map((c) => ({ ...c, taskIds: [...c.taskIds] }));
+        const insertAt = isAfter ? overIndex + 1 : overIndex;
+        to.taskIds.splice(insertAt, 0, activeIdNum);
 
-          // remove from source
-          const fromCol = newColumns[fromColIndex];
-          const removeIndex = fromCol.taskIds.indexOf(activeIdNum);
-          if (removeIndex !== -1) fromCol.taskIds.splice(removeIndex, 1);
+        // ✅ prev/next để tính position chính xác
+        const movedIndex = to.taskIds.indexOf(activeIdNum);
+        const prevTaskId = to.taskIds[movedIndex - 1];
+        const nextTaskId = to.taskIds[movedIndex + 1];
+        const prevItem = prevTaskId ? tasks.byId[prevTaskId] : null;
+        const nextItem = nextTaskId ? tasks.byId[nextTaskId] : null;
 
-          // insert into target before 'overId' item (if it exists) otherwise push
-          const toCol = newColumns[toColIndex];
-          const insertAt = toCol.taskIds.indexOf(overIdNum);
-          if (insertAt !== -1) {
-            toCol.taskIds.splice(insertAt, 0, activeIdNum);
-          } else {
-            toCol.taskIds.push(activeIdNum);
-          }
+        let newPosition: number;
+        if (prevItem && nextItem)
+          newPosition = Math.floor((prevItem.position + nextItem.position) / 2);
+        else if (!prevItem && nextItem)
+          newPosition = Math.floor(nextItem.position / 2);
+        else if (prevItem && !nextItem)
+          newPosition = prevItem.position + 1000;
+        else newPosition = 1000;
 
-          dispatch(setColumns(newColumns));
+        try {
+          setIsLoading(true);
+          await taskService.updateTaskPosition(activeIdNum, to.id, newPosition);
+          dispatch(removeTaskFromColumn({ taskId: activeIdNum, columnId: from.id }));
+          dispatch(addTaskToColumn({ columnId: to.id, taskId: activeIdNum, index: insertAt }));
+          dispatch(taskReordered({ taskId: activeIdNum, newPosition }));
+        } catch (err) {
+          console.error('updateTaskPosititon failed', err);
+        } finally {
+          setIsLoading(false);
         }
-
-        // TODO: call API to persist task position if you have one.
       }
+    }
+  };
 
-      // other cases: ignore
-    },
-    [columns, dispatch, isBoardClosed, boardId]
-  );
+
 
   // ---------- Render ----------
   return (
@@ -313,36 +348,38 @@ const WorkspaceBoard = () => {
               <div className="h-full flex items-start overflow-x-auto gap-4 p-4">
                 <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                   {columns.map((col) => (
-                    <DroppableColumn key={col.id} column={col} items={tasksByColumn[col.id] || []} />
+                    <DroppableColumn key={col.id} column={col} itemIds={col.taskIds} />
                   ))}
                 </SortableContext>
 
-                <button
-                  onClick={addColumn}
-                  className={`bg-[#ffffff3d] hover:bg-[#ffffff33] rounded-lg p-4 w-80 flex-shrink-0 transition-colors flex items-center justify-center gap-2 text-white ${isBoardClosed ? 'cursor-not-allowed' : ''}`}
-                  disabled={isBoardClosed}
-                >
-                  <Plus size={20} />
-                  Add another column
-                </button>
+                {!isBoardClosed && (
+                  <button
+                    onClick={addColumn}
+                    className={`bg-[#ffffff3d] hover:bg-[#ffffff33] rounded-lg p-4 w-80 flex-shrink-0 transition-colors flex items-center justify-center gap-2 text-white ${isBoardClosed ? 'cursor-not-allowed' : ''}`}
+                    disabled={isBoardClosed}
+                  >
+                    <Plus size={20} />
+                    Add another column
+                  </button>
+                )}
               </div>
 
               {/* Drag overlay uses local activeData to avoid disappearing during redux rerender */}
               <DragOverlay>
-                {!isBoardClosed && activeType === 'column' && activeData ? (
+                {!isBoardClosed && dragData?.type === 'column' ? (
                   <div className="bg-[rgba(0,0,0,0.7)] rounded-lg p-4 w-80 opacity-95 transform rotate-2 shadow-2xl">
                     <div className="flex items-center gap-2 mb-4">
                       <GripVertical size={16} className="text-gray-400" />
-                      <h3 className="font-semibold text-white">{(activeData as Column).name}</h3>
+                      <h3 className="font-semibold text-white">{(dragData.data as Column).name}</h3>
                       <span className="bg-gray-300 text-gray-600 text-xs px-2 py-1 rounded-full">
-                        {(activeData as Column).taskIds?.length ?? 0}
+                        {(dragData.data as Column).taskIds?.length ?? 0}
                       </span>
                     </div>
                   </div>
-                ) : !isBoardClosed && activeType === 'item' && activeData ? (
+                ) : !isBoardClosed && dragData?.type === 'item' ? (
                   <div className="bg-[rgba(0,0,0,0.6)] p-3 rounded-lg shadow-2xl opacity-95 transform rotate-2">
                     <span className="text-sm text-white whitespace-pre-wrap break-words">
-                      {(activeData as any).name}
+                      {(dragData.data as Task).name}
                     </span>
                   </div>
                 ) : null}

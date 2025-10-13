@@ -6,7 +6,7 @@ export const normalizeColumns = (columns: Column[]): ColumnsState => {
             acc[col.id] = col;
             return acc;
         }, {} as Record<number, Column>),
-        allIds: columns.map((col) => col.id),
+        allIds: columns.map((col) => col.id)
     };
 };
 

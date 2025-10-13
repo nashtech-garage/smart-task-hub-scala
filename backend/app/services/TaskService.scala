@@ -321,7 +321,7 @@ class TaskService @Inject()(taskRepository: TaskRepository,
 
   def updatePosition(taskId: Int, req: UpdateTaskPositionRequest, userId: Int): Future[Int] = {
     val action = for {
-      (task, _) <- getTaskAndProjectByTaskId(taskId, userId)
+      (task, projectId) <- getTaskAndProjectByTaskId(taskId, userId)
 
       _ <- if (task.status == TaskStatus.active) {
         DBIO.successful(())
@@ -332,8 +332,19 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       }
 
       updatedRows <- taskRepository.updatePosition(taskId, req.position, req.columnId)
+      _ <- updatedRows match {
+        case 1 =>
+          broadcastService.broadcastToProject(
+            projectId,
+            TaskMoved(TaskMovedPayload(taskId, task.columnId, req.columnId, req.position)))
+          DBIO.successful(())
+        case 0 =>
+          DBIO.failed(AppException(
+            message = s"Failed to update task position",
+            statusCode = Status.BAD_REQUEST
+          ))
+      }
     } yield updatedRows
-
     db.run(action.transactionally)
   }
 

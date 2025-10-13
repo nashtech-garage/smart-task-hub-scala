@@ -60,13 +60,9 @@ const columnsSlice = createSlice({
       state.byId[realColumn.id] = realColumn;
       state.allIds.push(realColumn.id);
     },
-    removeTaskFromColumn: (state, action: PayloadAction<number>) => {
-      const itemId = action.payload;
-      state.allIds = state.allIds.filter((tid) => tid !== itemId);
-
-      Object.values(state.byId).forEach((column) => {
-        column.taskIds = column.taskIds.filter((id) => id !== itemId);
-      });
+    removeTaskFromColumn: (state, action: PayloadAction<{ taskId: number, columnId: number }>) => {
+      const { taskId, columnId } = action.payload;
+      state.byId[columnId].taskIds = state.byId[columnId].taskIds.filter(id => id !== taskId);
     },
     addTaskToColumn: (state, action: PayloadAction<{ columnId: number; taskId: number, index: number }>) => {
       const { columnId, taskId, index } = action.payload;

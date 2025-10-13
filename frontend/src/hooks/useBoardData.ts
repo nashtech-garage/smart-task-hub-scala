@@ -18,6 +18,7 @@ interface UseBoardDataReturn {
     setIsBoardClosed: (closed: boolean) => void;
     refetch: () => Promise<void>;
     reopenBoard: () => Promise<void>;
+    setIsLoading: (loading: boolean) => void;
 }
 
 /**
@@ -87,7 +88,7 @@ export const useBoardData = (boardId: number): UseBoardDataReturn => {
 
         // Initial data fetch
         fetchBoardData();
-        
+
         // Setup WebSocket connection
         connectToProjectWS(boardId, (message) => {
             handleBoardWSMessage(message, dispatch, store.getState);
@@ -133,5 +134,6 @@ export const useBoardData = (boardId: number): UseBoardDataReturn => {
         setIsBoardClosed,
         refetch: fetchBoardData,
         reopenBoard,
+        setIsLoading
     };
 };

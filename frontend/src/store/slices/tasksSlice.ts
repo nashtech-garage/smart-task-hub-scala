@@ -77,7 +77,15 @@ const tasksSlice = createSlice({
           task.memberIds.splice(index, 1);
         }
       }
-    }
+    },
+
+    taskReordered: (state, action: PayloadAction<{ taskId: number, newPosition: number }>) => {
+      const { taskId, newPosition } = action.payload;
+      const task = state.byId[taskId];
+      if (task) {
+        task.position = newPosition;
+      }
+    },
   }
 });
 
@@ -89,6 +97,7 @@ export const {
   taskRemoved,
   taskRestored,
   assignedMemberToTask,
-  removeMemberFromTask
+  removeMemberFromTask,
+  taskReordered
 } = tasksSlice.actions;
 export default tasksSlice.reducer;

@@ -12,15 +12,16 @@ import React, {
 import DraggableItem from './DraggableItem';
 import ColumnHeader from './ColumnHeader';
 import AddTask from './AddTask';
+import type { UniqueIdentifier } from '@dnd-kit/core';
 
 interface DroppableColumnProps {
     column: Column;
-    items: Task[];
+    itemIds: UniqueIdentifier[];
 }
 
 const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
     column,
-    items,
+    itemIds,
 }) => {
     const columnRef = useRef<HTMLDivElement>(null);
 
@@ -35,7 +36,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         id: column.id,
         data: {
             type: 'column',
-            column,
+            data: column,
         },
     });
 
@@ -44,7 +45,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         transition,
     };
 
-    const itemIds = useMemo(() => items.map(item => item.id), [items]);
+    // const itemIds = useMemo(() => items.map(item => item.id), [items]);
 
     console.log('Rendering DroppableColumn:', column.id, column.name);
 
@@ -69,10 +70,10 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
             >
                 <div className='overflow-y-auto space-y-3 pr-1'>
                     <div className="overflow-y-auto space-y-3 pr-1">
-                        {items?.map(item => (
+                        {itemIds?.map(id => (
                             <DraggableItem
-                                key={item.id}
-                                itemId={item.id}
+                                key={id}
+                                itemId={Number(id)}
                             />
                         ))}
                     </div>
@@ -98,18 +99,18 @@ const arePropsEqual = (
     }
 
     // Check items array
-    if (prevProps.items.length !== nextProps.items.length) {
+    if (prevProps.itemIds.length !== nextProps.itemIds.length) {
         return false;
     }
 
     // Compare each item
-    for (let i = 0; i < prevProps.items.length; i++) {
-        const prevItem = prevProps.items[i];
-        const nextItem = nextProps.items[i];
+    for (let i = 0; i < prevProps.itemIds.length; i++) {
+        const prevItem = prevProps.itemIds[i];
+        const nextItem = nextProps.itemIds[i];
 
         if (
-            prevItem.id !== nextItem.id ||
-            prevItem.name !== nextItem.name
+            prevItem !== nextItem
+            // prevItem.name !== nextItem.name
         ) {
             return false;
         }

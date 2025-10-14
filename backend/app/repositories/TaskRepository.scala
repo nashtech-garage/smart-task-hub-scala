@@ -137,6 +137,41 @@ class TaskRepository@Inject()(
     }
   }
 
+  def findActiveTaskByColumnId(
+                                columnId: Int,
+                                limit: Int,
+                                offset: Int
+                              ): DBIO[Seq[TaskSummaryResponse]] = {
+    val query = for {
+      (((t, c), p), utOpt) <- tasks
+        .join(columns).on(_.columnId === _.id)
+        .join(projects).on { case ((_, c), p) => c.projectId === p.id }
+        .joinLeft(userTasks).on { case (((t, _), _), ut) => ut.taskId === t.id }
+      if c.id === columnId &&
+        t.status === TaskStatus.active &&
+        c.status === ColumnStatus.active &&
+        p.status === ProjectStatus.active
+    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt, utOpt.map(_.assignedTo))
+
+    query
+      .sortBy(_._3) // sort by position (t.position)
+      .drop(offset)
+      .take(limit)
+      .result
+      .map { rows =>
+        rows
+          .groupBy { case (id, name, pos, colId, updatedAt, _) =>
+            (id, name, pos, colId, updatedAt)
+          }
+          .map { case ((id, name, pos, colId, updatedAt), group) =>
+            val memberIds = group.flatMap(_._6).distinct
+            TaskSummaryResponse(id, name, pos, colId, memberIds, updatedAt)
+          }
+          .toSeq
+          .sortBy(_.position)
+      }
+  }
+
   def insertTaskBatch(tasksChunk: Seq[Task]): Future[Seq[Int]] = {
     db.run((tasks returning tasks.map(_.id)) ++= tasksChunk).map(_.toSeq)
   }

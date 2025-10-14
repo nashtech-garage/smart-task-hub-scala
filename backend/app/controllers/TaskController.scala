@@ -161,6 +161,21 @@ class TaskController @Inject()(
         }
     }
 
+  def getActiveTasksInColumn(projectId:Int, columnId: Int, limit: Int, page: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      implicit val messages: Messages = request.messages
+      val userId = request.userToken.userId
+      taskService
+        .getActiveTasksInColumn(projectId, columnId, userId, limit, page)
+        .map { tasks =>
+          Ok(
+            Json.toJson(
+              ApiResponse.success("Tasks retrieved successfully", tasks)
+            )
+          )
+        }
+    }
+
   def search(page: Int,
              size: Int,
              keyword: String,

@@ -301,6 +301,34 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     }
   }
 
+  def getActiveTasksInColumn(
+                              projectId: Int,
+                              columnId: Int,
+                              userId: Int,
+                              limit: Int,
+                              page: Int
+                            ): Future[Seq[TaskSummaryResponse]] = {
+
+    val action = for {
+      isUserInActiveProject <- projectRepository.isUserInActiveProject(
+        userId,
+        projectId
+      )
+      result <- if (isUserInActiveProject) {
+        taskRepository.findActiveTaskByColumnId(columnId, limit, (page - 1) * limit)
+      } else {
+        DBIO.failed(
+          AppException(
+            message = s"Project not found",
+            statusCode = Status.NOT_FOUND
+          )
+        )
+      }
+    } yield result
+
+    db.run(action)
+  }
+
   def searchTasks(
                    projectIds: Option[Seq[Int]],
                    keyword: Option[String],

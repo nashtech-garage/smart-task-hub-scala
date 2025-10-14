@@ -333,6 +333,16 @@ class TaskControllerSpec
       tasks.exists(task => task.id == taskId && task.name == "Active Task") mustBe true
     }
 
+    "get active tasks in column successfully" in {
+      val request = FakeRequest(GET, "/api/projects/1/columns/1/tasks")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message")
+        .as[String] mustBe "Tasks retrieved successfully"
+    }
+
     "fail get active tasks with unexist project id" in {
       val request = FakeRequest(GET, "/api/projects/0/columns/tasks/active")
         .withCookies(Cookie(cookieName, fakeToken))

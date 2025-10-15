@@ -6,13 +6,14 @@ import {
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import React, {
-    useMemo,
+    useEffect,
     useRef,
 } from 'react';
 import DraggableItem from './DraggableItem';
 import ColumnHeader from './ColumnHeader';
 import AddTask from './AddTask';
 import type { UniqueIdentifier } from '@dnd-kit/core';
+import { useVirtualizer } from "@tanstack/react-virtual";
 
 interface DroppableColumnProps {
     column: Column;
@@ -45,6 +46,21 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         transition,
     };
 
+    // === Virtualization setup ===
+    const scrollParentRef = useRef<HTMLDivElement>(null);
+
+    const virtualizer = useVirtualizer({
+        count: itemIds.length,
+        getScrollElement: () => scrollParentRef.current,
+        estimateSize: () => 80, // avarage height in pixel
+        overscan: 5, // overscan count
+    });
+
+    useEffect(() => {
+        virtualizer.measure();
+    }, [itemIds]);
+
+
     // const itemIds = useMemo(() => items.map(item => item.id), [items]);
 
     console.log('Rendering DroppableColumn:', column.id, column.name);
@@ -68,14 +84,40 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
                 items={itemIds}
                 strategy={verticalListSortingStrategy}
             >
-                <div className='overflow-y-auto space-y-3 pr-1'>
-                    <div className="overflow-y-auto space-y-3 pr-1">
-                        {itemIds?.map(id => (
-                            <DraggableItem
-                                key={id}
-                                itemId={Number(id)}
-                            />
-                        ))}
+                <div
+                    ref={scrollParentRef}
+                    className='overflow-y-auto space-y-3 pr-1'
+                >
+                    <div
+                        style={{
+                            height: virtualizer.getTotalSize(),
+                            position: "relative",
+                        }}
+                        className="overflow-y-auto space-y-3 pr-1"
+                    >
+                        <div
+                            style={{
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "100%",
+                                transform: `translateY(${virtualizer.getVirtualItems()[0]?.start ?? 0}px)`,
+                            }}
+                        >
+                            {virtualizer.getVirtualItems().map((virtualRow) => {
+                                const taskId = itemIds[virtualRow.index];
+                                return (
+                                    <div
+                                        className='my-2'
+                                        key={taskId}
+                                        data-index={virtualRow.index}
+                                        ref={virtualizer.measureElement}
+                                    >
+                                        <DraggableItem itemId={Number(taskId)} />
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 </div>
             </SortableContext>

@@ -19,7 +19,7 @@ export const addColumnThunk =
     (boardId: number, name: string, position: number): AppThunk =>
         async (dispatch) => {
             const tempId = - position;
-            dispatch(columnCreated({ id: tempId, name, position, taskIds: [] }));
+            dispatch(columnCreated({ id: tempId, name, position, taskIds: [], totalTasks: 0 }));
             try {
                 await createNewColumn(boardId, name, position);
             } catch (err) {

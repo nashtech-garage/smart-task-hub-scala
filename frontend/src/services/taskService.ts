@@ -69,12 +69,9 @@ const taskService = {
         })
     },
 
-    getTaskByColumnId(projectId: number, columnId: number, page: number = 1, limit: number = 10) {
+    getTaskByColumnId(projectId: number, columnId: number, pageParams: { page: number, limit: number }): Promise<ApiResponse<Task[]>> {
         return axiosClients.get(`${projectUrl}/${projectId}/${columnUrl}/${columnId}/${taskUrl}`, {
-            params: {
-                page,
-                limit
-            }
+            params: pageParams
         })
     }
 

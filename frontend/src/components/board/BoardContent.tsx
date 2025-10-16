@@ -273,7 +273,7 @@ const WorkspaceBoard = () => {
 
         from.taskIds = from.taskIds.filter(id => id !== activeIdNum);
 
-        // ✅ xác định hướng before/after để insert đúng chỗ
+        // ✅ find direction before/after to insert
         const overIndex = to.taskIds.indexOf(overIdNum);
         const activeRect = active.rect.current.translated;
         const overRect = over.rect;
@@ -284,7 +284,7 @@ const WorkspaceBoard = () => {
         const insertAt = isAfter ? overIndex + 1 : overIndex;
         to.taskIds.splice(insertAt, 0, activeIdNum);
 
-        // ✅ prev/next để tính position chính xác
+        // ✅ find prev/next to calculate position
         const movedIndex = to.taskIds.indexOf(activeIdNum);
         const prevTaskId = to.taskIds[movedIndex - 1];
         const nextTaskId = to.taskIds[movedIndex + 1];
@@ -348,7 +348,7 @@ const WorkspaceBoard = () => {
               <div className="h-full flex items-start overflow-x-auto gap-4 p-4">
                 <SortableContext items={columnIds} strategy={horizontalListSortingStrategy}>
                   {columns.map((col) => (
-                    <DroppableColumn key={col.id} column={col} itemIds={col.taskIds} />
+                    <DroppableColumn key={col.id} column={col} itemIds={col.taskIds} boardId={Number(boardId)}/>
                   ))}
                 </SortableContext>
 

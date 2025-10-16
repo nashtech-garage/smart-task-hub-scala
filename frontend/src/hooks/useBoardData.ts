@@ -5,11 +5,11 @@ import { notify } from '@/services/toastService';
 import { connectToProjectWS, disconnectWS } from '@/services/websocketService';
 import { reopenBoard as reopenBoardService } from '@/services/workspaceService';
 import { store } from '@/store';
-import { fetchColumns } from '@/store/thunks/columnsThunks';
-import { fetchTasks } from '@/store/thunks/tasksThunks';
 import { handleBoardWSMessage } from '@/websocket/boardHandler';
 import type { Board } from '@/types';
-import { fetchMembers } from '@/store/thunks/memberThunks';
+import { setColumns } from '@/store/slices/columnsSlice';
+import { setTasks } from '@/store/slices/tasksSlice';
+import { setMembers } from '@/store/slices/membersSlice';
 
 interface UseBoardDataReturn {
     boardDetail: Board;
@@ -63,12 +63,9 @@ export const useBoardData = (boardId: number): UseBoardDataReturn => {
 
             // Only fetch columns and tasks if board is active
             if (board?.status === 'active') {
-                // Fetch in parallel for better performance
-                await Promise.all([
-                    dispatch(fetchColumns(boardId) as any),
-                    dispatch(fetchTasks(boardId) as any),
-                    dispatch(fetchMembers(boardId) as any),
-                ]);
+                dispatch(setMembers(board.members));
+                dispatch(setColumns(board.columns));
+                dispatch(setTasks(board.tasks));
             }
         } catch (error: any) {
             const errorMessage = error.response?.data?.message || 'Failed to fetch board data';

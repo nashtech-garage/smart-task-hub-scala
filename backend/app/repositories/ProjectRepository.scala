@@ -1,11 +1,17 @@
 package repositories
 
-import db.MyPostgresProfile.api.{projectStatusTypeMapper, userProjectRoleTypeMapper}
-import dto.response.project.{CompletedProjectSummariesResponse, ProjectResponse, ProjectSummariesResponse}
+import db.MyPostgresProfile.api.{
+  projectStatusTypeMapper,
+  userProjectRoleTypeMapper
+}
+import dto.response.project.{
+  CompletedProjectSummariesResponse,
+  ProjectSummariesResponse
+}
 import dto.response.user.UserInProjectResponse
 import models.Enums.ProjectStatus.ProjectStatus
-import models.Enums.{ProjectStatus, UserProjectRole}
-import models.entities.{Column, Project, UserProject, Workspace}
+import models.Enums.{ ProjectStatus, UserProjectRole}
+import models.entities.{Column, Project, UserProject}
 import models.tables.TableRegistry.{columns, users}
 import models.tables.{ProjectTable, UserProjectTable, WorkspaceTable}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
@@ -28,7 +34,10 @@ class ProjectRepository @Inject()(
 
   def existsByName(workspaceId: Int, name: String): DBIO[Boolean] = {
     projects
-      .filter(p => p.workspaceId === workspaceId && p.name === name && p.status =!= ProjectStatus.deleted)
+      .filter(
+        p =>
+          p.workspaceId === workspaceId && p.name === name && p.status =!= ProjectStatus.deleted
+      )
       .exists
       .result
   }
@@ -105,7 +114,9 @@ class ProjectRepository @Inject()(
     } yield up).exists.result
   }
 
-  def getAllMembersInProject(projectId: Int): DBIO[Seq[UserInProjectResponse]] = {
+  def getAllMembersInProject(
+    projectId: Int
+  ): DBIO[Seq[UserInProjectResponse]] = {
     (for {
       up <- userProjects if up.projectId === projectId
       u <- users if u.id === up.userId
@@ -113,24 +124,25 @@ class ProjectRepository @Inject()(
       .map(_.map((UserInProjectResponse.apply _).tupled))
   }
 
-  def findById(projectId: Int): DBIO[Option[ProjectResponse]] = {
+  def findProjectBasicInfo(projectId: Int): DBIO[Option[(Int, String, ProjectStatus)]] =
     projects
       .filter(_.id === projectId)
       .map(p => (p.id, p.name, p.status))
       .result
       .headOption
-      .map(_.map { case (id, name, status) =>
-        ProjectResponse(id, name, status)
-      })
-  }
 
   def insertProjectBatch(projectList: Seq[Project]): Future[Seq[Project]] = {
-    val insertQuery = projects returning projects.map(_.id) into ((project, id) => project.copy(id = Some(id)))
+    val insertQuery = projects returning projects.map(_.id) into (
+      (project,
+       id) => project.copy(id = Some(id))
+    )
     val action = insertQuery ++= projectList
     db.run(action)
   }
 
-  def insertUserBatchIntoProject(entries: Seq[UserProject]): Future[Seq[Int]] = {
+  def insertUserBatchIntoProject(
+    entries: Seq[UserProject]
+  ): Future[Seq[Int]] = {
     val insertQuery = userProjects returning userProjects.map(_.id)
     val action = insertQuery ++= entries
     db.run(action)
@@ -140,7 +152,8 @@ class ProjectRepository @Inject()(
     val q = for {
       up <- userProjects
       if up.userId === userId && (up.role === UserProjectRole.owner || up.role === UserProjectRole.member)
-      p <- projects if p.id === up.projectId && p.status =!= ProjectStatus.deleted
+      p <- projects
+      if p.id === up.projectId && p.status =!= ProjectStatus.deleted
       w <- workspaces if w.id === p.workspaceId && !w.isDeleted
     } yield p
 

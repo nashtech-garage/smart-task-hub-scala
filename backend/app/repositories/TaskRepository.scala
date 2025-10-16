@@ -6,7 +6,7 @@ import models.Enums.TaskStatus.TaskStatus
 import models.Enums.{ColumnStatus, ProjectStatus, TaskStatus}
 import models.entities.{Task, UserTask}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
-import slick.jdbc.JdbcProfile
+import slick.jdbc.{GetResult, JdbcProfile}
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -171,6 +171,52 @@ class TaskRepository@Inject()(
           .sortBy(_.position)
       }
   }
+
+  implicit val getTaskResult
+  : GetResult[(Int, String, Int, Int, Instant, Int, Int)] = GetResult { r =>
+    (
+      r.<<[Int],
+      r.<<[String],
+      r.<<[Int],
+      r.<<[Int],
+      r.<<[java.sql.Timestamp].toInstant,
+      r.<<[Int],
+      r.<<[Int]
+    )
+  }
+
+  def findLimitedActiveTasksByProject(projectId: Int): DBIO[Seq[(Int, String, Int, Int, Instant, Int, Int)]] = {
+    val activeColumnStatus = ColumnStatus.active.toString
+    val activeTaskStatus = TaskStatus.active.toString
+
+    sql"""
+    SELECT id, name, position, column_id, updated_at, rn, total_tasks_in_column
+    FROM (
+      SELECT
+        t.id,
+        t.name,
+        t.position,
+        t.column_id,
+        t.updated_at,
+        ROW_NUMBER() OVER (PARTITION BY t.column_id ORDER BY t.position) as rn,
+        COUNT(*) OVER (PARTITION BY t.column_id) AS total_tasks_in_column
+      FROM tasks t
+      INNER JOIN columns c ON c.id = t.column_id
+      WHERE c.project_id = $projectId
+        AND c.status = $activeColumnStatus::column_status
+        AND t.status = $activeTaskStatus::task_status
+    ) ranked
+    WHERE rn <= 20
+    ORDER BY column_id, position
+  """.as[(Int, String, Int, Int, Instant, Int, Int)]
+  }
+
+  def findUserTaskByTaskIds(taskIds: Set[Int]): DBIO[Seq[UserTask]] =
+    if (taskIds.nonEmpty) {
+      userTasks.filter(_.taskId inSet taskIds).result
+    } else {
+      DBIO.successful(Seq.empty)
+    }
 
   def insertTaskBatch(tasksChunk: Seq[Task]): Future[Seq[Int]] = {
     db.run((tasks returning tasks.map(_.id)) ++= tasksChunk).map(_.toSeq)

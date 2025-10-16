@@ -1,7 +1,11 @@
 package services
 
 import dto.request.project.CreateProjectRequest
-import dto.response.project.{ProjectResponse, ProjectSummariesResponse}
+import dto.response.project.{
+  ProjectDetailResponse,
+  ProjectResponse,
+  ProjectSummariesResponse
+}
 import dto.response.user.UserInProjectResponse
 import exception.AppException
 import mappers.ProjectMapper
@@ -10,7 +14,12 @@ import models.Enums.{ProjectStatus, ProjectVisibility}
 import models.entities.Project
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.http.Status
-import repositories.{ProjectRepository, WorkspaceRepository}
+import repositories.{
+  ColumnRepository,
+  ProjectRepository,
+  TaskRepository,
+  WorkspaceRepository
+}
 import slick.jdbc.JdbcProfile
 
 import javax.inject.{Inject, Singleton}
@@ -20,6 +29,8 @@ import scala.concurrent.{ExecutionContext, Future}
 class ProjectService @Inject()(
   projectRepository: ProjectRepository,
   workspaceRepository: WorkspaceRepository,
+  columnRepository: ColumnRepository,
+  taskRepository: TaskRepository,
   protected val dbConfigProvider: DatabaseConfigProvider
 )(implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] {
@@ -109,15 +120,6 @@ class ProjectService @Inject()(
       errorMsg = "Only active projects can be completed"
     )
 
-  def deleteProject(projectId: Int, userId: Int): Future[Int] =
-    changeStatusIfOwner(
-      projectId,
-      userId,
-      validFrom = Set(ProjectStatus.completed),
-      next = ProjectStatus.deleted,
-      errorMsg = "Only completed projects can be deleted"
-    )
-
   private def changeStatusIfOwner(projectId: Int,
                                   userId: Int,
                                   validFrom: Set[ProjectStatus],
@@ -143,6 +145,15 @@ class ProjectService @Inject()(
     db.run(action.transactionally)
   }
 
+  def deleteProject(projectId: Int, userId: Int): Future[Int] =
+    changeStatusIfOwner(
+      projectId,
+      userId,
+      validFrom = Set(ProjectStatus.completed),
+      next = ProjectStatus.deleted,
+      errorMsg = "Only completed projects can be deleted"
+    )
+
   def reopenProject(projectId: Int, userId: Int): Future[Int] =
     changeStatusIfOwner(
       projectId,
@@ -163,46 +174,50 @@ class ProjectService @Inject()(
     userId: Int
   ): Future[Seq[UserInProjectResponse]] = {
     val action = for {
-      isUserInActiveProject <- projectRepository.isUserInActiveProject(
-        userId,
-        projectId
-      )
-      _ <- if (isUserInActiveProject) {
-        DBIO.successful(())
-      } else {
-        DBIO.failed(
-          AppException(
-            message = "Project not found",
-            statusCode = Status.NOT_FOUND
-          )
-        )
-      }
+      _ <- ensureUserInActiveProject(userId, projectId)
       members <- projectRepository.getAllMembersInProject(projectId)
     } yield members
     db.run(action)
   }
 
-  def getProjectById(projectId: Int,
-                     userId: Int): Future[Option[ProjectResponse]] = {
+  def getProjectDetailById(
+    projectId: Int,
+    userId: Int
+  ): Future[Option[ProjectDetailResponse]] = {
     val action = for {
-      isUserInActiveProject <- projectRepository.isUserInProject(
-        userId,
-        projectId
-      )
-      _ <- if (isUserInActiveProject) {
-        DBIO.successful(())
-      } else {
-        DBIO.failed(
-          AppException(
-            message = "Project not found",
-            statusCode = Status.NOT_FOUND
-          )
-        )
+      _ <- ensureUserInActiveProject(userId, projectId)
+      projectOpt <- projectRepository.findProjectBasicInfo(projectId)
+      resultOpt <- projectOpt match {
+        case Some((id, name, status)) =>
+          for {
+            columns <- columnRepository.findActiveColumnsByProject(projectId)
+            members <- projectRepository.getAllMembersInProject(projectId)
+            rankedTasks <- taskRepository.findLimitedActiveTasksByProject(
+              projectId
+            )
+            allUserTasks <- taskRepository.findUserTaskByTaskIds(
+              rankedTasks.map(_._1).toSet
+            )
+          } yield
+            Some(
+              ProjectDetailResponse.build(id, name, status, columns, members, rankedTasks, allUserTasks)
+            )
+
+        case None =>
+          DBIO.successful(None)
       }
-      project <- projectRepository.findById(projectId)
-    } yield project
-    db.run(action)
+    } yield resultOpt
+
+    db.run(action.transactionally)
   }
+
+  private def ensureUserInActiveProject(userId: Int,
+                                        projectId: Int): DBIO[Unit] =
+    projectRepository.isUserInActiveProject(userId, projectId).flatMap {
+      case true => DBIO.successful(())
+      case false =>
+        DBIO.failed(AppException("Project not found", Status.NOT_FOUND))
+    }
 
   def isUserInActiveProject(userId: Int, projectId: Int): Future[Boolean] = {
     db.run(projectRepository.isUserInActiveProject(userId, projectId))

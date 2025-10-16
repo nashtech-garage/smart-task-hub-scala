@@ -113,7 +113,7 @@ class ProjectController @Inject()(
   def getProjectById(projectId: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
       val userId = request.userToken.userId
-      projectService.getProjectById(projectId, userId).map { project =>
+      projectService.getProjectDetailById(projectId, userId).map { project =>
         val apiResponse =
           ApiResponse.success("Project retrieved", project)
         Ok(Json.toJson(apiResponse))

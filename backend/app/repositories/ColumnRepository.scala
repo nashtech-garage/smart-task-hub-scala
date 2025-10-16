@@ -54,12 +54,19 @@ class ColumnRepository @Inject()(
                 id = col.id.get,
                 name = col.name,
                 position = col.position,
-                taskIds = grouped.getOrElse(col.id.get, Seq.empty).map(_._2)
+                taskIds = grouped.getOrElse(col.id.get, Seq.empty).map(_._2),
+                totalTasks = grouped.getOrElse(col.id.get, Seq.empty).size
               )
             }
           }
       }
   }
+
+  def findActiveColumnsByProject(projectId: Int): DBIO[Seq[Column]] =
+    columns
+      .filter(c => c.projectId === projectId && c.status === ColumnStatus.active)
+      .sortBy(_.position.asc)
+      .result
 
   def update(column: UpdateColumnRequest, columnId: Int): DBIO[Int] = {
     columns
@@ -87,13 +94,6 @@ class ColumnRepository @Inject()(
     } yield (p.id, c.status)
 
     query.result.headOption
-  }
-
-  def findById(columnId: Int): DBIO[Option[Column]] = {
-    columns
-      .filter(c => c.id === columnId)
-      .result
-      .headOption
   }
 
   def findColumnIfUserInProject(columnId: Int, userId: Int): DBIO[Option[Column]] = {

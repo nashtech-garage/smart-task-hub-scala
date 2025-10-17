@@ -29,10 +29,10 @@ export const handleBoardWSMessage = (
       if (tempCol) {
         dispatch(columnReplaced({
           tempId: tempCol.id,
-          realColumn: { id: columnId, name, position, taskIds: [] }
+          realColumn: { id: columnId, name, position, taskIds: [], totalTasks: 0 }
         }));
       } else {
-        dispatch(columnCreated({ id: columnId, name, position, taskIds: [] }));
+        dispatch(columnCreated({ id: columnId, name, position, taskIds: [], totalTasks: 0 }));
       }
       break;
     }
@@ -135,11 +135,11 @@ export const handleBoardWSMessage = (
       console.log("Task moved", message);
       const { taskId, fromColumnId, toColumnId, newPosition } = message.payload;
       // if (!getState().columns.byId[toColumnId].taskIds.includes(taskId)) {
-        dispatch(taskReordered({ taskId, newPosition }));
-        dispatch(removeTaskFromColumn({ taskId, columnId: fromColumnId }));
-        const column = getState().columns.byId[toColumnId];
-        const index = column.taskIds.findIndex(id => getState().tasks.byId[id].position > newPosition);
-        dispatch(addTaskToColumn({ columnId: toColumnId, taskId, index: index === -1 ? -1 : index }));
+      dispatch(taskReordered({ taskId, newPosition }));
+      dispatch(removeTaskFromColumn({ taskId, columnId: fromColumnId }));
+      const column = getState().columns.byId[toColumnId];
+      const index = column.taskIds.findIndex(id => getState().tasks.byId[id].position > newPosition);
+      dispatch(addTaskToColumn({ columnId: toColumnId, taskId, index: index === -1 ? -1 : index }));
       // }
       break;
     }

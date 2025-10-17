@@ -13,6 +13,15 @@ export interface Board {
     status: "active" | "completed" | "deleted" | undefined
 }
 
+export interface BoardDetail {
+    id: number;
+    name: string;
+    status: "active" | "completed" | "deleted" | undefined;
+    columns: Column[];
+    tasks: Task[];
+    members: Member[];
+}
+
 export interface Item {
     id: number;
     name: string;
@@ -39,6 +48,7 @@ export interface Column {
     position: number;
     name: string;
     taskIds: number[];
+    totalTasks: number;
 }
 
 export interface ColumnsState {

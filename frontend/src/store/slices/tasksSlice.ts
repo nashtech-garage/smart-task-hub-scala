@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Task, TaskDetail, TasksState } from "@/types";
+import { normalizeTasks } from "@/utils/normalize";
 
 const initialState: TasksState = {
   byId: {},
@@ -10,8 +11,8 @@ const tasksSlice = createSlice({
   name: "tasks",
   initialState,
   reducers: {
-    setTasks: (state, action: PayloadAction<TasksState>) => {
-      return action.payload;
+    setTasks: (state, action: PayloadAction<Task[]>) => {
+      return normalizeTasks(action.payload);
     },
     taskCreated: (state, action: PayloadAction<Task>) => {
       const task = action.payload;
@@ -86,6 +87,15 @@ const tasksSlice = createSlice({
         task.position = newPosition;
       }
     },
+
+    appendTaskList: (state, action: PayloadAction<Task[]>) => {
+      const tasks = action.payload;
+      tasks.forEach(task => {
+        state.byId[task.id] = task;
+        state.allIds.push(task.id);
+      });
+    },
+
   }
 });
 
@@ -98,6 +108,7 @@ export const {
   taskRestored,
   assignedMemberToTask,
   removeMemberFromTask,
-  taskReordered
+  taskReordered,
+  appendTaskList
 } = tasksSlice.actions;
 export default tasksSlice.reducer;

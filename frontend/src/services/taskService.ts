@@ -67,6 +67,12 @@ const taskService = {
             columnId,
             position
         })
+    },
+
+    getTaskByColumnId(projectId: number, columnId: number, pageParams: { page: number, limit: number }): Promise<ApiResponse<Task[]>> {
+        return axiosClients.get(`${projectUrl}/${projectId}/${columnUrl}/${columnId}/${taskUrl}`, {
+            params: pageParams
+        })
     }
 
 }

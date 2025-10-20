@@ -1,5 +1,6 @@
 package services
 
+import cache.{TaskCacheManager, TasksInColumnCacheKey}
 import dto.request.task.{CreateTaskRequest, UpdateTaskPositionRequest, UpdateTaskRequest}
 import dto.response.task.{TaskDetailResponse, TaskSearchResponse, TaskSummaryResponse}
 import dto.websocket.OutgoingMessage
@@ -25,7 +26,8 @@ class TaskService @Inject()(taskRepository: TaskRepository,
                             columnRepository: ColumnRepository,
                             protected val dbConfigProvider: DatabaseConfigProvider,
                             broadcastService: BroadcastService,
-                            projectRepository: ProjectRepository
+                            projectRepository: ProjectRepository,
+                            taskCacheManager: TaskCacheManager
                            )(implicit ec: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile] {
 
   import profile.api._
@@ -67,6 +69,9 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     result.onComplete(res => {
       res.map {
         case (taskId, projectId) =>
+            // Invalidate cache for the column since a new task is added
+          taskCacheManager.invalidateColumn(columnId)
+
           val message = TaskCreated(
             TaskCreatedPayload(
             taskId = taskId,
@@ -110,6 +115,8 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     val result = db.run(action.transactionally)
     result.onComplete {
       case Success((task, project)) =>
+        // Invalidate cache for the column since the task is updated
+        taskCacheManager.invalidateColumn(task.columnId)
         val message = TaskUpdated(TaskUpdatedPayload(
           taskId = task.id.get,
           columnId = task.columnId,
@@ -236,7 +243,6 @@ class TaskService @Inject()(taskRepository: TaskRepository,
         )
       }
 
-      // assign vào task
       rowsAffected <- taskRepository.assignMemberToTask(taskId, userId, Some(assignedBy))
     } yield rowsAffected
 
@@ -260,14 +266,14 @@ class TaskService @Inject()(taskRepository: TaskRepository,
 
       deletionCheck <- taskRepository.unassignMemberFromTask(taskId, userId)
       _ <- deletionCheck match {
-        case 1 => {
+        case 1 =>
           val unassignedMemberFromTaskMessage = MemberUnassignedFromTask(MemberUnassignedFromTaskPayload(
             taskId,
             userId)
           )
           broadcastService.broadcastToProject(projectId, unassignedMemberFromTaskMessage)
           DBIO.successful(())
-        }
+
         case 0 => DBIO.failed(AppException(
           message = s"User with ID $userId is not in the project or not assigned to the task",
           statusCode = Status.BAD_REQUEST)
@@ -301,32 +307,49 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     }
   }
 
-  def getActiveTasksInColumn(
-                              projectId: Int,
-                              columnId: Int,
-                              userId: Int,
-                              limit: Int,
-                              page: Int
-                            ): Future[Seq[TaskSummaryResponse]] = {
+  def getActiveTasksInColumn(projectId: Int,
+                             columnId: Int,
+                             userId: Int,
+                             limit: Int,
+                             page: Int): Future[Seq[TaskSummaryResponse]] = {
 
-    val action = for {
-      isUserInActiveProject <- projectRepository.isUserInActiveProject(
-        userId,
-        projectId
-      )
-      result <- if (isUserInActiveProject) {
-        taskRepository.findActiveTaskByColumnId(columnId, limit, (page - 1) * limit)
-      } else {
-        DBIO.failed(
-          AppException(
-            message = s"Project not found",
-            statusCode = Status.NOT_FOUND
-          )
+    val offset = (page - 1) * limit
+    val cacheKey = TasksInColumnCacheKey(columnId, limit, offset)
+
+    taskCacheManager.getInColumn(cacheKey) match {
+      case Some(cachedTasks) =>
+        Logger("application").debug(
+          s"Cache HIT for column $columnId, limit $limit, offset $offset"
         )
-      }
-    } yield result
+        Future.successful(cachedTasks)
 
-    db.run(action)
+      case None =>
+        Logger("application").debug(
+          s"Cache MISS for column $columnId, limit $limit, offset $offset"
+        )
+
+        val action = for {
+          isUserInActiveProject <- projectRepository.isUserInActiveProject(
+            userId,
+            projectId
+          )
+          result <- if (isUserInActiveProject) {
+            taskRepository.findActiveTaskByColumnId(columnId, limit, offset)
+          } else {
+            DBIO.failed(
+              AppException(
+                message = s"Project not found",
+                statusCode = Status.NOT_FOUND
+              )
+            )
+          }
+        } yield result
+
+        db.run(action).map { tasks =>
+          taskCacheManager.put(cacheKey, tasks)
+          tasks
+        }
+    }
   }
 
   def searchTasks(

@@ -1,11 +1,21 @@
 package controllers
 
-import dto.request.task.{AssignMemberRequest, CreateTaskRequest, UpdateTaskPositionRequest, UpdateTaskRequest}
+import dto.request.task.{
+  AssignMemberRequest,
+  CreateTaskRequest,
+  UpdateTaskPositionRequest,
+  UpdateTaskRequest
+}
 import dto.response.ApiResponse
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
+import play.api.mvc.{
+  Action,
+  AnyContent,
+  MessagesAbstractController,
+  MessagesControllerComponents
+}
 import services.TaskService
 import utils.WritesExtras.unitWrites
 import validations.ValidationHandler
@@ -148,7 +158,6 @@ class TaskController @Inject()(
 
   def getActiveTasksInProject(projectId: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
-      implicit val messages: Messages = request.messages
       val userId = request.userToken.userId
       taskService
         .getActiveTasksInProject(projectId, userId)
@@ -161,9 +170,11 @@ class TaskController @Inject()(
         }
     }
 
-  def getActiveTasksInColumn(projectId:Int, columnId: Int, limit: Int, page: Int): Action[AnyContent] =
+  def getActiveTasksInColumn(projectId: Int,
+                             columnId: Int,
+                             limit: Int,
+                             page: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
-      implicit val messages: Messages = request.messages
       val userId = request.userToken.userId
       taskService
         .getActiveTasksInColumn(projectId, columnId, userId, limit, page)
@@ -203,12 +214,17 @@ class TaskController @Inject()(
     authenticatedActionWithUser.async(parse.json) { request =>
       implicit val messages: Messages = request.messages
       val updatedBy = request.userToken.userId
-      handleJsonValidation[UpdateTaskPositionRequest](request.body) { updateTaskPositionDto =>
-        taskService
-          .updatePosition(taskId, updateTaskPositionDto, updatedBy)
-          .map { _ =>
-            Ok(Json.toJson(ApiResponse[Unit](s"Task position updated successfully")))
-          }
+      handleJsonValidation[UpdateTaskPositionRequest](request.body) {
+        updateTaskPositionDto =>
+          taskService
+            .updatePosition(taskId, updateTaskPositionDto, updatedBy)
+            .map { _ =>
+              Ok(
+                Json.toJson(
+                  ApiResponse[Unit](s"Task position updated successfully")
+                )
+              )
+            }
       }
     }
 

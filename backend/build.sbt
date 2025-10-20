@@ -17,6 +17,7 @@ lazy val root = (project in file("."))
         guice,
         caffeine,
         filters,
+        caffeine,
 
         "org.playframework" %% "play-slick" % playSlickVersion,
         "org.playframework" %% "play-slick-evolutions" % playSlickVersion,

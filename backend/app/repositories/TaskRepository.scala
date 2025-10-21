@@ -142,34 +142,46 @@ class TaskRepository@Inject()(
                                 limit: Int,
                                 offset: Int
                               ): DBIO[Seq[TaskSummaryResponse]] = {
-    val query = for {
-      (((t, c), p), utOpt) <- tasks
-        .join(columns).on(_.columnId === _.id)
-        .join(projects).on { case ((_, c), p) => c.projectId === p.id }
-        .joinLeft(userTasks).on { case (((t, _), _), ut) => ut.taskId === t.id }
-      if c.id === columnId &&
-        t.status === TaskStatus.active &&
-        c.status === ColumnStatus.active &&
-        p.status === ProjectStatus.active
-    } yield (t.id, t.name, t.position, t.columnId, t.updatedAt, utOpt.map(_.assignedTo))
 
-    query
-      .sortBy(_._3) // sort by position (t.position)
-      .drop(offset)
-      .take(limit)
-      .result
-      .map { rows =>
-        rows
-          .groupBy { case (id, name, pos, colId, updatedAt, _) =>
-            (id, name, pos, colId, updatedAt)
-          }
-          .map { case ((id, name, pos, colId, updatedAt), group) =>
-            val memberIds = group.flatMap(_._6).distinct
-            TaskSummaryResponse(id, name, pos, colId, memberIds, updatedAt)
-          }
-          .toSeq
-          .sortBy(_.position)
+    implicit val getTaskSummaryResult: GetResult[TaskSummaryResponse] =
+      GetResult { r =>
+        val id = r.nextInt()
+        val name = r.nextString()
+        val position = r.nextInt()
+        val columnId = r.nextInt()
+        val updatedAt = r.nextTimestamp().toInstant
+        val sqlArray = r.rs.getArray(6) // 6 is column member_ids
+        val memberIds =
+          if (sqlArray != null)
+            sqlArray.getArray.asInstanceOf[Array[Any]].map(_.toString.toInt).toSeq
+          else Seq.empty[Int]
+
+        TaskSummaryResponse(id, name, position, columnId, memberIds, updatedAt)
       }
+
+    sql"""
+    SELECT
+      t.id,
+      t.name,
+      t.position,
+      t.column_id,
+      t.updated_at,
+      COALESCE(array_agg(DISTINCT ut.assigned_to)
+               FILTER (WHERE ut.assigned_to IS NOT NULL), '{}') AS member_ids
+    FROM tasks t
+    JOIN columns c ON t.column_id = c.id
+    JOIN projects p ON c.project_id = p.id
+    LEFT JOIN user_tasks ut ON ut.task_id = t.id
+    WHERE
+      c.id = $columnId AND
+      t.status = 'active' AND
+      c.status = 'active' AND
+      p.status = 'active'
+    GROUP BY t.id, t.name, t.position, t.column_id, t.updated_at
+    ORDER BY t.position
+    OFFSET $offset
+    LIMIT $limit
+  """.as[TaskSummaryResponse]
   }
 
   implicit val getTaskResult

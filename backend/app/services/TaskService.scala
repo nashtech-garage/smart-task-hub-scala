@@ -318,16 +318,9 @@ class TaskService @Inject()(taskRepository: TaskRepository,
 
     taskCacheManager.getInColumn(cacheKey) match {
       case Some(cachedTasks) =>
-        Logger("application").debug(
-          s"Cache HIT for column $columnId, limit $limit, offset $offset"
-        )
         Future.successful(cachedTasks)
 
       case None =>
-        Logger("application").debug(
-          s"Cache MISS for column $columnId, limit $limit, offset $offset"
-        )
-
         val action = for {
           isUserInActiveProject <- projectRepository.isUserInActiveProject(
             userId,

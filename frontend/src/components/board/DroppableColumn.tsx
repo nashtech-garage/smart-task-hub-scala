@@ -55,9 +55,11 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
             page: pageParam,
             limit,
         });
-        dispatch(addTaskListToColumn({ columnId: column.id, taskIds: res.data.map(t => t.id) }))
-        dispatch(appendTaskList(res.data));
-        return res.data;
+        const taskList = res.data.filter(t => !column.taskIds.includes(t.id));
+        if (taskList.length === 0) return [];
+        dispatch(addTaskListToColumn({ columnId: column.id, taskIds: taskList.map(t => t.id) }))
+        dispatch(appendTaskList(taskList));
+        return taskList;
     };
 
     const {
@@ -71,9 +73,10 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         initialPageParam: 2,
         getNextPageParam: (lastPage, allPages, lastPageParam) => {
             const loadedTasks = allPages.flatMap(p => p).length;
+            if (lastPage.length < limit) return undefined;
             return loadedTasks < column.totalTasks ? lastPageParam + 1 : undefined;
         },
-
+        enabled: column.totalTasks > limit
     });
 
     const style = {
@@ -97,6 +100,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
     }, [itemIds]);
 
     useEffect(() => {
+        if (column.totalTasks <= limit) return;
         const lastItem = virtualItems[virtualItems.length - 1]
         if (
             !hasNextPage ||
@@ -106,7 +110,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         )
             return
 
-        fetchNextPage()
+        fetchNextPage();
     }, [virtualItems, hasNextPage, isFetchingNextPage, column, fetchNextPage])
 
     console.log('Rendering DroppableColumn:', column.id, column.name);

@@ -1,8 +1,16 @@
 package services
 
-import cache.{TaskCacheManager, TasksInColumnCacheKey}
-import dto.request.task.{CreateTaskRequest, UpdateTaskPositionRequest, UpdateTaskRequest}
-import dto.response.task.{TaskDetailResponse, TaskSearchResponse, TaskSummaryResponse}
+import cache.TaskCacheManager
+import dto.request.task.{
+  CreateTaskRequest,
+  UpdateTaskPositionRequest,
+  UpdateTaskRequest
+}
+import dto.response.task.{
+  TaskDetailResponse,
+  TaskSearchResponse,
+  TaskSummaryResponse
+}
 import dto.websocket.OutgoingMessage
 import dto.websocket.board.messageTypes._
 import exception.AppException
@@ -22,13 +30,15 @@ import scala.concurrent.{ExecutionContext, Future}
 import scala.util.Success
 
 @Singleton
-class TaskService @Inject()(taskRepository: TaskRepository,
-                            columnRepository: ColumnRepository,
-                            protected val dbConfigProvider: DatabaseConfigProvider,
-                            broadcastService: BroadcastService,
-                            projectRepository: ProjectRepository,
-                            taskCacheManager: TaskCacheManager
-                           )(implicit ec: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile] {
+class TaskService @Inject()(
+  taskRepository: TaskRepository,
+  columnRepository: ColumnRepository,
+  protected val dbConfigProvider: DatabaseConfigProvider,
+  broadcastService: BroadcastService,
+  projectRepository: ProjectRepository,
+  taskCacheManager: TaskCacheManager
+)(implicit ec: ExecutionContext)
+    extends HasDatabaseConfigProvider[JdbcProfile] {
 
   import profile.api._
 
@@ -69,15 +79,13 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     result.onComplete(res => {
       res.map {
         case (taskId, projectId) =>
-            // Invalidate cache for the column since a new task is added
-          taskCacheManager.invalidateColumn(columnId)
-
           val message = TaskCreated(
             TaskCreatedPayload(
-            taskId = taskId,
-            columnId = columnId,
-            name = request.name,
-            taskPosition = request.position)
+              taskId = taskId,
+              columnId = columnId,
+              name = request.name,
+              taskPosition = request.position
+            )
           )
           broadcastService.broadcastToProject(projectId, message)
       }
@@ -85,16 +93,21 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     result.map(_._1)
   }
 
-  def updateTask(taskId: Int, req: UpdateTaskRequest, updatedBy: Int): Future[Task] = {
+  def updateTask(taskId: Int,
+                 req: UpdateTaskRequest,
+                 updatedBy: Int): Future[Task] = {
     val action = for {
       (task, projectId) <- getTaskAndProjectByTaskId(taskId, updatedBy)
 
       _ <- if (task.status == models.Enums.TaskStatus.active) {
         DBIO.successful(())
       } else {
-        DBIO.failed(AppException(
-          message = s"Task with ID $taskId does not exist or is not active",
-          statusCode = Status.NOT_FOUND))
+        DBIO.failed(
+          AppException(
+            message = s"Task with ID $taskId does not exist or is not active",
+            statusCode = Status.NOT_FOUND
+          )
+        )
       }
 
       updatedTask = task.copy(
@@ -116,12 +129,14 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     result.onComplete {
       case Success((task, project)) =>
         // Invalidate cache for the column since the task is updated
-        taskCacheManager.invalidateColumn(task.columnId)
-        val message = TaskUpdated(TaskUpdatedPayload(
-          taskId = task.id.get,
-          columnId = task.columnId,
-          taskPosition = task.position,
-          detail = TaskMapper.toDetailResponse(task))
+        taskCacheManager.updateTaskFields(task)
+        val message = TaskUpdated(
+          TaskUpdatedPayload(
+            taskId = task.id.get,
+            columnId = task.columnId,
+            taskPosition = task.position,
+            detail = TaskMapper.toDetailResponse(task)
+          )
         )
         broadcastService.broadcastToProject(project, message)
       case _ => Logger("application").error("Failed to broadcast task update")
@@ -129,16 +144,39 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     result.map { case (task, _) => task }
   }
 
-  def getTaskDetailById(taskId: Int, userId: Int): Future[Option[TaskDetailResponse]] = {
+  def getTaskDetailById(taskId: Int,
+                        userId: Int): Future[Option[TaskDetailResponse]] = {
     val action = for {
-      (task, _)        <- getTaskAndProjectByTaskId(taskId, userId)
-      assignedMembers  <- taskRepository.findAssignedMembers(taskId)
+      (task, _) <- getTaskAndProjectByTaskId(taskId, userId)
+      assignedMembers <- taskRepository.findAssignedMembers(taskId)
     } yield (task, assignedMembers)
 
     db.run(action.transactionally).map {
       case (task, assignedMembers) =>
-        Some(TaskMapper.toDetailWithAssignMembersResponse(task, assignedMembers))
+        Some(
+          TaskMapper.toDetailWithAssignMembersResponse(task, assignedMembers)
+        )
     }
+  }
+
+  private def getTaskAndProjectByTaskId(taskId: Int,
+                                        userId: Int): DBIO[(Task, Int)] = {
+    for {
+      taskOpt <- taskRepository.findTaskAndProjectIdIfUserInProject(
+        taskId,
+        userId
+      )
+      result <- taskOpt match {
+        case Some((t, pi)) => DBIO.successful(t, pi)
+        case _ =>
+          DBIO.failed(
+            AppException(
+              message = s"Task with ID $taskId does not exist",
+              statusCode = Status.NOT_FOUND
+            )
+          )
+      }
+    } yield result
   }
 
   def archiveTask(taskId: Int, userId: Int): Future[Task] = {
@@ -148,12 +186,14 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       validFrom = Set(TaskStatus.active),
       next = TaskStatus.archived,
       errorMsg = "Only active tasks can be archived",
-      broadcastMessage = TaskStatusUpdated(TaskStatusUpdatedPayload(
-        taskId = taskId,
-        columnId = 0, // Placeholder, actual columnId should be fetched if needed
-        taskPosition = 0, // Placeholder, actual position should be fetched if needed
-        name = "",
-        updatedStatus = TaskStatus.archived)
+      broadcastMessage = TaskStatusUpdated(
+        TaskStatusUpdatedPayload(
+          taskId = taskId,
+          columnId = 0, // Placeholder, actual columnId should be fetched if needed
+          taskPosition = 0, // Placeholder, actual position should be fetched if needed
+          name = "",
+          updatedStatus = TaskStatus.archived
+        )
       )
     )
   }
@@ -165,14 +205,58 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       validFrom = Set(TaskStatus.archived),
       next = TaskStatus.active,
       errorMsg = "Only archived tasks can be restored",
-      broadcastMessage = TaskStatusUpdated(TaskStatusUpdatedPayload(
-        taskId = taskId,
-        columnId = 0, // Placeholder, actual columnId should be fetched if needed
-        taskPosition = 0, // Placeholder, actual position should be fetched if needed
-        name = "",
-        updatedStatus = TaskStatus.active)
+      broadcastMessage = TaskStatusUpdated(
+        TaskStatusUpdatedPayload(
+          taskId = taskId,
+          columnId = 0, // Placeholder, actual columnId should be fetched if needed
+          taskPosition = 0, // Placeholder, actual position should be fetched if needed
+          name = "",
+          updatedStatus = TaskStatus.active
+        )
       )
     )
+  }
+
+  private def changeStatus(taskId: Int,
+                           userId: Int,
+                           validFrom: Set[TaskStatus],
+                           next: TaskStatus,
+                           errorMsg: String,
+                           broadcastMessage: OutgoingMessage): Future[Task] = {
+    val action = for {
+      (task, projectId) <- getTaskAndProjectByTaskId(taskId, userId)
+      _ <- if (validFrom.contains(task.status)) {
+        taskRepository.update(
+          task.copy(
+            status = next,
+            updatedBy = Some(userId),
+            updatedAt = Instant.now()
+          )
+        )
+      } else {
+        DBIO.failed(AppException(errorMsg, Status.BAD_REQUEST))
+      }
+    } yield (task, projectId)
+
+    val result = db.run(action)
+    result.onComplete {
+      case Success((task, project)) =>
+        val message = broadcastMessage match {
+          case msg: TaskStatusUpdated =>
+            msg.copy(
+              payload = msg.payload.copy(
+                columnId = task.columnId,
+                taskPosition = task.position,
+                name = task.name
+              )
+            )
+          case other => other
+        }
+        broadcastService.broadcastToProject(project, message)
+      case _ =>
+        Logger("application").error("Failed to broadcast task status change")
+    }
+    result.map { case (task, _) => task }
   }
 
   def deleteTask(taskId: Int, userId: Int): Future[Task] = {
@@ -182,17 +266,20 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       validFrom = Set(TaskStatus.archived),
       next = TaskStatus.deleted,
       errorMsg = "Only archived tasks can be deleted",
-      broadcastMessage = TaskStatusUpdated(TaskStatusUpdatedPayload(
-        taskId = taskId,
-        columnId = 0, // Placeholder, actual columnId should be fetched if needed
-        taskPosition = 0, // Placeholder, actual position should be fetched if needed
-        name = "", // Placeholder, actual name should be fetched if needed
-        updatedStatus = TaskStatus.deleted)
+      broadcastMessage = TaskStatusUpdated(
+        TaskStatusUpdatedPayload(
+          taskId = taskId,
+          columnId = 0, // Placeholder, actual columnId should be fetched if needed
+          taskPosition = 0, // Placeholder, actual position should be fetched if needed
+          name = "", // Placeholder, actual name should be fetched if needed
+          updatedStatus = TaskStatus.deleted
+        )
       )
     )
   }
 
-  def getArchivedTask(projectId: Int, userId: Int): Future[Seq[TaskSummaryResponse]] = {
+  def getArchivedTask(projectId: Int,
+                      userId: Int): Future[Seq[TaskSummaryResponse]] = {
     val action = for {
       isUserInActiveProject <- projectRepository.isUserInActiveProject(
         userId,
@@ -215,43 +302,65 @@ class TaskService @Inject()(taskRepository: TaskRepository,
     }
   }
 
-  def assignMemberToTask(projectId: Int, taskId: Int, userId: Int, assignedBy: Int): Future[Int] = {
+  def assignMemberToTask(projectId: Int,
+                         taskId: Int,
+                         userId: Int,
+                         assignedBy: Int): Future[Int] = {
     val action = for {
       (task, projectId) <- getTaskAndProjectByTaskId(taskId, assignedBy)
 
       _ <- if (task.status == models.Enums.TaskStatus.active) {
         DBIO.successful(())
       } else {
-        DBIO.failed(AppException(
-          message = s"Task with ID $taskId does not exist or is not active",
-          statusCode = Status.NOT_FOUND))
-      }
-
-      userCheckOpt <- taskRepository.findUserInProjectNotAssigned(userId, taskId)
-      _ <- userCheckOpt match {
-        case Some(_) => {
-          val assignedMemberToTaskMessage = MemberAssignedToTask(MemberAssignedToTaskPayload(
-            taskId,
-            userCheckOpt.get)
+        DBIO.failed(
+          AppException(
+            message = s"Task with ID $taskId does not exist or is not active",
+            statusCode = Status.NOT_FOUND
           )
-          broadcastService.broadcastToProject(projectId, assignedMemberToTaskMessage)
-          DBIO.successful(())
-        }
-        case None => DBIO.failed(AppException(
-          message = s"User with ID $userId is not in the project or already assigned",
-          statusCode = Status.NOT_FOUND)
         )
       }
 
-      rowsAffected <- taskRepository.assignMemberToTask(taskId, userId, Some(assignedBy))
+      userCheckOpt <- taskRepository.findUserInProjectNotAssigned(
+        userId,
+        taskId
+      )
+      _ <- userCheckOpt match {
+        case Some(_) => {
+          val assignedMemberToTaskMessage = MemberAssignedToTask(
+            MemberAssignedToTaskPayload(taskId, userCheckOpt.get)
+          )
+          broadcastService.broadcastToProject(
+            projectId,
+            assignedMemberToTaskMessage
+          )
+          DBIO.successful(())
+        }
+        case None =>
+          DBIO.failed(
+            AppException(
+              message =
+                s"User with ID $userId is not in the project or already assigned",
+              statusCode = Status.NOT_FOUND
+            )
+          )
+      }
+
+      rowsAffected <- taskRepository.assignMemberToTask(
+        taskId,
+        userId,
+        Some(assignedBy)
+      )
     } yield rowsAffected
 
     db.run(action)
   }
 
-  def unassignMemberFromTask(projectId:Int, taskId: Int, userId: Int, unassignedBy: Int): Future[Int] = {
+  def unassignMemberFromTask(projectId: Int,
+                             taskId: Int,
+                             userId: Int,
+                             unassignedBy: Int): Future[Int] = {
     val action = for {
-      isUserInProject    <- projectRepository.isUserInActiveProject(
+      isUserInProject <- projectRepository.isUserInActiveProject(
         unassignedBy,
         projectId
       )
@@ -259,32 +368,43 @@ class TaskService @Inject()(taskRepository: TaskRepository,
       _ <- if (isUserInProject) {
         DBIO.successful(())
       } else {
-        DBIO.failed(AppException(
-          message = s"You do not have permission to unassign members from this task",
-          statusCode = Status.FORBIDDEN))
+        DBIO.failed(
+          AppException(
+            message =
+              s"You do not have permission to unassign members from this task",
+            statusCode = Status.FORBIDDEN
+          )
+        )
       }
 
       deletionCheck <- taskRepository.unassignMemberFromTask(taskId, userId)
       _ <- deletionCheck match {
         case 1 =>
-          val unassignedMemberFromTaskMessage = MemberUnassignedFromTask(MemberUnassignedFromTaskPayload(
-            taskId,
-            userId)
+          val unassignedMemberFromTaskMessage = MemberUnassignedFromTask(
+            MemberUnassignedFromTaskPayload(taskId, userId)
           )
-          broadcastService.broadcastToProject(projectId, unassignedMemberFromTaskMessage)
+          broadcastService.broadcastToProject(
+            projectId,
+            unassignedMemberFromTaskMessage
+          )
           DBIO.successful(())
 
-        case 0 => DBIO.failed(AppException(
-          message = s"User with ID $userId is not in the project or not assigned to the task",
-          statusCode = Status.BAD_REQUEST)
-        )
+        case 0 =>
+          DBIO.failed(
+            AppException(
+              message =
+                s"User with ID $userId is not in the project or not assigned to the task",
+              statusCode = Status.BAD_REQUEST
+            )
+          )
       }
     } yield deletionCheck
 
     db.run(action)
   }
 
-  def getActiveTasksInProject(projectId: Int, userId: Int): Future[Seq[TaskSummaryResponse]] = {
+  def getActiveTasksInProject(projectId: Int,
+                              userId: Int): Future[Seq[TaskSummaryResponse]] = {
     val action = for {
       isUserInActiveProject <- projectRepository.isUserInActiveProject(
         userId,
@@ -311,56 +431,68 @@ class TaskService @Inject()(taskRepository: TaskRepository,
                              columnId: Int,
                              userId: Int,
                              limit: Int,
-                             page: Int): Future[Seq[TaskSummaryResponse]] = {
+                             offset: Int): Future[Seq[TaskSummaryResponse]] = {
 
-    val offset = (page - 1) * limit
-    val cacheKey = TasksInColumnCacheKey(columnId, limit, offset)
-
-    taskCacheManager.getInColumn(cacheKey) match {
+    taskCacheManager.getTasks(columnId, offset, limit).flatMap {
       case Some(cachedTasks) =>
         Future.successful(cachedTasks)
 
       case None =>
         val action = for {
-          isUserInActiveProject <- projectRepository.isUserInActiveProject(
-            userId,
-            projectId
-          )
-          result <- if (isUserInActiveProject) {
+          isUserInActiveProject <- projectRepository
+            .isUserInActiveProject(userId, projectId)
+          tasks <- if (isUserInActiveProject) {
             taskRepository.findActiveTaskByColumnId(columnId, limit, offset)
           } else {
             DBIO.failed(
               AppException(
-                message = s"Project not found",
+                message = "Project not found",
                 statusCode = Status.NOT_FOUND
               )
             )
           }
-        } yield result
+        } yield tasks
 
-        db.run(action).map { tasks =>
-          taskCacheManager.put(cacheKey, tasks)
-          tasks
+        db.run(action).flatMap { tasks =>
+          taskCacheManager.addTasksToColumn(columnId, tasks).map(_ => tasks)
         }
     }
   }
 
-  def searchTasks(
-                   projectIds: Option[Seq[Int]],
-                   keyword: Option[String],
-                   page: Int,
-                   size: Int,
-                   userId: Int
-                 ): Future[Seq[TaskSearchResponse]] = {
+  def searchTasks(projectIds: Option[Seq[Int]],
+                  keyword: Option[String],
+                  page: Int,
+                  size: Int,
+                  userId: Int): Future[Seq[TaskSearchResponse]] = {
 
-    val query = taskRepository.search(projectIds, keyword, userId)
+    val query = taskRepository
+      .search(projectIds, keyword, userId)
       .drop((page - 1) * size)
       .take(size)
 
-    db.run(query.result).map(_.map {
-      case (taskId, taskName, taskDesc, taskStatus, projectId, projectName, columnName, updatedAt) =>
-        TaskSearchResponse(taskId, taskName, taskDesc, taskStatus, projectId, projectName, columnName, updatedAt)
-    })
+    db.run(query.result)
+      .map(_.map {
+        case (
+            taskId,
+            taskName,
+            taskDesc,
+            taskStatus,
+            projectId,
+            projectName,
+            columnName,
+            updatedAt
+            ) =>
+          TaskSearchResponse(
+            taskId,
+            taskName,
+            taskDesc,
+            taskStatus,
+            projectId,
+            projectName,
+            columnName,
+            updatedAt
+          )
+      })
   }
 
   def updatePosition(taskId: Int, req: UpdateTaskPositionRequest, userId: Int): Future[Int] = {
@@ -388,60 +520,13 @@ class TaskService @Inject()(taskRepository: TaskRepository,
             statusCode = Status.BAD_REQUEST
           ))
       }
-    } yield updatedRows
-    db.run(action.transactionally)
-  }
-
-  private def changeStatus(taskId: Int,
-                           userId: Int,
-                           validFrom: Set[TaskStatus],
-                           next: TaskStatus,
-                           errorMsg: String,
-                           broadcastMessage: OutgoingMessage
-                          ): Future[Task] = {
-    val action = for {
-      (task, projectId) <- getTaskAndProjectByTaskId(taskId, userId)
-      _ <- if (validFrom.contains(task.status)) {
-        taskRepository.update(task.copy(
-          status = next,
-          updatedBy = Some(userId),
-          updatedAt = Instant.now()
-        ))
-      } else {
-        DBIO.failed(AppException(errorMsg, Status.BAD_REQUEST))
-      }
     } yield (task, projectId)
-
-    val result = db.run(action)
-    result.onComplete {
-      case Success((task, project)) =>
-        val message = broadcastMessage match {
-          case msg: TaskStatusUpdated =>
-            msg.copy(
-              payload = msg.payload.copy(
-                columnId = task.columnId,
-                taskPosition = task.position,
-                name = task.name
-              )
-            )
-          case other => other
-        }
-        broadcastService.broadcastToProject(project, message)
-      case _ => Logger("application").error("Failed to broadcast task status change")
+    db.run(action.transactionally).flatMap { case (task, projectId) =>
+      taskCacheManager.updateTaskPosition(
+        newColumnId = req.columnId,
+        taskId = taskId,
+        newPosition = req.position
+      ).map(_ => 1)
     }
-    result.map { case (task, _) => task }
-  }
-
-  private def getTaskAndProjectByTaskId(taskId: Int, userId: Int): DBIO[(Task, Int)] = {
-    for {
-      taskOpt <- taskRepository.findTaskAndProjectIdIfUserInProject(taskId, userId)
-      result <- taskOpt match {
-        case Some((t, pi)) => DBIO.successful(t, pi)
-        case _ => DBIO.failed(AppException(
-          message = s"Task with ID $taskId does not exist",
-          statusCode = Status.NOT_FOUND)
-        )
-      }
-    } yield result
   }
 }

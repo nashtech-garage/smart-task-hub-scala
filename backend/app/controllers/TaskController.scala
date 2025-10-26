@@ -1,5 +1,7 @@
 package controllers
 
+import cache.TaskCacheManager
+import constants.CacheKeys.userProjectKey
 import dto.request.task.{
   AssignMemberRequest,
   CreateTaskRequest,
@@ -7,6 +9,7 @@ import dto.request.task.{
   UpdateTaskRequest
 }
 import dto.response.ApiResponse
+import play.api.cache.AsyncCacheApi
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json}
@@ -14,18 +17,21 @@ import play.api.mvc.{
   Action,
   AnyContent,
   MessagesAbstractController,
-  MessagesControllerComponents
+  MessagesControllerComponents,
+  Result
 }
 import services.TaskService
 import utils.WritesExtras.unitWrites
 import validations.ValidationHandler
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class TaskController @Inject()(
   cc: MessagesControllerComponents,
   taskService: TaskService,
+  cache: AsyncCacheApi,
+  taskCacheManager: TaskCacheManager,
   authenticatedActionWithUser: AuthenticatedActionWithUser
 )(implicit ec: ExecutionContext)
     extends MessagesAbstractController(cc)
@@ -176,16 +182,53 @@ class TaskController @Inject()(
                              page: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
       val userId = request.userToken.userId
-      taskService
-        .getActiveTasksInColumn(projectId, columnId, userId, limit, page)
-        .map { tasks =>
-          Ok(
-            Json.toJson(
-              ApiResponse.success("Tasks retrieved successfully", tasks)
-            )
+      val offset = (page - 1) * limit
+      val userProjectCacheKey = userProjectKey(userId, projectId)
+
+      cache.get[Boolean](userProjectCacheKey).flatMap {
+        case Some(_) =>
+          getOrUpdateTasksFromCaffeine(
+            columnId,
+            limit,
+            offset,
+            projectId,
+            userId
           )
-        }
+
+        case None =>
+          taskService
+            .getActiveTasksInColumn(projectId, columnId, userId, limit, offset)
+            .map { tasks =>
+              cache.set(userProjectCacheKey, true)
+              Ok(
+                Json.toJson(
+                  ApiResponse.success("Tasks retrieved successfully", tasks)
+                )
+              )
+            }
+      }
     }
+
+  private def getOrUpdateTasksFromCaffeine(columnId: Int,
+                                           limit: Int,
+                                           offset: Int,
+                                           projectId: Int,
+                                           userId: Int): Future[Result] = {
+
+    val resultFut = taskCacheManager.getTasks(columnId, offset, limit).flatMap {
+      case Some(tasks) =>
+        Future.successful(tasks)
+      case None =>
+        taskService
+          .getActiveTasksInColumn(projectId, columnId, userId, limit, offset)
+    }
+
+    resultFut.map { tasks =>
+      Ok(
+        Json.toJson(ApiResponse.success("Tasks retrieved successfully", tasks))
+      )
+    }
+  }
 
   def search(page: Int,
              size: Int,

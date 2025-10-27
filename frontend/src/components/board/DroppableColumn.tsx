@@ -17,7 +17,7 @@ import { useInfiniteQuery } from '@tanstack/react-query'
 import { useVirtualizer } from "@tanstack/react-virtual";
 import taskService from '@/services/taskService';
 import { useDispatch } from 'react-redux';
-import { addTaskListToColumn } from '@/store/slices/columnsSlice';
+import { appendTaskListToColumn } from '@/store/slices/columnsSlice';
 import { appendTaskList } from '@/store/slices/tasksSlice';
 
 interface DroppableColumnProps {
@@ -57,7 +57,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         });
         const taskList = res.data.filter(t => !column.taskIds.includes(t.id));
         if (taskList.length === 0) return [];
-        dispatch(addTaskListToColumn({ columnId: column.id, taskIds: taskList.map(t => t.id) }))
+        dispatch(appendTaskListToColumn({ columnId: column.id, taskIds: taskList.map(t => t.id) }))
         dispatch(appendTaskList(taskList));
         return taskList;
     };
@@ -73,7 +73,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         initialPageParam: 2,
         getNextPageParam: (lastPage, allPages, lastPageParam) => {
             const loadedTasks = allPages.flatMap(p => p).length;
-            if (lastPage.length < limit) return undefined;
+            // if (lastPage.length < limit) return undefined;
             return loadedTasks < column.totalTasks ? lastPageParam + 1 : undefined;
         },
         enabled: column.totalTasks > limit

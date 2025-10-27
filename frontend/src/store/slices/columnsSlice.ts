@@ -63,6 +63,7 @@ const columnsSlice = createSlice({
     removeTaskFromColumn: (state, action: PayloadAction<{ taskId: number, columnId: number }>) => {
       const { taskId, columnId } = action.payload;
       state.byId[columnId].taskIds = state.byId[columnId].taskIds.filter(id => id !== taskId);
+      state.byId[columnId].totalTasks -= 1;
     },
     addTaskToColumn: (state, action: PayloadAction<{ columnId: number; taskId: number, index: number }>) => {
       const { columnId, taskId, index } = action.payload;
@@ -72,7 +73,7 @@ const columnsSlice = createSlice({
         column.totalTasks += 1;
       }
     },
-    addTaskListToColumn: (state, action: PayloadAction<{ columnId: number; taskIds: number[] }>) => {
+    appendTaskListToColumn: (state, action: PayloadAction<{ columnId: number; taskIds: number[] }>) => {
       const { columnId, taskIds } = action.payload;
       const column = state.byId[columnId];
       if (column) {
@@ -92,6 +93,6 @@ export const {
   columnReplaced,
   columnRestored,
   addTaskToColumn,
-  addTaskListToColumn
+  appendTaskListToColumn
 } = columnsSlice.actions;
 export default columnsSlice.reducer;

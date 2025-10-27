@@ -8,6 +8,9 @@ val postgresVersion = "42.7.3"
 val jacksonVersion = "2.14.3"
 val slickPgVersion   = "0.22.0"
 
+// Increase HTTP idle timeout for dev server
+PlayKeys.devSettings += "play.server.http.idleTimeout" -> "3600000"
+
 lazy val root = (project in file("."))
     .enablePlugins(PlayScala)
     .settings (

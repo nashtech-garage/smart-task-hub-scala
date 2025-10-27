@@ -195,7 +195,7 @@ const WorkspaceBoard = () => {
             else newPosition = 1000;
 
             try {
-                setDragLoading(true);
+                // setDragLoading(true);
                 await updateColumnPosititon(Number(boardId), activeIdNum, newPosition);
             } catch (err) {
                 console.error('updateColumnPosititon failed', err);
@@ -219,7 +219,7 @@ const WorkspaceBoard = () => {
             else newPosition = 1000;
 
             try {
-                setDragLoading(true);
+                // setDragLoading(true);
                 await taskService.updateTaskPosition(activeIdNum, targetCol.id, newPosition);
             } catch (err) {
                 console.error('updateColumnPosititon failed', err);
@@ -229,6 +229,7 @@ const WorkspaceBoard = () => {
         }
 
     };
+
 
     // ---------- Render ----------
     return (

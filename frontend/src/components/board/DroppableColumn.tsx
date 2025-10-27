@@ -70,7 +70,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
     } = useInfiniteQuery({
         queryKey: ['tasks', column.id],
         queryFn: fetchTasksByColumn,
-        initialPageParam: 2,
+        initialPageParam: 1,
         getNextPageParam: (lastPage, allPages, lastPageParam) => {
             const loadedTasks = allPages.flatMap(p => p).length;
             // if (lastPage.length < limit) return undefined;

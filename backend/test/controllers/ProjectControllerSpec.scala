@@ -231,5 +231,13 @@ class ProjectControllerSpec
       status(result) mustBe OK
       (contentAsJson(result) \ "message").as[String] mustBe "Projects retrieved"
     }
+    "export project data successfully" in {
+      val request = FakeRequest(GET, s"/api/projects/2/export")
+        .withCookies(Cookie(cookieName, fakeToken))
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] mustBe "Project export successfully"
+    }
   }
 }

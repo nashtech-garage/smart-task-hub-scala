@@ -37,6 +37,7 @@ GET    /api/projects/completed       controllers.ProjectController.getCompletedP
 GET    /api/projects/:projectId/members        controllers.ProjectController.getAllMembersInProject(projectId: Int)
 GET    /api/projects/:projectId        controllers.ProjectController.getProjectById(projectId: Int)
 GET    /api/projects    controllers.ProjectController.getProjectsByUser
+GET    /api/projects/:id/export   controllers.ProjectController.exportProject(id: Int)
 
 # Column routes
 POST   /api/projects/:projectId/columns    controllers.ColumnController.create(projectId: Int)

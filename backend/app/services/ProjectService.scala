@@ -1,11 +1,7 @@
 package services
 
 import dto.request.project.CreateProjectRequest
-import dto.response.project.{
-  ProjectDetailResponse,
-  ProjectResponse,
-  ProjectSummariesResponse
-}
+import dto.response.project.{ProjectDetailResponse, ProjectResponse, ProjectSummariesResponse}
 import dto.response.user.UserInProjectResponse
 import exception.AppException
 import mappers.ProjectMapper
@@ -14,13 +10,10 @@ import models.Enums.{ProjectStatus, ProjectVisibility}
 import models.entities.Project
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.http.Status
-import repositories.{
-  ColumnRepository,
-  ProjectRepository,
-  TaskRepository,
-  WorkspaceRepository
-}
+import play.api.libs.json.{JsValue, Json}
+import repositories.{ColumnRepository, ProjectRepository, TaskRepository, UserRepository, WorkspaceRepository}
 import slick.jdbc.JdbcProfile
+import utils.JsonFormats._
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
@@ -31,6 +24,7 @@ class ProjectService @Inject()(
   workspaceRepository: WorkspaceRepository,
   columnRepository: ColumnRepository,
   taskRepository: TaskRepository,
+    userRepository: UserRepository,
   protected val dbConfigProvider: DatabaseConfigProvider
 )(implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] {
@@ -227,6 +221,38 @@ class ProjectService @Inject()(
     db.run(projectRepository.getProjectsByUser(userId)).map {
       _.map(ProjectMapper.toProjectResponse)
     }
+  }
+
+  def exportProject(projectId: Int, userId: Int): Future[JsValue] = {
+    val action = for {
+      projectOpt <- projectRepository.findAccessibleProject(userId, projectId)
+      project <- projectOpt match {
+        case Some(p) => DBIO.successful(p)
+        case None    => DBIO.failed(AppException("Project not found", Status.NOT_FOUND))
+      }
+      columns <- columnRepository.findByProjectId(projectId)
+      tasks <- taskRepository.findByProjectId(projectId)
+      taskIds = tasks.flatMap(_.id)
+      userTasks <-
+        if (taskIds.nonEmpty) {userRepository.findUserTasksByTaskIds(taskIds)}
+        else {DBIO.successful(Seq.empty) }
+
+      userProjects <- userRepository.findUsersInProjectByProjectId(projectId)
+      userIds = (userTasks.map(_.assignedTo) ++ userProjects.map(_.userId)).distinct
+      users <-
+        if (userIds.nonEmpty) {userRepository.findPublicByIds(userIds)}
+        else {DBIO.successful(Seq.empty)}
+
+    } yield Json.obj(
+      "project" -> Json.toJson(project),
+      "columns" -> Json.toJson(columns),
+      "tasks" -> Json.toJson(tasks),
+      "userTasks" -> Json.toJson(userTasks),
+      "userProject" -> Json.toJson(userProjects),
+      "users" -> Json.toJson(users)
+    )
+
+    db.run(action)
   }
 
 }

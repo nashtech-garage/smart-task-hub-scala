@@ -67,9 +67,13 @@ const deleteColumn = async (columnId: number): Promise<ApiResponse<null>> => {
     return axiosClients.delete(`/columns/${columnId}`);
 };
 
+const exportBoard = async (boardId: number): Promise<ApiResponse<null>> => {
+    return axiosClients.get(`/projects/${boardId}/export`);
+};
+
 export {
     fetchUrlPreview, fetchBoardDetail, createNewColumn,
     updateColumn, archiveColumn, restoreColumn,
     deleteColumn, updateColumnPosititon, fetchBoardColumns,
-    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers, fetchAllBoards
+    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers, fetchAllBoards, exportBoard,
 };

@@ -1,10 +1,10 @@
 import { completedBoard } from '@/services/workspaceService';
 // import { Activity, Copy, EarthIcon, Eye, Folder, Globe, Image, Menu, Settings, Tag, Users, X } from 'lucide-react';
-import { Folder, Menu, X } from 'lucide-react';
+import { Download, Folder, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import ArchivedItemsModal from './ArchivedItemsModal';
-import { deleteColumn, restoreColumn } from '@/services/boardService';
+import { deleteColumn, exportBoard, restoreColumn } from '@/services/boardService';
 import { notify } from '@/services/toastService';
 import taskService from '@/services/taskService';
 import { useAppDispatch, useAppSelector, type RootState } from '@/store';
@@ -52,6 +52,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     const [showVisibility, setShowVisibility] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const [showArchivedItems, setShowArchivedItems] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
     const dispatch = useAppDispatch();
     const archivedColumns = useAppSelector(selectArchivedColumns);
     const archivedTasks = useAppSelector(selectArchivedTasks);
@@ -141,6 +142,39 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
         }
     };
 
+    const handleExportBoard = async () => {
+        if (isExporting) return;
+        try {
+            setIsExporting(true);
+            notify.info("Exporting data...");
+            const response = await exportBoard(Number(boardId));
+
+            // convert data 
+            const jsonString = JSON.stringify(response.data, null, 2);
+
+            // create blob from json
+            const blob = new Blob([jsonString], { type: "application/json" });
+
+            // create temporary link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${name}.json`;
+            document.body.appendChild(a);
+            a.click();
+
+            // clean up
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Export failed:", err);
+            notify.error("Failed to export board. Please try again!");
+        }
+        finally {
+            setIsExporting(false);
+        }
+    };
+
     return (
         <div className={`${isBoardClosed ? 'pointer-events-none opacity-60' : ''} h-[50px] flex items-center justify-between bg-[#28303E] p-4`}>
             <h1 className='text-xl font-bold text-white mb-2'>
@@ -210,21 +244,18 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                     <div className="p-2">
                                         {/* Main Menu Items */}
                                         {/* {menuItems.map((item, index) => (
-                                        <button
-                                            key={index}
-                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
-                                        >
-                                            <span className="mr-3 text-base text-white">{item.icon}</span>
-                                            <div className="flex-1">
-                                                <div className={`${item.color}`}>
-                                                    {item.label}
+                                            <button
+                                                key={index}
+                                                className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                            >
+                                                <span className="mr-3 text-base text-white">{item.icon}</span>
+                                                <div className="flex-1">
+                                                    <div className={`${item.color}`}>
+                                                        {item.label}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </button>
-                                    ))} */}
-
-                                        {/* Divider */}
-                                        <div className="border-t border-gray-600 my-2"></div>
+                                            </button>
+                                        ))} */}
 
                                         {/* Power-Ups Section */}
                                         <button
@@ -235,6 +266,18 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                             <div className="flex-1">
                                                 <div className='text-gray-300'>
                                                     Archived items
+                                                </div>
+                                            </div>
+                                        </button>
+
+                                        <button
+                                            onClick={handleExportBoard}
+                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                        >
+                                            <span className="mr-3 text-base text-white"><Download /></span>
+                                            <div className="flex-1">
+                                                <div className='text-gray-300'>
+                                                    Export as JSON
                                                 </div>
                                             </div>
                                         </button>

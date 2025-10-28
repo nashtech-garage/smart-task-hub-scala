@@ -23,6 +23,14 @@ class TaskRepository@Inject()(
   def create(task: Task): DBIO[Int] =
     tasks returning tasks.map(_.id) += task
 
+  def findByProjectId(projectId: Int): DBIO[Seq[Task]] = {
+    val q = for {
+      (t, c) <- tasks join columns on (_.columnId === _.id)
+      if c.projectId === projectId && t.status =!= TaskStatus.deleted
+    } yield t
+    q.result
+  }
+
   def existsByPositionAndActiveTrueInColumn(position: Int, columnId: Int): DBIO[Boolean] = {
     tasks
       .filter(t => t.position === position && t.columnId === columnId && t.status === TaskStatus.active)

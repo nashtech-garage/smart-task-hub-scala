@@ -129,4 +129,16 @@ class ProjectController @Inject()(
         Ok(Json.toJson(apiResponse))
       }
     }
+
+  def exportProject(projectId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+
+      projectService.exportProject(projectId, userId).map { jsonData =>
+        val apiResponse =
+          ApiResponse.success("Project export successfully", jsonData)
+
+        Ok(Json.toJson(apiResponse))
+      }
+    }
 }

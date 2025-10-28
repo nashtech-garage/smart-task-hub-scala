@@ -25,6 +25,9 @@ class ColumnRepository @Inject()(
     columns returning columns.map(_.id) += column
   }
 
+  def findByProjectId(projectId: Int): DBIO[Seq[Column]] =
+    columns.filter( c => c.projectId === projectId && c.status =!= ColumnStatus.deleted).result
+
   def exitsByPosition(projectId: Int, position: Int): DBIO[Boolean] = {
     columns
       .filter(c => c.projectId === projectId && c.position === position && c.status === ColumnStatus.active)

@@ -32,6 +32,18 @@ class ProjectRepository @Inject()(
   private val userProjects = TableQuery[UserProjectTable]
   private val workspaces = TableQuery[WorkspaceTable]
 
+  def findAccessibleProject(userId: Int, projectId: Int): DBIO[Option[Project]] = {
+    val query = for {
+      (p, up) <- projects
+        .join(userProjects).on(_.id === _.projectId)
+      if p.id === projectId &&
+        up.userId === userId &&
+        p.status =!= ProjectStatus.deleted
+    } yield p
+
+    query.result.headOption
+  }
+
   def existsByName(workspaceId: Int, name: String): DBIO[Boolean] = {
     projects
       .filter(

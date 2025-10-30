@@ -28,6 +28,7 @@ POST   /api/workspaces    controllers.WorkspaceController.create
 PUT    /api/workspaces/:id controllers.WorkspaceController.update(id: Int)
 
 # Project routes
+POST   /api/workspaces/:workspaceId/projects/import   controllers.ProjectController.uploadJsonFile(workspaceId: Int)
 POST   /api/workspaces/:workspaceId/projects    controllers.ProjectController.create(workspaceId: Int)
 GET    /api/workspaces/:workspaceId/projects    controllers.ProjectController.getAll(workspaceId: Int)
 PATCH   /api/projects/:projectId/complete   controllers.ProjectController.completeProject(projectId: Int)

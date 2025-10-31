@@ -130,4 +130,8 @@ class ColumnRepository @Inject()(
     db.run((columns returning columns) ++= cols).map(_.toSeq)
   }
 
+  def importColumnBatch(cols: Seq[Column]): DBIO[Seq[Int]] = {
+    (columns returning columns.map(_.id)) ++= cols
+  }
+
 }

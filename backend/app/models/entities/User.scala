@@ -2,6 +2,7 @@ package models.entities
 
 import models.Enums.UserProjectRole
 import models.Enums.UserProjectRole.UserProjectRole
+import play.api.libs.json.{Json, OFormat}
 
 import java.time.{Instant, LocalDateTime}
 
@@ -18,9 +19,18 @@ case class User(
     updatedAt: LocalDateTime = LocalDateTime.now()
 )
 
+object User {
+  implicit val userFormat: OFormat[User] = Json.format[User]
+}
+
 case class UserProject(id: Option[Int] = None,
                        userId: Int,
                        projectId: Int,
                        role: UserProjectRole = UserProjectRole.member,
                        invitedBy: Option[Int] = None,
                        joinedAt: Instant = Instant.now())
+
+object UserProject {
+  implicit val userProjectFormat: OFormat[UserProject] = Json.format[UserProject]
+
+}

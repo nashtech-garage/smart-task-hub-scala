@@ -247,6 +247,14 @@ class TaskRepository@Inject()(
     db.run(insertQuery).map(_ => ())
   }
 
+  def importTaskBatch(tasksChunk: Seq[Task]): DBIO[Seq[Int]] = {
+    ((tasks returning tasks.map(_.id)) ++= tasksChunk).map(_.toSeq)
+  }
+
+  def importUserBatchIntoTask(entries: Seq[UserTask]): DBIO[Seq[Int]]= {
+    (userTasks returning userTasks.map(_.id) ++= entries).map(_.toSeq)
+  }
+
   def search(
               projectIds: Option[Seq[Int]] = None,
               keyword: Option[String] = None,

@@ -74,6 +74,21 @@ class ProjectRepository @Inject()(
     } yield projectId
   }
 
+  def importProjectWithOwner(project: Project, ownerId: Int): DBIO[Int] = {
+    for {
+      projectId <- (projects returning projects.map(_.id)) += project
+
+      _ <- DBIO.seq(
+        userProjects += UserProject(
+          userId = ownerId,
+          projectId = projectId,
+          role = UserProjectRole.owner,
+          joinedAt = Instant.now()
+        )
+      )
+    } yield projectId
+  }
+
   def findNonDeletedByWorkspace(
     workspaceId: Int
   ): DBIO[Seq[ProjectSummariesResponse]] = {
@@ -158,6 +173,13 @@ class ProjectRepository @Inject()(
     val insertQuery = userProjects returning userProjects.map(_.id)
     val action = insertQuery ++= entries
     db.run(action)
+  }
+
+  def importUserBatchIntoProject(
+                                  entries: Seq[UserProject]
+                                ): DBIO[Seq[Int]] = {
+    val insertQuery = userProjects returning userProjects.map(_.id)
+    insertQuery ++= entries
   }
 
   def getProjectsByUser(userId: Int): DBIO[Seq[Project]] = {

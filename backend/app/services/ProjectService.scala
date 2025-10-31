@@ -1,7 +1,11 @@
 package services
 
-import dto.request.project.CreateProjectRequest
-import dto.response.project.{ProjectDetailResponse, ProjectResponse, ProjectSummariesResponse}
+import dto.request.project.{CreateProjectRequest, ImportProjectData}
+import dto.response.project.{
+  ProjectDetailResponse,
+  ProjectResponse,
+  ProjectSummariesResponse
+}
 import dto.response.user.UserInProjectResponse
 import exception.AppException
 import mappers.ProjectMapper
@@ -11,7 +15,13 @@ import models.entities.Project
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import play.api.http.Status
 import play.api.libs.json.{JsValue, Json}
-import repositories.{ColumnRepository, ProjectRepository, TaskRepository, UserRepository, WorkspaceRepository}
+import repositories.{
+  ColumnRepository,
+  ProjectRepository,
+  TaskRepository,
+  UserRepository,
+  WorkspaceRepository
+}
 import slick.jdbc.JdbcProfile
 import utils.JsonFormats._
 
@@ -24,7 +34,7 @@ class ProjectService @Inject()(
   workspaceRepository: WorkspaceRepository,
   columnRepository: ColumnRepository,
   taskRepository: TaskRepository,
-    userRepository: UserRepository,
+  userRepository: UserRepository,
   protected val dbConfigProvider: DatabaseConfigProvider
 )(implicit ec: ExecutionContext)
     extends HasDatabaseConfigProvider[JdbcProfile] {
@@ -174,6 +184,14 @@ class ProjectService @Inject()(
     db.run(action)
   }
 
+  private def ensureUserInActiveProject(userId: Int,
+                                        projectId: Int): DBIO[Unit] =
+    projectRepository.isUserInActiveProject(userId, projectId).flatMap {
+      case true => DBIO.successful(())
+      case false =>
+        DBIO.failed(AppException("Project not found", Status.NOT_FOUND))
+    }
+
   def getProjectDetailById(
     projectId: Int,
     userId: Int
@@ -194,7 +212,15 @@ class ProjectService @Inject()(
             )
           } yield
             Some(
-              ProjectDetailResponse.build(id, name, status, columns, members, rankedTasks, allUserTasks)
+              ProjectDetailResponse.build(
+                id,
+                name,
+                status,
+                columns,
+                members,
+                rankedTasks,
+                allUserTasks
+              )
             )
 
         case None =>
@@ -204,14 +230,6 @@ class ProjectService @Inject()(
 
     db.run(action.transactionally)
   }
-
-  private def ensureUserInActiveProject(userId: Int,
-                                        projectId: Int): DBIO[Unit] =
-    projectRepository.isUserInActiveProject(userId, projectId).flatMap {
-      case true => DBIO.successful(())
-      case false =>
-        DBIO.failed(AppException("Project not found", Status.NOT_FOUND))
-    }
 
   def isUserInActiveProject(userId: Int, projectId: Int): Future[Boolean] = {
     db.run(projectRepository.isUserInActiveProject(userId, projectId))
@@ -228,31 +246,86 @@ class ProjectService @Inject()(
       projectOpt <- projectRepository.findAccessibleProject(userId, projectId)
       project <- projectOpt match {
         case Some(p) => DBIO.successful(p)
-        case None    => DBIO.failed(AppException("Project not found", Status.NOT_FOUND))
+        case None =>
+          DBIO.failed(AppException("Project not found", Status.NOT_FOUND))
       }
       columns <- columnRepository.findByProjectId(projectId)
       tasks <- taskRepository.findByProjectId(projectId)
       taskIds = tasks.flatMap(_.id)
-      userTasks <-
-        if (taskIds.nonEmpty) {userRepository.findUserTasksByTaskIds(taskIds)}
-        else {DBIO.successful(Seq.empty) }
+      userTasks <- if (taskIds.nonEmpty) {
+        userRepository.findUserTasksByTaskIds(taskIds)
+      } else { DBIO.successful(Seq.empty) }
 
       userProjects <- userRepository.findUsersInProjectByProjectId(projectId)
       userIds = (userTasks.map(_.assignedTo) ++ userProjects.map(_.userId)).distinct
-      users <-
-        if (userIds.nonEmpty) {userRepository.findPublicByIds(userIds)}
-        else {DBIO.successful(Seq.empty)}
+      users <- if (userIds.nonEmpty) { userRepository.findPublicByIds(userIds) } else {
+        DBIO.successful(Seq.empty)
+      }
 
-    } yield Json.obj(
-      "project" -> Json.toJson(project),
-      "columns" -> Json.toJson(columns),
-      "tasks" -> Json.toJson(tasks),
-      "userTasks" -> Json.toJson(userTasks),
-      "userProject" -> Json.toJson(userProjects),
-      "users" -> Json.toJson(users)
-    )
+    } yield
+      Json.obj(
+        "project" -> Json.toJson(project),
+        "columns" -> Json.toJson(columns),
+        "tasks" -> Json.toJson(tasks),
+        "userTasks" -> Json.toJson(userTasks),
+        "userProjects" -> Json.toJson(userProjects),
+        "users" -> Json.toJson(users)
+      )
 
     db.run(action)
+  }
+
+  def importProject(projectData: ImportProjectData,
+                    userId: Int,
+                    workspaceId: Int): Future[ProjectResponse] = {
+    val action = for {
+      exists <- workspaceRepository.isUserInActiveWorkspace(workspaceId, userId)
+      _ <- if (exists) { DBIO.successful(()) }
+      else { DBIO.failed(AppException("Workspace not found", Status.NOT_FOUND)) }
+
+      projectId <- {
+        val newProject = Project(
+          name = projectData.project.name,
+          visibility = projectData.project.visibility,
+          workspaceId = workspaceId,
+          createdBy = Some(userId),
+          updatedBy = Some(userId)
+        )
+        projectRepository.importProjectWithOwner(newProject, userId)
+      }
+
+      insertedColumnIds <- columnRepository.importColumnBatch(
+        projectData.columns.map(_.copy(projectId = projectId, id = None))
+      )
+      columnIdMap = projectData.columns.map(_.id).zip(insertedColumnIds).toMap
+      remappedTasks = projectData.tasks.map(
+        t =>
+          t.copy(
+            id = None,
+            columnId = columnIdMap.getOrElse(Some(t.columnId), 0)
+        )
+      )
+      insertedTasks <- taskRepository.importTaskBatch(remappedTasks)
+      taskIdMap = projectData.tasks.map(_.id).zip(insertedTasks).toMap
+
+      _ <- projectRepository.importUserBatchIntoProject(
+        projectData.userProjects.map(_.copy(id = None, projectId = projectId))
+      )
+
+      remappedUserTasks = projectData.userTasks.map(
+        u => u.copy(id = None, taskId = taskIdMap.getOrElse(Some(u.taskId), 0))
+      )
+      _ <- taskRepository.importUserBatchIntoTask(remappedUserTasks)
+
+    } yield {
+      ProjectResponse(
+        projectId,
+        projectData.project.name,
+        projectData.project.status
+      )
+    }
+
+    db.run(action.transactionally)
   }
 
 }

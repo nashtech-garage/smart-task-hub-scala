@@ -1,5 +1,5 @@
 import { createBoard } from '@/services/workspaceService';
-import { TriangleAlert } from 'lucide-react';
+import { Plus, TriangleAlert } from 'lucide-react';
 import { useState } from 'react';
 import { notify } from '@/services/toastService';
 
@@ -16,9 +16,9 @@ const backgroundOptions = [
 ];
 
 type CreateBoardProp = {
-  id: number | null; 
-  workspaceName: string;
-  onBoardCreated?: () => void;
+    id: number | null;
+    workspaceName: string;
+    onBoardCreated?: () => void;
 };
 
 const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCreated }) => {
@@ -30,32 +30,32 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
     const [isLoading, setIsLoading] = useState(false);
 
     const handleCreateBoard = async () => {
-        if(!id) return;
+        if (!id) return;
         if (boardTitle.trim()) {
             setIsLoading(true);
             setErrorMessage(''); // Clear any previous errors
-            
+
             await createBoard(boardTitle, id)
-            .then(res => {
-                notify.success(res.message);
-                setShowCreateModal(false);
-                onBoardCreated?.()
-                setBoardTitle('');
-                setSelectedBackground(0);
-                setErrorMessage(''); // Clear errors on success
-            })
-            .catch(err => {
-                // Handle different error response structures
-                const apiErrorMessage = err.response?.data?.errors?.[0]?.message 
-                    || err.response?.data?.message 
-                    || err.message 
-                    || 'An error occurred while creating the board';
-                setErrorMessage(apiErrorMessage);
-                notify.error(apiErrorMessage);
-            })
-            .finally(() => {
-                setIsLoading(false);
-            });
+                .then(res => {
+                    notify.success(res.message);
+                    setShowCreateModal(false);
+                    onBoardCreated?.()
+                    setBoardTitle('');
+                    setSelectedBackground(0);
+                    setErrorMessage(''); // Clear errors on success
+                })
+                .catch(err => {
+                    // Handle different error response structures
+                    const apiErrorMessage = err.response?.data?.errors?.[0]?.message
+                        || err.response?.data?.message
+                        || err.message
+                        || 'An error occurred while creating the board';
+                    setErrorMessage(apiErrorMessage);
+                    notify.error(apiErrorMessage);
+                })
+                .finally(() => {
+                    setIsLoading(false);
+                });
         }
     };
 
@@ -94,7 +94,8 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
                 className="
                     h-24 bg-[#2A2D31] hover:bg-[#3A3D41] rounded-lg cursor-pointer transition-colors 
                     flex items-center justify-center border-2 border-dashed border-gray-600"
-                >
+            >
+                <span className="text-gray-400 font-medium mr-0.5"><Plus /></span>
                 <span className="text-gray-400 font-medium">Create new board</span>
             </div>
             {/* Create Board Modal */}
@@ -153,9 +154,8 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
                                     type="text"
                                     value={boardTitle}
                                     onChange={handleTitleChange}
-                                    className={`w-full px-3 py-2 bg-[#1E2125] border rounded text-white text-sm focus:outline-none ${
-                                        errorToDisplay ? 'border-red-400 focus:border-red-400' : 'border-gray-600 focus:border-blue-400'
-                                    }`}
+                                    className={`w-full px-3 py-2 bg-[#1E2125] border rounded text-white text-sm focus:outline-none ${errorToDisplay ? 'border-red-400 focus:border-red-400' : 'border-gray-600 focus:border-blue-400'
+                                        }`}
                                     placeholder="Enter board title"
                                     disabled={isLoading}
                                 />
@@ -182,8 +182,7 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
                                 <button
                                     onClick={handleCreateBoard}
                                     disabled={!boardTitle.trim() || isLoading}
-                                    className={`w-full py-2 text-sm rounded font-medium ${
-                                        boardTitle.trim() && !isLoading
+                                    className={`w-full py-2 text-sm rounded font-medium ${boardTitle.trim() && !isLoading
                                             ? 'bg-blue-600 hover:bg-blue-700 text-white'
                                             : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                         }`}
@@ -195,7 +194,7 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
                     </div>
                 </div>
             )}
-            
+
         </>
     );
 }

@@ -71,9 +71,19 @@ const exportBoard = async (boardId: number): Promise<ApiResponse<null>> => {
     return axiosClients.get(`/projects/${boardId}/export`);
 };
 
+const importBoard = async (workspaceId: number, file: File): Promise<ApiResponse<Board>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosClients.post(`/workspaces/${workspaceId}/projects/import`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
 export {
     fetchUrlPreview, fetchBoardDetail, createNewColumn,
     updateColumn, archiveColumn, restoreColumn,
     deleteColumn, updateColumnPosititon, fetchBoardColumns,
-    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers, fetchAllBoards, exportBoard,
+    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers, fetchAllBoards, exportBoard, importBoard
 };

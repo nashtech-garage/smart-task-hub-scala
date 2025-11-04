@@ -17,6 +17,7 @@ lazy val root = (project in file("."))
       scalaVersion := "2.13.16",
 
       libraryDependencies ++= Seq(
+        ws,
         guice,
         caffeine,
         filters,
@@ -49,7 +50,9 @@ lazy val root = (project in file("."))
         "com.typesafe.play" %% "play-ws" % "2.9.8",
         "com.typesafe.play" %% "play-json" % "2.10.7",
         "org.jsoup" % "jsoup" % "1.21.1",
-        "org.playframework" %% "play-ahc-ws" % "3.0.8"
+        "org.playframework" %% "play-ahc-ws" % "3.0.8",
+        "org.keycloak" % "keycloak-admin-client" % "22.0.1",
+        "org.keycloak" % "keycloak-core" % "22.0.1"
       ),
 
       // CRITICAL: Force Jackson versions to prevent conflicts

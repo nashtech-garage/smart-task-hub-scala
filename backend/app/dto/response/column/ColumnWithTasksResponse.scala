@@ -6,7 +6,8 @@ import play.api.libs.json.{Json, OFormat}
 case class ColumnWithTasksResponse(id: Int,
                                    name: String,
                                    position: Int,
-                                   tasks: Seq[TaskSummaryResponse])
+                                   taskIds: Seq[Int],
+                                   totalTasks: Int)
 object ColumnWithTasksResponse {
   implicit val columnWithTasksFmt: OFormat[ColumnWithTasksResponse] =
     Json.format[ColumnWithTasksResponse]

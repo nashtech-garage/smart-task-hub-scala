@@ -1,10 +1,12 @@
 import ClosedBoards from "@/components/board/ClosedBoards";
 import CreateBoard from "@/components/shared/CreateBoard";
+import LoadingSpinner from "@/components/ui/LoadingSpinner";
+import { importBoard } from "@/services/boardService";
 import { notify } from "@/services/toastService";
 import { getBoards, getClosedBoards, getWorkspaceById, updateWorkspace } from "@/services/workspaceService";
 import type { Board } from "@/types/project";
 import type { WorkSpace } from "@/types/workspace";
-import { Pencil, Users } from "lucide-react";
+import { Pencil, Upload, Users } from "lucide-react";
 import { useEffect, useState, type SetStateAction } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 
@@ -26,6 +28,7 @@ const Boards = () => {
     const [workspaceNameError, setWorkspaceNameError] = useState('');
     const [workspaceDescriptionError, setWorkspaceDescriptionError] = useState('');
     const [showClosedBoards, setShowClosedBoards] = useState(false);
+    const [isImportingBoard, setIsImportingBoard] = useState(false);
 
     const isWorkspaceChanged = (
         original: WorkSpace,
@@ -38,7 +41,7 @@ const Boards = () => {
     };
 
     const handleBoardNavigate = (boardId: number) => {
-        navigate(`/workspace/${id}/board/${boardId}`, { replace: true });
+        navigate(`/board/${boardId}`, { replace: true });
     };
 
     const onEditingButtonClick = () => {
@@ -89,7 +92,7 @@ const Boards = () => {
             .catch(_ => navigate('/not-found'));
     };
 
-    const fetchBoards = async () => {   
+    const fetchBoards = async () => {
         if (!id) return;
         return await getBoards(Number(id))
             .then(data => {
@@ -104,6 +107,54 @@ const Boards = () => {
                 data?.data && setClosedBoards(data.data)
             })
             .catch(err => notify.error(err?.message))
+    };
+
+    const handleFileClick = () => {
+        // create hidden file input element
+        const input = document.createElement("input");
+        input.type = "file";
+        input.accept = "application/json";
+        input.style.display = "none";
+
+        // listen for file selection event
+        input.onchange = async (e) => {
+            const target = e.target as HTMLInputElement;
+            const file = target.files?.[0];
+            if (!file) {
+                console.log("User canceled file selection.");
+                return;
+            }
+
+            // validate file type
+            const fileName = file.name.toLowerCase();
+            if (!fileName.endsWith(".json")) {
+                notify.error("Please select a valid JSON file.");
+                return;
+            }
+            else {
+                try {
+                    setBoards([...boards, {
+                        id: -1,
+                        name: file.name
+                    }]);
+                    setIsImportingBoard(true);
+                    const response = await importBoard(workspaceData.id, file);
+                    notify.success(response.message);
+                    setBoards([...boards.filter(b => b.id !== -1), response.data]);
+                }
+                catch (error: any) {
+                    notify.error(error.response?.data?.message || 'Failed to import board!')
+                }
+                finally {
+                    setIsImportingBoard(false);
+                }
+
+            }
+
+        };
+
+        // open file dialog
+        input.click();
     };
 
     useEffect(() => {
@@ -192,25 +243,59 @@ const Boards = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
                         {/* Existing boards */}
-                        {boards?.map(board => (
-                            <div
-                                key={board.id}
-                                onClick={() => handleBoardNavigate(board.id)}
-                                className={`
+                        {boards?.map(board => {
+                            if (board.id === -1) {
+                                return (
+                                    //     <button
+                                    //         className="
+                                    // h-24 bg-[#2A2D31] hover:bg-[#3A3D41] rounded-lg cursor-pointer transition-colors 
+                                    // flex items-center justify-center border-2 border-dashed border-gray-600"
+                                    //         disabled={isImportingBoard}
+                                    //     >
+                                    //         {/* <LoadingSpinner /> */}
+                                    //         <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4'></div>
+                                    //     </button>
+
+                                    <div
+                                        key={board.id}
+                                        className={`
                                         flex items-end
                                         h-24 rounded-lg cursor-pointer overflow-hidden
                                         hover:opacity-90 transition-opacity `}
-                                style={{
-                                    backgroundImage: `url(${backgroundImage})`,
-                                    backgroundSize: 'cover',
-                                    backgroundPosition: 'center'
-                                }}
-                            >
-                                <div className="grow p-2 bg-black/50 flex items-end justify-between">
-                                    <h3 className="text-white font-medium text-sm">{board.name}</h3>
+                                        style={{
+                                            backgroundImage: `url(${backgroundImage})`,
+                                            backgroundSize: 'cover',
+                                            backgroundPosition: 'center'
+                                        }}
+                                    >
+                                        <div className="grow p-2 bg-black/50 flex items-end justify-between">
+                                            <div className='animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto mb-4'></div>
+                                            <h3 className="text-white font-medium text-sm">Importing {board.name}...</h3>
+                                        </div>
+                                    </div>
+
+                                )
+                            }
+                            return (
+                                <div
+                                    key={board.id}
+                                    onClick={() => handleBoardNavigate(board.id)}
+                                    className={`
+                                        flex items-end
+                                        h-24 rounded-lg cursor-pointer overflow-hidden
+                                        hover:opacity-90 transition-opacity `}
+                                    style={{
+                                        backgroundImage: `url(${backgroundImage})`,
+                                        backgroundSize: 'cover',
+                                        backgroundPosition: 'center'
+                                    }}
+                                >
+                                    <div className="grow p-2 bg-black/50 flex items-end justify-between">
+                                        <h3 className="text-white font-medium text-sm">{board.name}</h3>
+                                    </div>
                                 </div>
-                            </div>
-                        ))}
+                            )
+                        })}
 
                         {/* Create new board button */}
                         <CreateBoard
@@ -218,6 +303,18 @@ const Boards = () => {
                             workspaceName={workspaceData.name}
                             onBoardCreated={fetchBoards}
                         />
+
+                        {/* Import new board button */}
+                        <button
+                            onClick={handleFileClick}
+                            className="
+                                h-24 bg-[#2A2D31] hover:bg-[#3A3D41] rounded-lg cursor-pointer transition-colors 
+                                flex items-center justify-center border-2 border-dashed border-gray-600"
+                            disabled={isImportingBoard}
+                        >
+                            <span className="text-gray-400 font-medium mr-2"><Upload /></span>
+                            <span className="text-gray-400 font-medium">{isImportingBoard ? 'Importing...' : 'Import board'}</span>
+                        </button>
                     </div>
 
                     {/* View closed boards button */}
@@ -252,9 +349,9 @@ const Boards = () => {
                     </div>
 
                     {/* Closed Boards Modal */}
-                    {showClosedBoards && 
-                        <ClosedBoards 
-                            hideClosedBoards={() => setShowClosedBoards(false)} 
+                    {showClosedBoards &&
+                        <ClosedBoards
+                            hideClosedBoards={() => setShowClosedBoards(false)}
                         />
                     }
                 </div>

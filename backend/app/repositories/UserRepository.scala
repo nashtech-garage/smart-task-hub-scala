@@ -1,7 +1,9 @@
 package repositories
 
-import models.entities.User
+import dto.response.user.UserPublicDTO
+import models.entities.{User, UserProject, UserTask}
 import models.tables.TableRegistry
+import models.tables.TableRegistry.{userProjects, userTasks}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
@@ -63,4 +65,23 @@ class UserRepository @Inject()(
   def update(user: User): Future[Int] = {
     db.run(users.filter(_.id === user.id).update(user))
   }
+
+  def createBatch(userList: Seq[User]): Future[Seq[User]] = {
+    val insertQuery = users returning users.map(_.id) into ((user, id) => user.copy(id = Some(id)))
+    val action = insertQuery ++= userList
+    db.run(action)
+  }
+
+  def findUsersInProjectByProjectId(projectId: Int): DBIO[Seq[UserProject]] =
+    userProjects.filter(_.projectId === projectId).result
+
+  def findUserTasksByTaskIds(taskIds: Seq[Int]): DBIO[Seq[UserTask]] =
+    userTasks.filter(_.taskId.inSet(taskIds)).result
+
+  def findPublicByIds(userIds: Seq[Int]): DBIO[Seq[UserPublicDTO]] =
+    users
+      .filter(_.id.inSet(userIds))
+      .map(u => (u.id, u.name))
+      .result
+      .map(_.map { case (id, name) => UserPublicDTO(id, name) })
 }

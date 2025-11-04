@@ -1,12 +1,20 @@
 import { completedBoard } from '@/services/workspaceService';
 // import { Activity, Copy, EarthIcon, Eye, Folder, Globe, Image, Menu, Settings, Tag, Users, X } from 'lucide-react';
-import { Folder, Menu, X } from 'lucide-react';
+import { Download, Folder, Menu, X } from 'lucide-react';
 import { useEffect, useState } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 import ArchivedItemsModal from './ArchivedItemsModal';
-import type { Column } from '@/types';
-import { deleteColumn, fetchArchivedColumns, restoreColumn } from '@/services/boardService';
+import { deleteColumn, exportBoard, restoreColumn } from '@/services/boardService';
 import { notify } from '@/services/toastService';
+import taskService from '@/services/taskService';
+import { useAppDispatch, useAppSelector, type RootState } from '@/store';
+import { selectArchivedColumns } from '@/store/selectors/columnsSelector';
+import { selectArchivedTasks } from '@/store/selectors/tasksSelectors';
+import { fetchArchivedColumnsThunk } from '@/store/thunks/columnsThunks';
+import { fetchArchivedTasksThunk } from '@/store/thunks/tasksThunks';
+import { archivedTaskRestored } from '@/store/slices/archiveTasksSlice';
+import { columnDeleted } from '@/store/slices/archiveColumnsSlice';
+import { useSelector } from 'react-redux';
 
 // const menuItems = [
 //     { icon: <Users />, label: "Share", color: "text-gray-300" },
@@ -16,8 +24,8 @@ import { notify } from '@/services/toastService';
 // ];
 
 // const powerUpItems = [
-    // { icon: <Tag />, label: "Labels", color: "text-gray-300" },
-    // { icon: <Activity />, label: "Activity", color: "text-gray-300" },
+// { icon: <Tag />, label: "Labels", color: "text-gray-300" },
+// { icon: <Activity />, label: "Activity", color: "text-gray-300" },
 // ];
 
 // const moreItems = [
@@ -29,36 +37,39 @@ interface BoardNavbarProps {
     id: number;
     name?: string;
     isBoardClosed: boolean;
+    setIsBoardClosed: (closed: boolean) => void;
 }
 
 const BoardNavbar: React.FC<BoardNavbarProps> = ({
     id,
     name,
-    isBoardClosed
+    isBoardClosed,
+    setIsBoardClosed
 }) => {
 
-    const { wsId, boardId } = useParams();
-    const navigate = useNavigate();
-    const [archivedColumns, setArchivedColumns] = useState<Column[]>([]);
-    // const [archivedTasks, setArchivedTasks] = useState<Item[]>([]);
+    const { boardId } = useParams();
     const [showMenu, setShowMenu] = useState(false);
     const [showVisibility, setShowVisibility] = useState(false);
     const [showCloseConfirm, setShowCloseConfirm] = useState(false);
     const [showArchivedItems, setShowArchivedItems] = useState(false);
+    const [isExporting, setIsExporting] = useState(false);
+    const dispatch = useAppDispatch();
+    const archivedColumns = useAppSelector(selectArchivedColumns);
+    const archivedTasks = useAppSelector(selectArchivedTasks);
 
-    const fetchArchivedItems = async () => {
-        if(id === 0) return;
-        try {
-            const result = await fetchArchivedColumns(id);
-            result.data && setArchivedColumns(result.data);
-        } catch (error: any) {
-            notify.error(error.response?.data?.message);
-        }
-    }
+    // const members = useAppSelector(selectBoardMembers); // array member objects
+    const members = useSelector((state: RootState) => state.members);
+
+    const MAX_VISIBLE = 5;
+    const visibleMembers = members.slice(0, MAX_VISIBLE);
+    const extraCount = members.length - MAX_VISIBLE;
 
     useEffect(() => {
-        fetchArchivedItems();
-    }, [fetchArchivedColumns]);
+        if (id !== 0) {
+            dispatch(fetchArchivedColumnsThunk(id));
+            dispatch(fetchArchivedTasksThunk(id));
+        }
+    }, [id, dispatch]);
 
     const handleCloseMenu = () => {
         setShowCloseConfirm(false);
@@ -67,10 +78,15 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     };
 
     const confirmCloseBoard = async () => {
-        if(!boardId) return;
-        await completedBoard(Number(boardId));
-        handleCloseMenu();
-        navigate(`/workspace/boards/${wsId}`)
+        if (!boardId) return;
+        try {
+            await completedBoard(Number(boardId));
+            handleCloseMenu();
+            setIsBoardClosed(true);
+        }
+        catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const cancelCloseBoard = () => {
@@ -88,13 +104,18 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
     // Archive handlers - implement these based on your data management
     const handleRestoreTask = async (taskId: number) => {
-        console.log(taskId);
+        try {
+            const result = await taskService.restoreTask(taskId);
+            dispatch(archivedTaskRestored(taskId));
+            notify.success(result.message);
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const handleRestoreColumn = async (columnId: number) => {
         try {
             const result = await restoreColumn(columnId);
-            setArchivedColumns(archivedColumns.filter(item => item.id !== columnId));
             notify.success(result.message);
         } catch (error: any) {
             notify.error(error.response?.data?.message);
@@ -102,16 +123,55 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     };
 
     const handleDeleteTask = async (taskId: number) => {
-        console.log(taskId);
+        try {
+            const result = await taskService.deleteTask(taskId);
+            // dispatch(archivedTaskDeleted(taskId));
+            notify.success(result.message);
+        } catch (error: any) {
+            notify.error(error.response?.data?.message);
+        }
     };
 
     const handleDeleteColumn = async (columnId: number) => {
         try {
             const result = await deleteColumn(columnId);
-            setArchivedColumns(archivedColumns.filter(item => item.id !== columnId));
+            dispatch(columnDeleted(columnId));
             notify.success(result.message);
         } catch (error: any) {
             notify.error(error.response?.data?.message);
+        }
+    };
+
+    const handleExportBoard = async () => {
+        if (isExporting) return;
+        try {
+            setIsExporting(true);
+            notify.info("Exporting data...");
+            const response = await exportBoard(Number(boardId));
+
+            // convert data 
+            const jsonString = JSON.stringify(response.data, null, 2);
+
+            // create blob from json
+            const blob = new Blob([jsonString], { type: "application/json" });
+
+            // create temporary link
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `${name}.json`;
+            document.body.appendChild(a);
+            a.click();
+
+            // clean up
+            a.remove();
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error("Export failed:", err);
+            notify.error("Failed to export board. Please try again!");
+        }
+        finally {
+            setIsExporting(false);
         }
     };
 
@@ -128,6 +188,24 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                 >
                     <Globe className="w-5 h-5" />
                 </button> */}
+
+                {/* Avatars */}
+                {visibleMembers.map((m) => (
+                    <div
+                        key={m.id}
+                        title={m.name}
+                        className="w-8 h-8 rounded-full bg-gray-600 text-white flex items-center justify-center text-xs font-medium overflow-hidden"
+                    >
+                        {m.name.charAt(0).toUpperCase()}
+                    </div>
+                ))}
+
+                {/* +n if there are more than 5 members */}
+                {extraCount > 0 && (
+                    <div className="w-8 h-8 rounded-full bg-gray-500 text-white flex items-center justify-center text-xs font-medium">
+                        +{extraCount}
+                    </div>
+                )}
 
                 <button
                     onClick={() => setShowMenu(!showMenu)}
@@ -148,58 +226,67 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                         {/* Menu */}
                         {
                             !showArchivedItems ?
-                            <div className="absolute right-0 top-10 w-80 bg-[#2c3e50] rounded-lg shadow-xl z-50 border border-gray-600">
-                                {/* Menu Header */}
-                                <div className="flex items-center justify-between p-3 border-b border-gray-600">
-                                    <span className="text-white font-medium text-sm">Menu</span>
-                                    <button
-                                        onClick={() => setShowMenu(false)}
-                                        className="text-gray-400 hover:text-white transition-colors"
-                                    >
-                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                        </svg>
-                                    </button>
-                                </div>
-
-                                {/* Menu Content */}
-                                <div className="p-2">
-                                    {/* Main Menu Items */}
-                                    {/* {menuItems.map((item, index) => (
+                                <div className="absolute right-0 top-10 w-80 bg-[#2c3e50] rounded-lg shadow-xl z-50 border border-gray-600">
+                                    {/* Menu Header */}
+                                    <div className="flex items-center justify-between p-3 border-b border-gray-600">
+                                        <span className="text-white font-medium text-sm">Menu</span>
                                         <button
-                                            key={index}
+                                            onClick={() => setShowMenu(false)}
+                                            className="text-gray-400 hover:text-white transition-colors"
+                                        >
+                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                            </svg>
+                                        </button>
+                                    </div>
+
+                                    {/* Menu Content */}
+                                    <div className="p-2">
+                                        {/* Main Menu Items */}
+                                        {/* {menuItems.map((item, index) => (
+                                            <button
+                                                key={index}
+                                                className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                            >
+                                                <span className="mr-3 text-base text-white">{item.icon}</span>
+                                                <div className="flex-1">
+                                                    <div className={`${item.color}`}>
+                                                        {item.label}
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))} */}
+
+                                        {/* Power-Ups Section */}
+                                        <button
+                                            onClick={handleArchivedItemsClick}
                                             className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
                                         >
-                                            <span className="mr-3 text-base text-white">{item.icon}</span>
+                                            <span className="mr-3 text-base text-white"><Folder /></span>
                                             <div className="flex-1">
-                                                <div className={`${item.color}`}>
-                                                    {item.label}
+                                                <div className='text-gray-300'>
+                                                    Archived items
                                                 </div>
                                             </div>
                                         </button>
-                                    ))} */}
 
-                                    {/* Divider */}
-                                    <div className="border-t border-gray-600 my-2"></div>
-
-                                    {/* Power-Ups Section */}
-                                    <button 
-                                        onClick={handleArchivedItemsClick}
-                                        className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
-                                    >
-                                        <span className="mr-3 text-base text-white"><Folder /></span>
-                                        <div className="flex-1">
-                                            <div className='text-gray-300'>
-                                                Archived items
+                                        <button
+                                            onClick={handleExportBoard}
+                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                        >
+                                            <span className="mr-3 text-base text-white"><Download /></span>
+                                            <div className="flex-1">
+                                                <div className='text-gray-300'>
+                                                    Export as JSON
+                                                </div>
                                             </div>
-                                        </div>
-                                    </button>
+                                        </button>
 
-                                    {/* Divider */}
-                                    <div className="border-t border-gray-600 my-2"></div>
+                                        {/* Divider */}
+                                        <div className="border-t border-gray-600 my-2"></div>
 
-                                    {/* More Items */}
-                                    {/* {moreItems.map((item, index) => (
+                                        {/* More Items */}
+                                        {/* {moreItems.map((item, index) => (
                                         <button
                                             key={index}
                                             className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
@@ -212,64 +299,64 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                             </div>
                                         </button>
                                     ))} */}
-                                    {/* Close Board Item - Separate with relative positioning for popup */}
-                                    <div className="relative">
-                                        <button
-                                            onClick={() => setShowCloseConfirm(true)}
-                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
-                                        >
-                                            <span className="mr-3 text-base text-white"><X /></span>
-                                            <div className="flex-1">
-                                                <div className="text-red-400">
-                                                    Close board
+                                        {/* Close Board Item - Separate with relative positioning for popup */}
+                                        <div className="relative">
+                                            <button
+                                                onClick={() => setShowCloseConfirm(true)}
+                                                className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                            >
+                                                <span className="mr-3 text-base text-white"><X /></span>
+                                                <div className="flex-1">
+                                                    <div className="text-red-400">
+                                                        Close board
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        </button>
+                                            </button>
 
-                                        {/* Close Board Confirmation Popup - Positioned above the button */}
-                                        {showCloseConfirm && (
-                                            <>
-                                                {/* Confirmation Popup */}
-                                                <div className="absolute bottom-full right-0 bg-[#1a1a1a] rounded p-3">
-                                                    <div className="flex items-center justify-between pb-2 border-b border-gray-600">
-                                                        <h3 className="text-white font-semibold text-sm">Close board?</h3>
+                                            {/* Close Board Confirmation Popup - Positioned above the button */}
+                                            {showCloseConfirm && (
+                                                <>
+                                                    {/* Confirmation Popup */}
+                                                    <div className="absolute bottom-full right-0 bg-[#1a1a1a] rounded p-3">
+                                                        <div className="flex items-center justify-between pb-2 border-b border-gray-600">
+                                                            <h3 className="text-white font-semibold text-sm">Close board?</h3>
+                                                            <button
+                                                                onClick={cancelCloseBoard}
+                                                                className="text-gray-400 hover:text-white transition-colors rounded"
+                                                            >
+                                                                <X className="w-4 h-4 cursor-pointer" />
+                                                            </button>
+                                                        </div>
+                                                        <p className="text-gray-300 text-xs mb-3 pt-2 leading-relaxed">
+                                                            You can find and reopen closed boards at the bottom of{' '}
+                                                            <span className="text-blue-400 underline cursor-pointer">your boards page</span>.
+                                                        </p>
                                                         <button
-                                                            onClick={cancelCloseBoard}
-                                                            className="text-gray-400 hover:text-white transition-colors rounded"
+                                                            onClick={confirmCloseBoard}
+                                                            className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded text-sm font-medium transition-colors"
                                                         >
-                                                            <X className="w-4 h-4 cursor-pointer" />
+                                                            Close
                                                         </button>
                                                     </div>
-                                                    <p className="text-gray-300 text-xs mb-3 pt-2 leading-relaxed">
-                                                        You can find and reopen closed boards at the bottom of{' '}
-                                                        <span className="text-blue-400 underline cursor-pointer">your boards page</span>.
-                                                    </p>
-                                                    <button
-                                                        onClick={confirmCloseBoard}
-                                                        className="w-full bg-red-500 hover:bg-red-600 text-white py-2 rounded text-sm font-medium transition-colors"
-                                                    >
-                                                        Close
-                                                    </button>
-                                                </div>
-                                            </>
-                                        )}
+                                                </>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
-                            </div>
-                            : 
-                            <>
-                                {/* Archived Items Modal */}
-                                <ArchivedItemsModal
-                                    onClose={handleCloseMenu}
-                                    onBack={handleBackToMenu}
-                                    archivedTasks={[]}
-                                    archivedColumns={archivedColumns}
-                                    onRestoreTask={handleRestoreTask}
-                                    onRestoreColumn={handleRestoreColumn}
-                                    onDeleteTask={handleDeleteTask}
-                                    onDeleteColumn={handleDeleteColumn}
-                                />
-                            </>
+                                :
+                                <>
+                                    {/* Archived Items Modal */}
+                                    <ArchivedItemsModal
+                                        onClose={handleCloseMenu}
+                                        onBack={handleBackToMenu}
+                                        archivedTasks={archivedTasks}
+                                        archivedColumns={archivedColumns}
+                                        onRestoreTask={handleRestoreTask}
+                                        onRestoreColumn={handleRestoreColumn}
+                                        onDeleteTask={handleDeleteTask}
+                                        onDeleteColumn={handleDeleteColumn}
+                                    />
+                                </>
                         }
 
                     </>

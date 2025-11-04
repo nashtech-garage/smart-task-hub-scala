@@ -1,6 +1,7 @@
 package controllers
 
 import dto.request.column.{CreateColumnRequest, UpdateColumnPositionRequest, UpdateColumnRequest}
+import dto.response.column.ColumnSummariesResponse
 import exception.AppException
 import org.scalatest.BeforeAndAfterAll
 import org.scalatest.concurrent.ScalaFutures
@@ -12,7 +13,7 @@ import play.api.mvc.Cookie
 import play.api.test.Helpers._
 import play.api.test._
 import play.api.{Application, Configuration}
-import services.{ColumnService, JwtService, ProjectService, UserToken, WorkspaceService}
+import services.{JwtService, ProjectService, UserToken, WorkspaceService}
 
 class ColumnControllerSpec
     extends PlaySpec
@@ -49,7 +50,6 @@ class ColumnControllerSpec
   override def beforeAll(): Unit = {
     val workspaceService = inject[WorkspaceService]
     val projectService = inject[ProjectService]
-    val columnService = inject[ColumnService]
 
     await(
       workspaceService.createWorkspace(
@@ -203,6 +203,18 @@ class ColumnControllerSpec
         .as[String] mustBe "Column archived successfully"
     }
 
+    "should get archived columns successfully" in {
+      val request = FakeRequest(GET, "/api/projects/1/columns/archived").withCookies(
+        Cookie(cookieName, fakeToken)
+      )
+      val result = route(app, request).get
+
+      status(result) mustBe OK
+      (contentAsJson(result) \ "message").as[String] mustBe "Archived columns retrieved"
+      val data = (contentAsJson(result) \ "data").as[Seq[ColumnSummariesResponse]]
+      data.length must be > 0
+    }
+
     "restore column successfully" in {
       val request = FakeRequest(PATCH, "/api/columns/1/restore")
         .withCookies(Cookie(cookieName, fakeToken))
@@ -214,11 +226,11 @@ class ColumnControllerSpec
     }
 
     "delete column successfully" in {
-      val archiveRequest = FakeRequest(PATCH, "/api/columns/1/archive")
+      val archiveRequest = FakeRequest(PATCH, "/api/columns/3/archive")
         .withCookies(Cookie(cookieName, fakeToken))
       route(app, archiveRequest).get
 
-      val request = FakeRequest(DELETE, "/api/columns/1")
+      val request = FakeRequest(DELETE, "/api/columns/3")
         .withCookies(Cookie(cookieName, fakeToken))
       val result = route(app, request).get
 
@@ -226,5 +238,21 @@ class ColumnControllerSpec
       (contentAsJson(result) \ "message")
         .as[String] mustBe "Column deleted successfully"
     }
+  }
+
+  "update column position successfully" in {
+    val columnPosition = 100
+
+    val body = Json.toJson(UpdateColumnPositionRequest(columnPosition))
+    val request = FakeRequest(PATCH, "/api/projects/1/columns/1/position")
+      .withCookies(Cookie(cookieName, fakeToken))
+      .withBody(body)
+      .withHeaders(CONTENT_TYPE -> "application/json")
+
+    val result = route(app, request).get
+
+    status(result) mustBe OK
+    (contentAsJson(result) \ "message")
+      .as[String] mustBe "Column position updated successfully"
   }
 }

@@ -1,0 +1,150 @@
+// store/wsHandlers/boardHandlers.ts
+import type { RootState, AppDispatch } from "@/store";
+import { columnArchived, archivedColumnRestored, columnDeleted } from "@/store/slices/archiveColumnsSlice";
+import { taskArchived, taskDeleted, archivedTaskRestored } from "@/store/slices/archiveTasksSlice";
+import { addTaskToColumn, columnCreated, columnRemoved, columnReplaced, columnRestored, columnsReordered, columnUpdated, removeTaskFromColumn } from "@/store/slices/columnsSlice";
+import { assignedMemberToTask, removeMemberFromTask, taskCreated, taskRemoved, taskReordered, taskReplaced, taskRestored, taskUpdated } from "@/store/slices/tasksSlice";
+
+export const handleBoardWSMessage = (
+  message: any,
+  dispatch: AppDispatch,
+  getState: () => RootState
+) => {
+  switch (message.type) {
+    case "COLUMN_MOVED":
+      console.log("Column moved", message);
+      const { columnId, newPosition } = message.payload;
+      const column = getState().columns.byId[columnId];
+      if (column) {
+        dispatch(columnsReordered({ columnId, newPosition }));
+      }
+      break;
+
+    case "COLUMN_CREATED": {
+      const { columnId, name, position } = message.payload;
+      const tempCol = getState().columns.allIds
+        .map(id => getState().columns.byId[id])
+        .find(c => c.id < 0);
+
+      if (tempCol) {
+        dispatch(columnReplaced({
+          tempId: tempCol.id,
+          realColumn: { id: columnId, name, position, taskIds: [], totalTasks: 0 }
+        }));
+      } else {
+        dispatch(columnCreated({ id: columnId, name, position, taskIds: [], totalTasks: 0 }));
+      }
+      break;
+    }
+
+    case "COLUMN_STATUS_UPDATED": {
+      const { columnId, updatedStatus } = message.payload;
+      console.log("Column status updated", message);
+
+      if (updatedStatus === "archived") {
+        const column = getState().columns.byId[columnId];
+        if (column) {
+          dispatch(columnRemoved(columnId));
+          dispatch(columnArchived(column));
+        }
+      } else if (updatedStatus === "active") {
+        const column = getState().archivedColumns.byId[columnId];
+        if (column) {
+          dispatch(archivedColumnRestored(columnId));
+          dispatch(columnRestored(column));
+        }
+      } else if (updatedStatus === "deleted") {
+        dispatch(columnDeleted(columnId));
+      }
+      break;
+    }
+
+    case "COLUMN_UPDATED": {
+      const { columnId, name } = message.payload;
+      dispatch(columnUpdated({ columnId, name }));
+      break;
+    }
+
+    case "TASK_CREATED": {
+      const { columnId, name, taskPosition, taskId } = message.payload;
+      const tempTask = getState().tasks.allIds
+        .map(id => getState().tasks.byId[id])
+        .find(c => c.id < 0);
+      if (tempTask) {
+        dispatch(taskReplaced({
+          tempId: tempTask.id,
+          realTask: { id: taskId, name, position: taskPosition, memberIds: [] }
+        }));
+
+      } else {
+        dispatch(taskCreated({ id: taskId, name, position: taskPosition, memberIds: [] }));
+      }
+      dispatch(addTaskToColumn({ columnId, taskId, index: -1 }));
+      break;
+    }
+
+    case "TASK_UPDATED": {
+      console.log("Task updated", message);
+      const { taskId, columnId, taskPosition, detail, name } = message.payload;
+      dispatch(taskUpdated({ taskId, columnId, taskPosition, detail, name }));
+      break;
+    }
+
+    case "TASK_STATUS_UPDATED": {
+      const { taskId, columnId, taskPosition, name, updatedStatus } = message.payload;
+      console.log("Task status updated", message);
+
+      if (updatedStatus === "archived") {
+        const task = getState().tasks.byId[taskId];
+        if (task) {
+          dispatch(removeTaskFromColumn({ taskId, columnId }));
+          dispatch(taskRemoved(taskId));
+          dispatch(taskArchived(task));
+        }
+      } else if (updatedStatus === "active") {
+        const task = getState().archivedTasks.byId[taskId];
+        if (task) {
+          dispatch(archivedTaskRestored(taskId));
+          dispatch(taskRestored(task));
+
+          const column = getState().columns.byId[columnId];
+          const index = column.taskIds.findIndex(id => getState().tasks.byId[id].position > task.position);
+          dispatch(addTaskToColumn({ columnId, taskId, index: index === -1 ? -1 : index }));
+        }
+      } else if (updatedStatus === "deleted") {
+        dispatch(taskDeleted(taskId));
+      }
+      break;
+    }
+
+    case "MEMBER_ASSIGNED_TO_TASK": {
+      console.log("Member assigned to task", message);
+      const { taskId, assignData }: { taskId: number, assignData: { userId: number, username: string } } = message.payload;
+      dispatch(assignedMemberToTask({ taskId, memberId: assignData.userId }));
+      break;
+    }
+
+    case "MEMBER_UNASSIGNED_TO_TASK": {
+      console.log("Member unassigned to task", message);
+      const { taskId, userId } = message.payload;
+      dispatch(removeMemberFromTask({ taskId, userId }));
+      break;
+    }
+
+    case "TASK_MOVED": {
+      console.log("Task moved", message);
+      const { taskId, fromColumnId, toColumnId, newPosition } = message.payload;
+      // if (!getState().columns.byId[toColumnId].taskIds.includes(taskId)) {
+      dispatch(taskReordered({ taskId, newPosition }));
+      dispatch(removeTaskFromColumn({ taskId, columnId: fromColumnId }));
+      const column = getState().columns.byId[toColumnId];
+      const index = column.taskIds.findIndex(id => getState().tasks.byId[id].position > newPosition);
+      dispatch(addTaskToColumn({ columnId: toColumnId, taskId, index: index === -1 ? -1 : index }));
+      // }
+      break;
+    }
+
+    default:
+      console.warn("Unknown WS event", message);
+  }
+};

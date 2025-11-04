@@ -20,10 +20,12 @@ import Template from '@/pages/Template';
 import Home from '@/pages/Home';
 import Member from '@/pages/workspace/Member';
 import Setting from '@/pages/workspace/Setting';
-import WorkspaceBoard from '@/pages/WorkspaceBoard';
+import WorkspaceBoard from '@/components/board/BoardContent';
 import HomeBoards from '@/pages/HomeBoards';
 import Boards from '@/pages/workspace/Board';
 import WorkspaceDetail from '@/pages/workspace/WorkspaceDetail';
+import SearchPage from '@/pages/SearchPage';
+import Board from '@/pages/Board';
 
 // Layout wrappers for different roles
 const AdminLayout = () => (
@@ -34,7 +36,7 @@ const AdminLayout = () => (
     </ProtectedRoute>
 );
 
-const   UserLayout = () => (
+const UserLayout = () => (
     <ProtectedRoute requiredRole='user' fallback={<UnauthorizedFallback />}>
         <MainLayout>
             <Outlet />
@@ -103,8 +105,8 @@ const router = createBrowserRouter([
                 ]
             },
             {
-                path: 'workspace/:wsId/board/:boardId',
-                element: <WorkspaceBoard />,
+                path: 'board/:boardId',
+                element: <Board />,
             },
             {
                 path: 'workspace',
@@ -122,9 +124,14 @@ const router = createBrowserRouter([
                         path: 'setting/:id',
                         element: <Setting />,
                     },
-                    
+
                 ]
             },
+            {
+                path: 'search',
+                element: <SearchPage />,
+            },
+            
         ],
     },
 

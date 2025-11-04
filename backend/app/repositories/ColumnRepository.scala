@@ -13,7 +13,7 @@ import slick.jdbc.JdbcProfile
 
 import java.time.Instant
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ColumnRepository @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider
@@ -24,6 +24,9 @@ class ColumnRepository @Inject()(
   def create(column: Column): DBIO[Int] = {
     columns returning columns.map(_.id) += column
   }
+
+  def findByProjectId(projectId: Int): DBIO[Seq[Column]] =
+    columns.filter( c => c.projectId === projectId && c.status =!= ColumnStatus.deleted).result
 
   def exitsByPosition(projectId: Int, position: Int): DBIO[Boolean] = {
     columns
@@ -54,19 +57,19 @@ class ColumnRepository @Inject()(
                 id = col.id.get,
                 name = col.name,
                 position = col.position,
-                tasks = grouped.getOrElse(col.id.get, Seq.empty).map {
-                  case (_, id, name, pos) =>
-                    TaskSummaryResponse(
-                      id,
-                      name,
-                      pos.getOrElse(1)
-                    )
-                }
+                taskIds = grouped.getOrElse(col.id.get, Seq.empty).map(_._2),
+                totalTasks = grouped.getOrElse(col.id.get, Seq.empty).size
               )
             }
           }
       }
   }
+
+  def findActiveColumnsByProject(projectId: Int): DBIO[Seq[Column]] =
+    columns
+      .filter(c => c.projectId === projectId && c.status === ColumnStatus.active)
+      .sortBy(_.position.asc)
+      .result
 
   def update(column: UpdateColumnRequest, columnId: Int): DBIO[Int] = {
     columns
@@ -83,20 +86,17 @@ class ColumnRepository @Inject()(
     columns.filter(_.id === columnId).map(_.position).update(position)
   }
 
-  def findStatusIfUserInProject(columnId: Int, userId: Int): DBIO[Option[ColumnStatus]] = {
+  def findStatusAndProjectIdIfUserInProject(columnId: Int, userId: Int): DBIO[Option[(Int, ColumnStatus)]] = {
     val query = for {
-      (c, p) <- columns join projects on (_.projectId === _.id)
-      if c.id === columnId.bind && p.createdBy === userId.bind
-    } yield c.status
+      (((c, p), up)) <- columns
+        .join(projects).on(_.projectId === _.id)
+        .join(userProjects).on { case ((c, p), up) =>
+          p.id === up.projectId && up.userId === userId.bind
+        }
+      if c.id === columnId.bind
+    } yield (p.id, c.status)
 
     query.result.headOption
-  }
-
-  def findById(columnId: Int): DBIO[Option[Column]] = {
-    columns
-      .filter(c => c.id === columnId)
-      .result
-      .headOption
   }
 
   def findColumnIfUserInProject(columnId: Int, userId: Int): DBIO[Option[Column]] = {
@@ -124,6 +124,14 @@ class ColumnRepository @Inject()(
       .map(c => (c.id, c.name, c.position))
       .result
       .map(_.map((ColumnSummariesResponse.apply _).tupled))
+  }
+
+  def insertColumnBatch(cols: Seq[Column]): Future[Seq[Column]] = {
+    db.run((columns returning columns) ++= cols).map(_.toSeq)
+  }
+
+  def importColumnBatch(cols: Seq[Column]): DBIO[Seq[Int]] = {
+    (columns returning columns.map(_.id)) ++= cols
   }
 
 }

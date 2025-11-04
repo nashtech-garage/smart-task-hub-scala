@@ -28,6 +28,7 @@ POST   /api/workspaces    controllers.WorkspaceController.create
 PUT    /api/workspaces/:id controllers.WorkspaceController.update(id: Int)
 
 # Project routes
+POST   /api/workspaces/:workspaceId/projects/import   controllers.ProjectController.uploadJsonFile(workspaceId: Int)
 POST   /api/workspaces/:workspaceId/projects    controllers.ProjectController.create(workspaceId: Int)
 GET    /api/workspaces/:workspaceId/projects    controllers.ProjectController.getAll(workspaceId: Int)
 PATCH   /api/projects/:projectId/complete   controllers.ProjectController.completeProject(projectId: Int)
@@ -36,6 +37,8 @@ PATCH   /api/projects/:projectId/reopen     controllers.ProjectController.reopen
 GET    /api/projects/completed       controllers.ProjectController.getCompletedProjectsByUser
 GET    /api/projects/:projectId/members        controllers.ProjectController.getAllMembersInProject(projectId: Int)
 GET    /api/projects/:projectId        controllers.ProjectController.getProjectById(projectId: Int)
+GET    /api/projects    controllers.ProjectController.getProjectsByUser
+GET    /api/projects/:id/export   controllers.ProjectController.exportProject(id: Int)
 
 # Column routes
 POST   /api/projects/:projectId/columns    controllers.ColumnController.create(projectId: Int)
@@ -45,7 +48,7 @@ PATCH  /api/projects/:projectId/columns/:columnId   controllers.ColumnController
 PATCH   /api/columns/:columnId/archive    controllers.ColumnController.archive(columnId: Int)
 PATCH   /api/columns/:columnId/restore    controllers.ColumnController.restore(columnId: Int)
 DELETE  /api/columns/:columnId            controllers.ColumnController.delete(columnId: Int)
-PATCH  /api/columns/:columnId/position        controllers.ColumnController.updatePosition(columnId: Int)
+PATCH  /api/projects/:projectId/columns/:columnId/position        controllers.ColumnController.updatePosition(projectId: Int, columnId: Int)
 
 # Task routes
 POST   /api/columns/:columnId/tasks    controllers.TaskController.create(columnId: Int)
@@ -54,3 +57,13 @@ GET    /api/tasks/:taskId              controllers.TaskController.getById(taskId
 PATCH  /api/tasks/:taskId/archive      controllers.TaskController.archive(taskId: Int)
 PATCH  /api/tasks/:taskId/restore      controllers.TaskController.restore(taskId: Int)
 DELETE  /api/tasks/:taskId             controllers.TaskController.delete(taskId: Int)
+POST   /api/projects/:projectId/tasks/:taskId/members   controllers.TaskController.assignMember(projectId: Int, taskId: Int)
+DELETE /api/projects/:projectId/tasks/:taskId/members/:userId controllers.TaskController.unassignMember(projectId: Int, taskId: Int, userId: Int)
+PATCH  /api/tasks/:taskId/position     controllers.TaskController.updatePosition(taskId: Int)
+GET    /api/projects/:projectId/columns/tasks/archived    controllers.TaskController.getArchivedTasks(projectId: Int)
+GET    /api/projects/:projectId/columns/tasks/active    controllers.TaskController.getActiveTasksInProject(projectId: Int)
+GET    /api/projects/:projectId/columns/:columnsId/tasks    controllers.TaskController.getActiveTasksInColumn(projectId: Int, columnsId: Int, limit: Int ?= 20, page: Int ?= 1)
+GET   /api/tasks   controllers.TaskController.search(page: Int ?= 2, size: Int ?= 10, keyword: String ?= "", projectIds: Option[List[Int]])
+
+#Web socket
+GET /ws/project/:projectId  controllers.WebSocketController.joinProject(projectId: Int)

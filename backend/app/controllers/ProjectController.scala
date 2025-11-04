@@ -1,22 +1,25 @@
 package controllers
 
-import dto.request.project.CreateProjectRequest
+import dto.request.project.{CreateProjectRequest, ImportProjectData}
 import dto.response.ApiResponse
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
-import play.api.libs.json.{JsValue, Json}
+import play.api.libs.Files.TemporaryFile
+import play.api.libs.json.{JsResultException, JsValue, Json}
 import play.api.mvc.{
   Action,
   AnyContent,
   MessagesAbstractController,
-  MessagesControllerComponents
+  MessagesControllerComponents,
+  MultipartFormData
 }
+import scoverage.Platform.Source
 import services.ProjectService
 import utils.WritesExtras.unitWrites
 import validations.ValidationHandler
 
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ProjectController @Inject()(
   cc: MessagesControllerComponents,
@@ -114,14 +117,80 @@ class ProjectController @Inject()(
       }
     }
 
-    /** GET /projects/:projectId */
+  /** GET /projects/:projectId */
   def getProjectById(projectId: Int): Action[AnyContent] =
     authenticatedActionWithUser.async { request =>
       val userId = request.userToken.userId
-      projectService.getProjectById(projectId, userId).map { project =>
+      projectService.getProjectDetailById(projectId, userId).map { project =>
         val apiResponse =
           ApiResponse.success("Project retrieved", project)
         Ok(Json.toJson(apiResponse))
+      }
+    }
+
+  def getProjectsByUser: Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+      projectService.getProjectsByUserId(userId).map { projects =>
+        val apiResponse =
+          ApiResponse.success("Projects retrieved", projects)
+        Ok(Json.toJson(apiResponse))
+      }
+    }
+
+  def exportProject(projectId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+
+      projectService.exportProject(projectId, userId).map { jsonData =>
+        val apiResponse =
+          ApiResponse.success("Project export successfully", jsonData)
+
+        Ok(Json.toJson(apiResponse))
+      }
+    }
+
+  def uploadJsonFile(
+    workspaceId: Int
+  ): Action[MultipartFormData[TemporaryFile]] =
+    authenticatedActionWithUser.async(parse.multipartFormData) { request =>
+      val userId = request.userToken.userId
+
+      request.body.file("file") match {
+        case Some(uploadedFile) =>
+          val filePath = uploadedFile.ref.path.toFile
+
+          try {
+            val fileSource = Source.fromFile(filePath)("UTF-8")
+            val fileContent = try fileSource.getLines().mkString("\n")
+            finally fileSource.close()
+            val json = Json.parse(fileContent)
+
+            val data = json.as[ImportProjectData]
+
+            projectService
+              .importProject(data, userId, workspaceId)
+              .map { res =>
+                val apiResponse =
+                  ApiResponse.success("Project imported successfully", res)
+                Ok(Json.toJson(apiResponse))
+              }
+
+          } catch {
+            case _: JsResultException =>
+              Future.successful(
+                BadRequest(Json.obj("message" -> "JSON parse failed"))
+              )
+            case _: Throwable =>
+              Future.successful(
+                BadRequest(Json.obj("message" -> "Invalid JSON format"))
+              )
+          }
+
+        case None =>
+          Future.successful(
+            BadRequest(Json.obj("message" -> "No file uploaded"))
+          )
       }
     }
 }

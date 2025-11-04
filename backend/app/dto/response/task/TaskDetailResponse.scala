@@ -15,7 +15,8 @@ case class TaskDetailResponse(id: Int,
                               columnId: Int,
                               isCompleted: Boolean,
                               createdAt: Instant,
-                              updatedAt: Instant
+                              updatedAt: Instant,
+                              assignedMembers: Seq[AssignedMemberResponse] = Seq.empty
                              )
 
 object TaskDetailResponse {

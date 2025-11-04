@@ -28,6 +28,7 @@ const ArchivedItemsModal: React.FC<ArchivedItemsModalProps> = ({
     const modalRef = useRef<HTMLDivElement>(null);
 
     const currentItems = currentView === 'tasks' ? archivedTasks : archivedColumns;
+    console.log("Rendering ArchivedItemsModal, currentView:", currentView);
 
     return (
         <div
@@ -134,7 +135,7 @@ const ArchivedItemsModal: React.FC<ArchivedItemsModalProps> = ({
                                         <div className="flex items-start justify-between gap-3">
                                             <div className="flex-1 min-w-0">
                                                 <div className="text-[#B6C2CF] font-medium mb-1 break-words">
-                                                        {item.content}
+                                                    {item.name}
                                                 </div>
                                                 {/* <div className="text-[#9FADBC] text-xs">
                                                     Archived {item.archivedAt.toLocaleDateString()}

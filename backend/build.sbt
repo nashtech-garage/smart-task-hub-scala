@@ -8,6 +8,9 @@ val postgresVersion = "42.7.3"
 val jacksonVersion = "2.14.3"
 val slickPgVersion   = "0.22.0"
 
+// Increase HTTP idle timeout for dev server
+PlayKeys.devSettings += "play.server.http.idleTimeout" -> "3600000"
+
 lazy val root = (project in file("."))
     .enablePlugins(PlayScala)
     .settings (
@@ -17,6 +20,7 @@ lazy val root = (project in file("."))
         guice,
         caffeine,
         filters,
+        caffeine,
 
         "org.playframework" %% "play-slick" % playSlickVersion,
         "org.playframework" %% "play-slick-evolutions" % playSlickVersion,
@@ -69,8 +73,7 @@ lazy val root = (project in file("."))
         coverageExcludedPackages := Seq(
             "controllers\\.javascript\\..*",
             "controllers.Reverse.*",
-            "dto\\.request\\..*",
-            "dto\\.response\\..*",
+            "dto\\..*",
             "filters\\..*",
             "mappers\\..*",
             "models\\..*",
@@ -81,6 +84,7 @@ lazy val root = (project in file("."))
             "db\\..*",
             "validations\\..*",
             "utils\\..*",
+            "actors\\..*",
         ).mkString(";"),
 
         Test / javaOptions += "-Dconfig.file=conf/application.test.conf",

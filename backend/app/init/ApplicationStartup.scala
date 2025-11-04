@@ -1,7 +1,6 @@
 package init
 
-import play.api.{Logger, Logging}
-import play.api.inject.ApplicationLifecycle
+import play.api.Logger
 
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.duration._
@@ -9,7 +8,6 @@ import scala.concurrent.{Await, ExecutionContext}
 
 @Singleton
 class ApplicationStartup @Inject()(
-                                    lifecycle: ApplicationLifecycle,
                                     databaseInitializer: DatabaseInitializer
                                   )(implicit ec: ExecutionContext) {
 
@@ -17,16 +15,15 @@ class ApplicationStartup @Inject()(
   initialize()
 
 
-
   private def initialize(): Unit = {
     Logger("application").info("Application startup initialization...")
     try {
-      Await.result(databaseInitializer.initializeDatabase(), 10.seconds)
+      Await.result(databaseInitializer.initializeDatabase(), Duration.Inf)
+      Logger("application").info("Application startup initialization completed.")
     } catch {
       case ex: Throwable =>
         Logger("application").error("Failed to initialize database", ex)
     }
   }
-
 
 }

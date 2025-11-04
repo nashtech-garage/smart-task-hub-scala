@@ -1431,13 +1431,19 @@ paths:
               example:
                 message: "Column not found"
 
-  /columns/{columnId}/position:
+  /projects/{projectId}/columns/{columnId}/position:
     patch:
       tags:
         - Columns
       summary: Update column position
       description: Updates the position of a specific column in a project
       parameters:
+        - in: path
+          name: projectId
+          required: true
+          description: Project ID
+          schema:
+            type: integer
         - in: path
           name: columnId
           required: true
@@ -1497,7 +1503,7 @@ paths:
 
 
   /projects/{projectId}/columns/archived:
-   get:
+    get:
       tags:
         - Columns
       summary: Get archived columns in project
@@ -1526,12 +1532,12 @@ paths:
               example:
                 message: "Archived columns retrieved"
                 data:
-                - id: 2
-                  name: "Done"
-                  position: 3
-                - id: 3
-                  name: "Archived"
-                  position: 4
+                  - id: 2
+                    name: "Done"
+                    position: 3
+                  - id: 3
+                    name: "Archived"
+                    position: 4
 
         '401':
           description: Unauthenticated request
@@ -1966,6 +1972,128 @@ paths:
               example:
                 message: "Task with ID 22 does not exist"
 
+  /projects/{projectId}/columns/tasks/archived:
+    get:
+      tags:
+        - Tasks
+      summary: Get archived tasks in project
+      description: Retrieves all archived tasks in the specified project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          description: Project ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Archived tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TaskSummariesResponse'
+              example:
+                message: "Archived tasks retrieved successfully"
+                data:
+                  - id: 2
+                    name: "Task A"
+                    position: 3
+                    columnId: 1
+                  - id: 3
+                    name: "Task B"
+                    position: 4
+                    columnId: 2
+
+        '401':
+          description: Unauthenticated request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Authentication required"
+
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Project not found"
+
+  /projects/{projectId}/columns/tasks/active:
+    get:
+      tags:
+        - Tasks
+      summary: Get active tasks in project
+      description: Retrieves all active tasks in the specified project
+      parameters:
+        - in: path
+          name: projectId
+          required: true
+          description: Project ID
+          schema:
+            type: integer
+      responses:
+        '200':
+          description: Active tasks retrieved successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+                    properties:
+                      data:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/TaskSummariesResponse'
+              example:
+                message: "Archived tasks retrieved successfully"
+                data:
+                  - id: 2
+                    name: "Task A"
+                    position: 3
+                    columnId: 1
+                  - id: 3
+                    name: "Task B"
+                    position: 4
+                    columnId: 2
+
+        '401':
+          description: Unauthenticated request
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Authentication required"
+
+        '404':
+          description: Project not found
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/ApiResponse'
+                  - type: object
+              example:
+                message: "Project not found"
+
 components:
   schemas:
     # Request schemas
@@ -2154,15 +2282,15 @@ components:
           example: false
 
     UpdateColumnPositionRequest:
-        type: object
-        required:
-          - position
-        properties:
-          position:
-            type: integer
-            minimum: 1
-            description: New position of the column in the project board
-            example: 2
+      type: object
+      required:
+        - position
+      properties:
+        position:
+          type: integer
+          minimum: 1
+          description: New position of the column in the project board
+          example: 2
 
 
     # Response schemas
@@ -2317,6 +2445,10 @@ components:
           type: integer
           description: Position of the task in the column
           example: 1
+        columnId:
+          type: integer
+          description: ID of the column containing the task
+          example: 1
 
     ColumnWithTasksResponse:
       type: object
@@ -2408,6 +2540,25 @@ components:
         position:
           type: integer
           description: Position of the column in the project board
+          example: 1
+    TaskSummariesResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          description: Task ID
+          example: 1
+        name:
+          type: string
+          description: Task name
+          example: "Task A"
+        position:
+          type: integer
+          description: Position of the task in the column
+          example: 1
+        columnId:
+          type: integer
+          description: ID of the column containing the task
           example: 1
 
     ProjectResponse:

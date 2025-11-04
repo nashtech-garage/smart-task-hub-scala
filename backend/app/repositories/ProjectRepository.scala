@@ -1,10 +1,16 @@
 package repositories
 
-import db.MyPostgresProfile.api.{projectStatusTypeMapper, userProjectRoleTypeMapper}
-import dto.response.project.{CompletedProjectSummariesResponse, ProjectResponse, ProjectSummariesResponse}
+import db.MyPostgresProfile.api.{
+  projectStatusTypeMapper,
+  userProjectRoleTypeMapper
+}
+import dto.response.project.{
+  CompletedProjectSummariesResponse,
+  ProjectSummariesResponse
+}
 import dto.response.user.UserInProjectResponse
 import models.Enums.ProjectStatus.ProjectStatus
-import models.Enums.{ProjectStatus, UserProjectRole}
+import models.Enums.{ ProjectStatus, UserProjectRole}
 import models.entities.{Column, Project, UserProject}
 import models.tables.TableRegistry.{columns, users}
 import models.tables.{ProjectTable, UserProjectTable, WorkspaceTable}
@@ -13,7 +19,7 @@ import slick.jdbc.JdbcProfile
 
 import java.time.Instant
 import javax.inject.Inject
-import scala.concurrent.ExecutionContext
+import scala.concurrent.{ExecutionContext, Future}
 
 class ProjectRepository @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider
@@ -25,6 +31,28 @@ class ProjectRepository @Inject()(
   private val projects = TableQuery[ProjectTable]
   private val userProjects = TableQuery[UserProjectTable]
   private val workspaces = TableQuery[WorkspaceTable]
+
+  def findAccessibleProject(userId: Int, projectId: Int): DBIO[Option[Project]] = {
+    val query = for {
+      (p, up) <- projects
+        .join(userProjects).on(_.id === _.projectId)
+      if p.id === projectId &&
+        up.userId === userId &&
+        p.status =!= ProjectStatus.deleted
+    } yield p
+
+    query.result.headOption
+  }
+
+  def existsByName(workspaceId: Int, name: String): DBIO[Boolean] = {
+    projects
+      .filter(
+        p =>
+          p.workspaceId === workspaceId && p.name === name && p.status =!= ProjectStatus.deleted
+      )
+      .exists
+      .result
+  }
 
   def createProjectWithOwner(project: Project, ownerId: Int): DBIO[Int] = {
     for {
@@ -41,6 +69,21 @@ class ProjectRepository @Inject()(
           Column(projectId = projectId, name = "To Do", position = 1),
           Column(projectId = projectId, name = "In Progress", position = 1000),
           Column(projectId = projectId, name = "Done", position = 2000)
+        )
+      )
+    } yield projectId
+  }
+
+  def importProjectWithOwner(project: Project, ownerId: Int): DBIO[Int] = {
+    for {
+      projectId <- (projects returning projects.map(_.id)) += project
+
+      _ <- DBIO.seq(
+        userProjects += UserProject(
+          userId = ownerId,
+          projectId = projectId,
+          role = UserProjectRole.owner,
+          joinedAt = Instant.now()
         )
       )
     } yield projectId
@@ -98,7 +141,9 @@ class ProjectRepository @Inject()(
     } yield up).exists.result
   }
 
-  def getAllMembersInProject(projectId: Int): DBIO[Seq[UserInProjectResponse]] = {
+  def getAllMembersInProject(
+    projectId: Int
+  ): DBIO[Seq[UserInProjectResponse]] = {
     (for {
       up <- userProjects if up.projectId === projectId
       u <- users if u.id === up.userId
@@ -106,14 +151,46 @@ class ProjectRepository @Inject()(
       .map(_.map((UserInProjectResponse.apply _).tupled))
   }
 
-  def findById(projectId: Int): DBIO[Option[ProjectResponse]] = {
+  def findProjectBasicInfo(projectId: Int): DBIO[Option[(Int, String, ProjectStatus)]] =
     projects
       .filter(_.id === projectId)
       .map(p => (p.id, p.name, p.status))
       .result
       .headOption
-      .map(_.map { case (id, name, status) =>
-        ProjectResponse(id, name, status)
-      })
+
+  def insertProjectBatch(projectList: Seq[Project]): Future[Seq[Project]] = {
+    val insertQuery = projects returning projects.map(_.id) into (
+      (project,
+       id) => project.copy(id = Some(id))
+    )
+    val action = insertQuery ++= projectList
+    db.run(action)
+  }
+
+  def insertUserBatchIntoProject(
+    entries: Seq[UserProject]
+  ): Future[Seq[Int]] = {
+    val insertQuery = userProjects returning userProjects.map(_.id)
+    val action = insertQuery ++= entries
+    db.run(action)
+  }
+
+  def importUserBatchIntoProject(
+                                  entries: Seq[UserProject]
+                                ): DBIO[Seq[Int]] = {
+    val insertQuery = userProjects returning userProjects.map(_.id)
+    insertQuery ++= entries
+  }
+
+  def getProjectsByUser(userId: Int): DBIO[Seq[Project]] = {
+    val q = for {
+      up <- userProjects
+      if up.userId === userId && (up.role === UserProjectRole.owner || up.role === UserProjectRole.member)
+      p <- projects
+      if p.id === up.projectId && p.status =!= ProjectStatus.deleted
+      w <- workspaces if w.id === p.workspaceId && !w.isDeleted
+    } yield p
+
+    q.result
   }
 }

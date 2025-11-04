@@ -1,4 +1,4 @@
-import type { ApiResponse, Board, Column, UrlPreviewData } from '@/types';
+import type { ApiResponse, Board, BoardDetail, Column, Member, Task, UrlPreviewData } from '@/types';
 import axiosClients from './axiosClient';
 
 const previewUrl = '/url-preview';
@@ -12,27 +12,39 @@ const fetchUrlPreview = async (url: string): Promise<UrlPreviewData> => {
     });
 };
 
-const fetchBoardDetail = async (id: number): Promise<ApiResponse<Board>> => {
+const fetchBoardDetail = async (id: number): Promise<ApiResponse<BoardDetail>> => {
     return axiosClients.get(`${projectUrl}/${id}`);
 };
 
+const fetchAllBoards = async (): Promise<ApiResponse<Board[]>> => {
+    return axiosClients.get(`${projectUrl}`);
+}
+
 const fetchBoardColumns = async (id: number): Promise<ApiResponse<Column[]>> => {
     return axiosClients.get(`${projectUrl}/${id}/columns`);
+};
+
+const fetchBoardMembers = async (id: number): Promise<ApiResponse<Member[]>> => {
+    return axiosClients.get(`${projectUrl}/${id}/members`);
+};
+
+const fetchActiveBoardTasks = async (id: number): Promise<ApiResponse<Task[]>> => {
+    return axiosClients.get(`${projectUrl}/${id}/columns/tasks/active`);
 };
 
 const fetchArchivedColumns = async (id: number): Promise<ApiResponse<Column[]>> => {
     return axiosClients.get(`${projectUrl}/${id}/columns/archived`);
 };
 
-const createNewColumn = async (id: number, title: string, position: number): Promise<ApiResponse<null>> => {
+const createNewColumn = async (id: number, name: string, position: number): Promise<ApiResponse<null>> => {
     return axiosClients.post(`${projectUrl}/${id}/columns`, {
-        name: title,
+        name,
         position
     });
 };
 
-const updateColumn = async (id: number, boardId: number, name: string): Promise<ApiResponse<null>> => {
-    return axiosClients.patch(`${projectUrl}/${id}/columns/${boardId}`, {
+const updateColumn = async (projectId: number, columnId: number, name: string): Promise<ApiResponse<null>> => {
+    return axiosClients.patch(`${projectUrl}/${projectId}/columns/${columnId}`, {
         name
     });
 };
@@ -55,9 +67,23 @@ const deleteColumn = async (columnId: number): Promise<ApiResponse<null>> => {
     return axiosClients.delete(`/columns/${columnId}`);
 };
 
-export { 
-    fetchUrlPreview, fetchBoardDetail, createNewColumn, 
-    updateColumn, archiveColumn, restoreColumn, 
-    deleteColumn, updateColumnPosititon, fetchBoardColumns, 
-    fetchArchivedColumns 
+const exportBoard = async (boardId: number): Promise<ApiResponse<null>> => {
+    return axiosClients.get(`/projects/${boardId}/export`);
+};
+
+const importBoard = async (workspaceId: number, file: File): Promise<ApiResponse<Board>> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    return axiosClients.post(`/workspaces/${workspaceId}/projects/import`, formData, {
+        headers: {
+            'Content-Type': 'multipart/form-data',
+        },
+    });
+}
+
+export {
+    fetchUrlPreview, fetchBoardDetail, createNewColumn,
+    updateColumn, archiveColumn, restoreColumn,
+    deleteColumn, updateColumnPosititon, fetchBoardColumns,
+    fetchArchivedColumns, fetchActiveBoardTasks, fetchBoardMembers, fetchAllBoards, exportBoard, importBoard
 };

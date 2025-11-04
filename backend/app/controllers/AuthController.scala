@@ -20,6 +20,7 @@ import scala.util.{Failure, Success}
  */
 @Singleton
 class AuthController @Inject()(
+                                keycloakService: KeycloakService,
                                 authService: AuthService,
                                 cc: ControllerComponents,
                                 jwtService: JwtService,
@@ -45,7 +46,7 @@ class AuthController @Inject()(
   def login(): Action[AnyContent] = Action.async { implicit request ⇒
     parseLoginRequest(request.body).fold(
       error ⇒ Future.successful(BadRequest(Json.toJson(ApiResponse.error[AuthResponse](error)))),
-      loginReq ⇒ handleLogin(loginReq)
+      loginReq ⇒ handleKeycloakLogin(loginReq)
     )
   }
 
@@ -141,6 +142,15 @@ class AuthController @Inject()(
       case None ⇒
         val apiResponse = ApiResponse.error[AuthResponse]("Invalid email or password")
         Future.successful(Unauthorized(Json.toJson(apiResponse)))
+    }
+  }
+
+  private def handleKeycloakLogin(loginReq: LoginRequest): Future[Result] = {
+    keycloakService.login(loginReq.email, loginReq.password).flatMap {
+      case Right(tokenResponse) =>
+        Future.successful(Ok(Json.toJson(tokenResponse)).withCookies(cookieService.createAuthCookie(tokenResponse.access_token)))
+      case Left(error) =>
+        Future.successful(InternalServerError(error))
     }
   }
 

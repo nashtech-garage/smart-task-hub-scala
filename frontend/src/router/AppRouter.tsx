@@ -18,14 +18,13 @@ import RegisterForm from '@/components/auth/RegisterForm';
 import SidebarLayout from '@/components/layout/SidebarLayout';
 import Template from '@/pages/Template';
 import Home from '@/pages/Home';
-import Member from '@/pages/workspace/Member';
 import Setting from '@/pages/workspace/Setting';
-import WorkspaceBoard from '@/components/board/BoardContent';
 import HomeBoards from '@/pages/HomeBoards';
 import Boards from '@/pages/workspace/Board';
 import WorkspaceDetail from '@/pages/workspace/WorkspaceDetail';
 import SearchPage from '@/pages/SearchPage';
 import Board from '@/pages/Board';
+import WorkspaceCollaborators from '@/pages/workspace/WorkspaceCollaborators';
 
 // Layout wrappers for different roles
 const AdminLayout = () => (
@@ -118,7 +117,7 @@ const router = createBrowserRouter([
                     },
                     {
                         path: 'members/:id',
-                        element: <Member />,
+                        element: <WorkspaceCollaborators />,
                     },
                     {
                         path: 'setting/:id',

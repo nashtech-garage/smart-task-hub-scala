@@ -2,7 +2,7 @@ import { notify } from '@/services/toastService';
 import { getWorkspaces } from '@/services/workspaceService';
 import type { WorkSpace } from '@/types/workspace';
 import clsx from 'clsx';
-import { Folders, House, LayoutTemplate, ChevronDown, ChevronRight, Settings } from 'lucide-react';
+import { Folders, House, LayoutTemplate, ChevronDown, ChevronRight, Settings, Users } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 
@@ -34,12 +34,12 @@ const workspaceItems = [
         title: 'Boards',
         navigate: '/workspace/boards'
     },
-    // {
-    //     id: 'w-item2',
-    //     icon: <Users />,
-    //     title: 'Members',
-    //     navigate: '/workspace/members'
-    // },
+    {
+        id: 'w-item2',
+        icon: <Users />,
+        title: 'Members',
+        navigate: '/workspace/members'
+    },
     {
         id: 'w-item3',
         icon: <Settings />,

@@ -111,14 +111,14 @@ class DataSeeder @Inject()(
     val entries = workspaceIds.flatMap { wsId =>
       // always add admin + tester
       val base = Seq(
-        UserWorkspace(None, Some(adminId), Some(wsId), Some(UserWorkspaceRole.admin), UserWorkspaceStatus.active, None, Some(now)),
-        UserWorkspace(None, Some(testerId), Some(wsId), Some(UserWorkspaceRole.member), UserWorkspaceStatus.active, Some(adminId), Some(now))
+        UserWorkspace(None, adminId, wsId, UserWorkspaceRole.admin, UserWorkspaceStatus.active, None, now),
+        UserWorkspace(None, testerId, wsId, UserWorkspaceRole.member, UserWorkspaceStatus.active, Some(adminId), now)
       )
 
       // add 3 random other users (if available)
       val otherUsers = rnd.shuffle(users.filter(u => u.email != "admin@test.com" && u.email != "tester@test.com")).take(3).flatMap(_.id)
       val others = otherUsers.map(uid =>
-        UserWorkspace(None, Some(uid), Some(wsId), Some(UserWorkspaceRole.member), UserWorkspaceStatus.active, Some(adminId), Some(now)))
+        UserWorkspace(None, uid, wsId, UserWorkspaceRole.member, UserWorkspaceStatus.active, Some(adminId), now))
       base ++ others
     }
 

@@ -7,6 +7,7 @@ val playSlickVersion = "6.1.1"
 val postgresVersion = "42.7.3"
 val jacksonVersion = "2.14.3"
 val slickPgVersion   = "0.22.0"
+val mailerVersion    = "9.1.0"
 
 // Increase HTTP idle timeout for dev server
 PlayKeys.devSettings += "play.server.http.idleTimeout" -> "3600000"
@@ -49,7 +50,11 @@ lazy val root = (project in file("."))
         "com.typesafe.play" %% "play-ws" % "2.9.8",
         "com.typesafe.play" %% "play-json" % "2.10.7",
         "org.jsoup" % "jsoup" % "1.21.1",
-        "org.playframework" %% "play-ahc-ws" % "3.0.8"
+        "org.playframework" %% "play-ahc-ws" % "3.0.8",
+
+        //mailer
+        "com.typesafe.play" %% "play-mailer" % mailerVersion,
+        "com.typesafe.play" %% "play-mailer-guice" % mailerVersion,
       ),
 
       // CRITICAL: Force Jackson versions to prevent conflicts
@@ -85,6 +90,7 @@ lazy val root = (project in file("."))
             "validations\\..*",
             "utils\\..*",
             "actors\\..*",
+            "cache\\..*",
         ).mkString(";"),
 
         Test / javaOptions += "-Dconfig.file=conf/application.test.conf",

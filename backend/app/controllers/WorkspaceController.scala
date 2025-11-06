@@ -1,12 +1,17 @@
 package controllers
 
-import dto.request.workspace.{CreateWorkspaceRequest, UpdateWorkspaceRequest}
+import dto.request.workspace.{CreateWorkspaceRequest, InviteUserIntoWorkspaceRequest, UpdateWorkspaceRequest}
 import dto.response.ApiResponse
 import exception.AppException
 import play.api.i18n.I18nSupport.RequestWithMessagesApi
 import play.api.i18n.Messages
 import play.api.libs.json.{JsValue, Json}
-import play.api.mvc.{Action, AnyContent, MessagesAbstractController, MessagesControllerComponents}
+import play.api.mvc.{
+  Action,
+  AnyContent,
+  MessagesAbstractController,
+  MessagesControllerComponents
+}
 import services.WorkspaceService
 import utils.WritesExtras.unitWrites
 import validations.ValidationHandler
@@ -36,24 +41,23 @@ class WorkspaceController @Inject()(
       val createdBy = request.userToken.userId
       handleJsonValidation[CreateWorkspaceRequest](request.body) {
         createWorkspaceDto =>
-          workspaceService.createWorkspace(createWorkspaceDto, createdBy).map {
-            _ =>
+          workspaceService
+            .createWorkspace(createWorkspaceDto, createdBy)
+            .map { _ =>
               Created(
                 Json.toJson(ApiResponse[Unit]("Workspace created successfully"))
               )
-          }.recover {
-            case ex: AppException => BadRequest(
-              Json.obj(
-                "message" -> "Duplicate workspace name",
-                "errors" -> Json.arr(
+            }
+            .recover {
+              case ex: AppException =>
+                BadRequest(
                   Json.obj(
-                    "field" -> "name",
-                    "message" -> ex.message
+                    "message" -> "Duplicate workspace name",
+                    "errors" -> Json
+                      .arr(Json.obj("field" -> "name", "message" -> ex.message))
                   )
                 )
-              )
-            )
-          }
+            }
       }
     }
 
@@ -62,15 +66,16 @@ class WorkspaceController @Inject()(
     authenticatedActionWithUser.async { request =>
       val userId = request.userToken.userId
       workspaceService.getAllWorkspaces(userId).map { workspaces =>
-        val apiResponse = ApiResponse.success("Workspaces retrieved", workspaces)
+        val apiResponse =
+          ApiResponse.success("Workspaces retrieved", workspaces)
         Ok(Json.toJson(apiResponse))
       }
     }
 
   /** GET /workspaces/:id */
   def getWorkspaceById(id: Int): Action[AnyContent] =
-   authenticatedActionWithUser.async { request ⇒
-     val userId = request.userToken.userId
+    authenticatedActionWithUser.async { request ⇒
+      val userId = request.userToken.userId
       workspaceService.getWorkspaceById(id, userId).map {
         case Some(workspace) =>
           val apiResponse =
@@ -78,17 +83,19 @@ class WorkspaceController @Inject()(
           Ok(Json.toJson(apiResponse))
         case None => NotFound(Json.obj("error" -> s"Workspace $id not found"))
       }
-  }
+    }
 
   /** DELETE /workspaces/:id */
   def deleteWorkspace(id: Int): Action[AnyContent] =
-   authenticatedActionWithUser.async { request ⇒
-     val userId = request.userToken.userId
+    authenticatedActionWithUser.async { request ⇒
+      val userId = request.userToken.userId
       workspaceService.deleteWorkspace(id, userId).map {
         case true =>
           Ok(
             Json
-              .toJson(ApiResponse.successNoData("Workspace deleted successfully"))
+              .toJson(
+                ApiResponse.successNoData("Workspace deleted successfully")
+              )
           )
         case false =>
           NotFound(
@@ -98,7 +105,7 @@ class WorkspaceController @Inject()(
             )
           )
       }
-  }
+    }
 
   /** PUT /workspaces/:id */
   def update(id: Int): Action[JsValue] =
@@ -115,5 +122,24 @@ class WorkspaceController @Inject()(
               )
             }
       }
+    }
+
+  def inviteUser(workspaceId: Int): Action[JsValue] =
+    authenticatedActionWithUser.async(parse.json) { request =>
+      implicit val messages: Messages = request.messages
+      val invitorId = request.userToken.userId
+      handleJsonValidation[InviteUserIntoWorkspaceRequest](request.body) {
+        inviteUserIntoWorkspaceDto =>
+          workspaceService
+            .inviteUserToWorkspace(invitorId, workspaceId, inviteUserIntoWorkspaceDto)
+            .map(
+              _ =>
+                Ok(
+                  Json
+                    .toJson(ApiResponse[Unit]("User invited successfully"))
+              )
+            )
+      }
+
     }
 }

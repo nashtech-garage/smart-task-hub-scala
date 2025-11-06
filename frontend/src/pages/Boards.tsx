@@ -70,18 +70,18 @@ const Boards = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
 
     return (
-        <div className='p-6'>
+        <div className='p-6 bg-[(var(--background))] text-[(var(--foreground))]'>
             {/* Most Popular Templates */}
             <div className='mb-8'>
                 <div className='flex items-center justify-between mb-4'>
-                    <h2 className='text-xl font-bold text-white'>
+                    <h2 className='text-xl font-bold'>
                         Most popular templates
                     </h2>
                     <button className='text-sm text-gray-500 hover:text-gray-700'>
                         ×
                     </button>
                 </div>
-                <p className='text-sm text-white mb-4'>
+                <p className='text-sm mb-4'>
                     Get going faster with a template from the Trello
                     community or{' '}
                     <select
@@ -118,7 +118,7 @@ const Boards = () => {
                                 </div>
                                 <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
                             </div>
-                            <h3 className='mt-2 text-sm font-medium text-white group-hover:text-blue-600 p-2'>
+                            <h3 className='mt-2 text-sm font-medium group-hover:text-blue-600 p-2'>
                                 {template.title}
                             </h3>
                         </div>
@@ -134,7 +134,7 @@ const Boards = () => {
             <div className='mb-8'>
                 <div className='flex items-center mb-4'>
                     <svg
-                        className='w-5 h-5 mr-2 text-white'
+                        className='w-5 h-5 mr-2 '
                         fill='none'
                         viewBox='0 0 24 24'
                         stroke='currentColor'
@@ -146,7 +146,7 @@ const Boards = () => {
                             d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
                         />
                     </svg>
-                    <h2 className='text-lg font-semibold text-white'>
+                    <h2 className='text-lg font-semibold'>
                         Recently viewed
                     </h2>
                 </div>
@@ -169,7 +169,7 @@ const Boards = () => {
                                 )}
                                 <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
                             </div>
-                            <h3 className='mt-2 p-2 text-sm font-medium text-white group-hover:text-blue-600'>
+                            <h3 className='mt-2 p-2 text-sm font-medium group-hover:text-blue-600'>
                                 {board.title}
                             </h3>
                         </div>
@@ -179,7 +179,7 @@ const Boards = () => {
 
             {/* Your Workspaces */}
             <div>
-                <h2 className='text-lg font-semibold text-white mb-4 flex items-center'>
+                <h2 className='text-lg font-semibold  mb-4 flex items-center'>
                     YOUR WORKSPACES
                 </h2>
 
@@ -187,15 +187,15 @@ const Boards = () => {
                 <div className='mb-6'>
                     <div className='flex items-center justify-between mb-4'>
                         <div className='flex items-center'>
-                            <div className='w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-semibold text-sm mr-3'>
+                            <div className='w-8 h-8 bg-orange-500 rounded flex items-center justify-center  font-semibold text-sm mr-3'>
                                 N
                             </div>
-                            <h3 className='text-lg font-medium text-white'>
+                            <h3 className='text-lg font-medium '>
                                 Nashtech
                             </h3>
                         </div>
                         <div className='flex items-center space-x-2'>
-                            <button className='flex items-center px-3 py-1.5 text-sm text-white hover:bg-[#A6C5E229] rounded'>
+                            <button className='flex items-center px-3 py-1.5 text-sm hover:bg-[#A6C5E229] rounded'>
                                 <svg
                                     className='w-4 h-4 mr-1'
                                     fill='none'
@@ -211,7 +211,7 @@ const Boards = () => {
                                 </svg>
                                 Members
                             </button>
-                            <button className='flex items-center px-3 py-1.5 text-sm text-white hover:bg-[#A6C5E229] rounded'>
+                            <button className='flex items-center px-3 py-1.5 text-sm hover:bg-[#A6C5E229] rounded'>
                                 <svg
                                     className='w-4 h-4 mr-1'
                                     fill='none'

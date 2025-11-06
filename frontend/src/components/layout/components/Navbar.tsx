@@ -78,12 +78,12 @@ const Navbar: React.FC = () => {
     }, [debounceQuery]);
 
     return (
-        <nav className='bg-[#1E2125] border-b border-gray-700 px-4 py-2'>
+        <nav className='bg-[(var(--background))] border-b border px-4 py-2'>
             <div className='flex items-center justify-between'>
                 {/* Left side - Logo and Navigation */}
                 <div className='flex items-center space-x-4'>
                     {/* Grid Icon */}
-                    <button className='p-2 text-gray-300 hover:text-white hover:bg-gray-700 rounded'>
+                    <button className='p-2 dark:text-gray-300 hover:text-white hover:bg-gray-700 rounded'>
                         <svg
                             className='w-4 h-4'
                             fill='currentColor'
@@ -105,7 +105,7 @@ const Navbar: React.FC = () => {
                                     <path d='M21 16.5c0 .38-.21.71-.53.88l-7.9 4.44c-.16.12-.36.18-.57.18-.21 0-.41-.06-.57-.18l-7.9-4.44A.991.991 0 0 1 3 16.5v-9c0-.38.21-.71.53-.88l7.9-4.44c.16-.12.36-.18.57-.18.21 0 .41.06.57.18l7.9 4.44c.32.17.53.5.53.88v9z' />
                                 </svg>
                             </div>
-                            <span className='text-white font-semibold text-lg'>
+                            <span className='text-[(var(--foreground))] font-semibold text-lg'>
                                 Smart Taskhub
                             </span>
                         </div>
@@ -136,7 +136,7 @@ const Navbar: React.FC = () => {
                                 placeholder='Search'
                                 value={keyword}
                                 onChange={(e) => setKeyword(e.target.value)}
-                                className='block w-full pl-10 pr-3 py-1.5 bg-gray-700 border border-gray-600 rounded-md text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
+                                className='block w-full pl-10 pr-3 py-1.5 dark:bg-gray-700 border border-gray-600 rounded-md text-[var(--foreground)] placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm'
                             />
                         </div>
 
@@ -201,9 +201,9 @@ const Navbar: React.FC = () => {
                 {/* Right side - Actions and Profile */}
                 <div className='flex items-center space-x-2'>
                     {/* Create Button */}
-                    <button className='bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium'>
+                    {/* <button className='bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded text-sm font-medium'>
                         Create
-                    </button>
+                    </button> */}
 
                     {/* Notifications */}
                     {/* <button className='p-1.5 text-gray-300 hover:text-white hover:bg-gray-700 rounded relative'>
@@ -246,7 +246,7 @@ const Navbar: React.FC = () => {
                     <div className='relative'>
                         <button
                             onClick={() => setIsProfileOpen(!isProfileOpen)}
-                            className='flex items-center space-x-1 p-1 hover:bg-gray-700 rounded'
+                            className='flex items-center space-x-1 p-1 hover:bg-[var(--hover-bg)] rounded'
                         >
                             <div className='w-8 h-8 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold text-sm'>
                                 {user?.name?.charAt(0).toUpperCase() || 'VT'}

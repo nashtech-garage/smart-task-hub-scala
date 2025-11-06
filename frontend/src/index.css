@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 @import 'react-toastify/dist/ReactToastify.css';
@@ -72,7 +70,8 @@
 
 /* Scrollbar Track */
 ::-webkit-scrollbar {
-    width: 8px; /* or height for horizontal scrollbar */
+    width: 8px;
+    /* or height for horizontal scrollbar */
 }
 
 /* Scrollbar Track Background */
@@ -86,7 +85,8 @@
 ::-webkit-scrollbar-thumb {
     background-color: #3d3838;
     border-radius: 10px;
-    border: 2px solid transparent; /* space around thumb */
+    border: 2px solid transparent;
+    /* space around thumb */
 }
 
 /* On hover */
@@ -95,7 +95,8 @@
 }
 
 body {
-    scrollbar-gutter: stable; /* optional: prevent layout shift */
+    scrollbar-gutter: stable;
+    /* optional: prevent layout shift */
 }
 
 @theme inline {
@@ -169,10 +170,11 @@ body {
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --hover-bg: #A6C5E229;
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    --background: #1E2125;
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
@@ -203,13 +205,15 @@ body {
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --hover-bg: #A6C5E229;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
 }

@@ -100,7 +100,7 @@ const Sidebar = () => {
     };
 
     return (
-        <div className='w-64 bg-[#1E2125] flex flex-col'>
+        <div className='w-64 flex flex-col'>
             <div className='p-4'>
                 {/* Navigation Items */}
                 <nav className='space-y-1 border-b py-2'>
@@ -109,12 +109,10 @@ const Sidebar = () => {
                             to={item.navigate}
                             key={item.id}
                             className={clsx(
-                                'flex items-center gap-2 px-3 py-2 text-sm hover:bg-[#A6C5E229] font-medium rounded-lg transition-colors duration-200',
+                                'flex items-center gap-2 px-3 py-2 text-sm hover:bg-[(var(--hover-bg))] font-medium rounded-lg transition-colors duration-200',
                                 {
-                                    'text-[#155DFC] bg-[#1C2B41]':
+                                    'text-[#155DFC] bg-[#A6C5E229]':
                                         item.navigate === location.pathname,
-                                    'text-white':
-                                        item.navigate !== location.pathname,
                                 }
                             )}
                         >
@@ -126,23 +124,23 @@ const Sidebar = () => {
             </div>
 
             {/* Workspaces Section */}
-            <div className='flex-1 px-4'>
+            <div className='flex-1 px-4 overflow-y-auto'>
                 <div className='mb-4'>
-                    <h3 className='text-xs font-semibold text-white uppercase tracking-wide mb-2'>
+                    <h3 className='text-xs font-semibold uppercase tracking-wide mb-2'>
                         Workspaces
                     </h3>
                     {workspaces.map(workspace => (
                         <div className='space-y-1 mb-2' key={workspace.id}>
                             {/* Workspace Header */}
                             <div
-                                className='flex items-center justify-between p-2 hover:bg-[#A6C5E229] rounded-lg cursor-pointer transition-colors duration-200'
+                                className='flex items-center justify-between p-2 hover:bg-[(var(--hover-bg))] rounded-lg cursor-pointer transition-colors duration-200'
                                 onClick={() => handleExpandWorkspace(workspace.id)}
                             >
                                 <div className='flex items-center'>
-                                    <div className='w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-black font-semibold text-sm mr-3'>
+                                    <div className='w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-semibold text-sm mr-3'>
                                         {workspace.name.charAt(0)}
                                     </div>
-                                    <span className='text-sm font-medium text-white'>
+                                    <span className='text-sm font-medium'>
                                         {workspace.name}
                                     </span>
                                 </div>
@@ -170,7 +168,7 @@ const Sidebar = () => {
                                             <Link
                                                 key={item.id}
                                                 to={`${item.navigate}/${workspace.id}`}
-                                                className='flex items-center gap-2 pl-11 block px-3 py-1.5 text-xs text-white hover:bg-[#A6C5E229] rounded transition-colors duration-200'
+                                                className='flex items-center gap-2 pl-11 px-3 py-1.5 text-xs hover:bg-[(var(--hover-bg))] rounded transition-colors duration-200'
 
                                             >
                                                 {item.icon}

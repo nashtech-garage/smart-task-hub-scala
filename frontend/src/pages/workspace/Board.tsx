@@ -167,7 +167,7 @@ const Boards = () => {
     }, [id]);
 
     return (
-        <div className="h-full bg-[#1E2125] text-white">
+        <div className="h-full c">
             {/* Header */}
             <div className="p-8">
                 {isEditingWorkspace ? (

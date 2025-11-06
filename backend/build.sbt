@@ -18,6 +18,7 @@ lazy val root = (project in file("."))
       scalaVersion := "2.13.16",
 
       libraryDependencies ++= Seq(
+        ws,
         guice,
         caffeine,
         filters,
@@ -29,8 +30,8 @@ lazy val root = (project in file("."))
         "com.github.t3hnar" % "scala-bcrypt_2.13" % "4.3.0",
 
         "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.1" % Test,
-        "org.mockito" %% "mockito-scala-scalatest" % "1.17.29" % Test,
-        "org.scalatestplus.play" %% "scalatestplus-play" % "7.0.1" % Test,
+        "org.mockito" % "mockito-core" % "5.12.0" % Test,
+        "org.scalatestplus" %% "mockito-4-6" % "3.2.15.0" % Test,
         "com.h2database" % "h2" % "2.2.224" % Test,
 
         // Explicitly add compatible Jackson versions
@@ -47,14 +48,14 @@ lazy val root = (project in file("."))
         "io.github.cdimascio" % "dotenv-java" % "3.2.0",
         // Slick extensions for PostgreSQL, to support a series of pg data types and related operators/functions.
         "com.github.tminglei" %% "slick-pg" % slickPgVersion,
-        "com.typesafe.play" %% "play-ws" % "2.9.8",
         "com.typesafe.play" %% "play-json" % "2.10.7",
         "org.jsoup" % "jsoup" % "1.21.1",
-        "org.playframework" %% "play-ahc-ws" % "3.0.8",
-
         //mailer
         "com.typesafe.play" %% "play-mailer" % mailerVersion,
         "com.typesafe.play" %% "play-mailer-guice" % mailerVersion,
+
+        "org.playframework" %% "play-ahc-ws-standalone" % "3.0.8",
+        "org.playframework" %% "play-ws-standalone" % "3.0.8"
       ),
 
       // CRITICAL: Force Jackson versions to prevent conflicts

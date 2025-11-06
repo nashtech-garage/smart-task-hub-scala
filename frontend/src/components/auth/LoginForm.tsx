@@ -9,7 +9,7 @@ const LoginForm: React.FC = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [rememberMe, setRememberMe] = useState(false);
-    const { login, isLoading, error, isAuthenticated, clearAuthError } =
+    const { login, isLoading, error, isAuthenticated, clearAuthError, checkAuth } =
         useAuth();
     const navigate = useNavigate();
     const location = useLocation();
@@ -34,6 +34,8 @@ const LoginForm: React.FC = () => {
                 finally {
                     navigate(from, { replace: true });
                 }
+            }  else {
+                checkAuth();
             }
         };
 
@@ -51,6 +53,10 @@ const LoginForm: React.FC = () => {
             console.error('Login failed:', err);
         }
     };
+    
+    const loginWithGoogle = () => {
+        window.location.href = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${import.meta.env.VITE_GOOGLE_CLIENT_ID}&redirect_uri=${import.meta.env.VITE_GOOGLE_REDIRECT_URI}&response_type=code&scope=${import.meta.env.VITE_GOOGLE_SCOPE}`;
+    }
 
     return (
         <div className='w-full max-w-md mx-auto'>
@@ -173,6 +179,16 @@ const LoginForm: React.FC = () => {
                     ) : (
                         'Continue'
                     )}
+                </button>
+                {/* Sign in with Google Button (Commented Out) */}
+                <button
+                    type='button'
+                    disabled={isLoading}
+                    onClick={loginWithGoogle}
+                    className='w-full border border-gray-300 hover:bg-gray-100 text-gray-700 font-medium py-3 px-4 rounded-md transition-colors duration-200 disabled:cursor-not-allowed text-sm flex items-center justify-center'
+                >
+                    <img className="w-5 h-5 mr-2" src="/src/assets/google.svg" alt="google" />
+                    Sign in with Google
                 </button>
             </form>
 

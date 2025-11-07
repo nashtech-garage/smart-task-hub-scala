@@ -29,4 +29,7 @@ object ErrorMessages {
 
   def minValue(field: String, min: Int)(implicit messages: Messages): String =
     messages("validate.minValue", field, min)
+
+  def invalidFormat(field: String)(implicit messages: Messages): String =
+    messages("validate.invalidFormat", field)
 }

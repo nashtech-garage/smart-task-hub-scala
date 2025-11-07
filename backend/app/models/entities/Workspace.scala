@@ -21,10 +21,10 @@ case class Workspace(
 
 case class UserWorkspace(
                           id: Option[Int] = None,
-                          userId: Option[Int] = None,
-                          workspaceId: Option[Int] = None,
-                          role: Option[UserWorkspaceRole] = None,
+                          userId: Int,
+                          workspaceId:Int,
+                          role: UserWorkspaceRole,
                           status: UserWorkspaceStatus = UserWorkspaceStatus.active,
                           invitedBy: Option[Int] = None,
-                          joinedAt: Option[Instant] = None
+                          joinedAt: Instant = Instant.now()
                         )

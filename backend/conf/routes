@@ -25,6 +25,7 @@ OPTIONS /api/url-preview        controllers.UrlPreviewController.previewOptions(
 # Workspace routes
 
 POST   /api/workspaces    controllers.WorkspaceController.create
+POST   /api/workspaces/:workspaceId/invite    controllers.WorkspaceController.inviteUser(workspaceId: Int)
 PUT    /api/workspaces/:id controllers.WorkspaceController.update(id: Int)
 
 # Project routes

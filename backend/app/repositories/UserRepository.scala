@@ -84,4 +84,5 @@ class UserRepository @Inject()(
       .map(u => (u.id, u.name))
       .result
       .map(_.map { case (id, name) => UserPublicDTO(id, name) })
+
 }

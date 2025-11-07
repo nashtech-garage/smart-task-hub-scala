@@ -191,7 +191,7 @@ object CustomValidators {
     */
   def validateRequiredEnum[E <: Enumeration](
     field: String,
-    enum: E,
+    `enum`: E,
     requiredMsg: String,
     invalidMsgTmpl: String
   ): Reads[E#Value] = {

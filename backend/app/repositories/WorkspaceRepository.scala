@@ -38,9 +38,9 @@ class WorkspaceRepository @Inject()(
 
       // Create corresponding UserWorkspace entry
       _ <- userWorkspaces += UserWorkspace(
-        workspaceId = Some(wsId),
-        userId = Some(userId),
-        role = Some(Enums.UserWorkspaceRole.admin)
+        workspaceId = wsId,
+        userId = userId,
+        role = Enums.UserWorkspaceRole.admin
       )
     } yield wsId
   }
@@ -145,6 +145,12 @@ class WorkspaceRepository @Inject()(
   def insertUserBatchIntoWorkspace(entries: Seq[UserWorkspace]): Future[Seq[Int]] = {
     val insertQuery = userWorkspaces returning userWorkspaces.map(_.id)
     val action = insertQuery ++= entries
+    db.run(action)
+  }
+
+  def insertUserIntoWorkspace(entry: UserWorkspace): Future[Int] = {
+    val insertQuery = userWorkspaces returning userWorkspaces.map(_.id)
+    val action = insertQuery += entry
     db.run(action)
   }
 }

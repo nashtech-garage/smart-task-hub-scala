@@ -6,7 +6,7 @@ on:
     paths:
       - 'backend/**'
   pull_request:
-    branches: [ dev ]
+    branches: [ main ]
     paths:
       - 'backend/**'
 
@@ -16,6 +16,10 @@ jobs:
     defaults:
       run:
         working-directory: backend
+    permissions:
+      contents: read
+      packages: write
+      security-events: write
 
     steps:
       # 1. Checkout code
@@ -35,14 +39,67 @@ jobs:
         with:
           apps: sbt
 
-      # 4. Build (compile & stage)
+      # 4. Cache sbt dependencies
+      - name: Cache sbt dependencies
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.ivy2/cache
+            ~/.sbt
+            ~/.coursier
+            backend/target
+            backend/project/target
+          key: ${{ runner.os }}-sbt-${{ hashFiles('**/build.sbt') }}
+          restore-keys: |
+            ${{ runner.os }}-sbt-
+
+      # 5. Build (compile & stage)
       - name: Build Play Framework App
         run: sbt stage
 
-      # 5. Run Scalastyle (Static Code Analysis)
+      # 6. Run Scalastyle (Static Code Analysis)
       - name: Run Scalastyle
         run: sbt scalastyle
 
-      # 6. Run tests with coverage
+      # 7. Run tests with coverage
       - name: Run Scoverage Tests
         run: sbt clean coverage test coverageReport coverageAggregate
+
+      # 8. Log in to ghcr.io
+      - name: Log in to the Container registry
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' }}
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # 9. Build and push Docker image (with cache)
+      - name: Build and push Docker image
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' }}
+        uses: docker/build-push-action@v6
+        with:
+          context: ./backend
+          push: true
+          tags: ghcr.io/nashtech-garage/smart-taskhub-be:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      # 10. Scan docker image with Trivy
+      - name: "Scan Docker Image with Trivy"
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' }}
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: 'ghcr.io/nashtech-garage/smart-taskhub-be:latest'
+          format: 'sarif'
+          scan-type: 'image'
+          severity: 'CRITICAL,HIGH,WARNING'
+          output: 'trivy-results.sarif'
+      
+      # 11. Upload Trivy scan results to GitHub Security tab
+      - name: "Upload Trivy scan results to GitHub Security tab"
+        if: ${{ github.ref == 'refs/heads/main' || github.ref == 'refs/heads/dev' }}
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: trivy-results.sarif
+          category: 'image'

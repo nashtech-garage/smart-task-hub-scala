@@ -18,7 +18,7 @@ class UserProfileTable(tag: Tag) extends Table[UserProfile](tag, "user_profiles"
     userLanguage,
     themeMode,
     createdAt,
-    updatedAt,
+    updatedAt
   ) <> ((UserProfile.apply _).tupled, UserProfile.unapply)
 
   private def userFk = foreignKey(

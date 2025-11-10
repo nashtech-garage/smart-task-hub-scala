@@ -176,8 +176,8 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
     };
 
     return (
-        <div className={`${isBoardClosed ? 'pointer-events-none opacity-60' : ''} h-[50px] flex items-center justify-between bg-[#28303E] p-4`}>
-            <h1 className='text-xl font-bold text-white mb-2'>
+        <div className={`${isBoardClosed ? 'pointer-events-none opacity-60' : ''} h-[50px] flex items-center justify-between bg-[var(--board-navbar-bg)] p-4`}>
+            <h1 className='text-xl font-bold text-[var(--foreground)] mb-2'>
                 {name}
             </h1>
             {/* Folder Menu Button */}
@@ -209,7 +209,7 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
                 <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className="flex items-center justify-center w-8 h-8 text-white hover:bg-[#3A4150] rounded transition-colors"
+                    className="flex items-center justify-center w-8 h-8 text-[var(--foreground)] hover:bg-[var(--board-navbar-menu-hover)] rounded transition-colors"
                 >
                     <Menu className="w-5 h-5" />
                 </button>
@@ -226,10 +226,10 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                         {/* Menu */}
                         {
                             !showArchivedItems ?
-                                <div className="absolute right-0 top-10 w-80 bg-[#2c3e50] rounded-lg shadow-xl z-50 border border-gray-600">
+                                <div className="absolute right-0 top-10 w-80 bg-[var(--background)] rounded-lg shadow-xl z-50 border border-gray-600">
                                     {/* Menu Header */}
                                     <div className="flex items-center justify-between p-3 border-b border-gray-600">
-                                        <span className="text-white font-medium text-sm">Menu</span>
+                                        <span className="text-[var(--menu-text)] font-medium text-sm">Menu</span>
                                         <button
                                             onClick={() => setShowMenu(false)}
                                             className="text-gray-400 hover:text-white transition-colors"
@@ -260,11 +260,11 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                         {/* Power-Ups Section */}
                                         <button
                                             onClick={handleArchivedItemsClick}
-                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[var(--hover-bg)] transition-colors text-left"
                                         >
-                                            <span className="mr-3 text-base text-white"><Folder /></span>
+                                            <span className="mr-3 text-base text-[var(--menu-text)]"><Folder /></span>
                                             <div className="flex-1">
-                                                <div className='text-gray-300'>
+                                                <div className='text-[var(--menu-text)]'>
                                                     Archived items
                                                 </div>
                                             </div>
@@ -272,11 +272,11 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
 
                                         <button
                                             onClick={handleExportBoard}
-                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                            className="w-full flex items-center px-3 py-2 text-sm hover:bg-[var(--hover-bg)] transition-colors text-left"
                                         >
-                                            <span className="mr-3 text-base text-white"><Download /></span>
+                                            <span className="mr-3 text-base text-[var(--menu-text)]"><Download /></span>
                                             <div className="flex-1">
-                                                <div className='text-gray-300'>
+                                                <div className='text-[var(--menu-text)]'>
                                                     Export as JSON
                                                 </div>
                                             </div>
@@ -303,9 +303,9 @@ const BoardNavbar: React.FC<BoardNavbarProps> = ({
                                         <div className="relative">
                                             <button
                                                 onClick={() => setShowCloseConfirm(true)}
-                                                className="w-full flex items-center px-3 py-2 text-sm hover:bg-[#34495e] transition-colors text-left"
+                                                className="w-full flex items-center px-3 py-2 text-sm hover:bg-[var(--hover-bg)] transition-colors text-left"
                                             >
-                                                <span className="mr-3 text-base text-white"><X /></span>
+                                                <span className="mr-3 text-base text-[var(--menu-text)]"><X /></span>
                                                 <div className="flex-1">
                                                     <div className="text-red-400">
                                                         Close board

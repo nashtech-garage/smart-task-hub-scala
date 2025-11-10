@@ -233,7 +233,7 @@ const WorkspaceBoard = () => {
 
     // ---------- Render ----------
     return (
-        <div className="bg-[#283449] w-full h-full flex flex-col">
+        <div className="bg-[var(--board-bg)] w-full h-full flex flex-col">
             {isLoading ? (
                 <div className="mt-6">
                     <LoadingContent />
@@ -269,7 +269,7 @@ const WorkspaceBoard = () => {
                                 {!isBoardClosed && (
                                     <button
                                         onClick={addColumn}
-                                        className={`bg-[#ffffff3d] hover:bg-[#ffffff33] rounded-lg p-4 w-80 flex-shrink-0 transition-colors flex items-center justify-center gap-2 text-white ${isBoardClosed ? 'cursor-not-allowed' : ''}`}
+                                        className={`bg-[#ffffff3d] hover:bg-[#ffffff33] rounded-lg p-4 w-80 flex-shrink-0 transition-colors flex items-center justify-center gap-2 text-[var(--foreground)] ${isBoardClosed ? 'cursor-not-allowed' : ''}`}
                                         disabled={isBoardClosed}
                                     >
                                         <Plus size={20} />

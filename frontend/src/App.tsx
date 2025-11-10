@@ -1,6 +1,6 @@
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
-import { store, persistor } from './store';
+import { store, persistor, type RootState } from './store';
 import LoadingFallback from './components/ui/LoadingFallback';
 import { AppRouter } from './router/AppRouter';
 import { ToastContainer } from "react-toastify";
@@ -14,22 +14,31 @@ function App() {
         <Provider store={store}>
             <QueryClientProvider client={queryClient}>
                 <PersistGate loading={<LoadingFallback />} persistor={persistor}>
-                    <AppRouter />
-                    <ToastContainer
-                        position="top-right"
-                        autoClose={3000}
-                        hideProgressBar={false}
-                        newestOnTop={false}
-                        closeOnClick
-                        rtl={false}
-                        pauseOnFocusLoss
-                        draggable
-                        pauseOnHover
-                        theme="dark" // can switch to "dark"
-                    />
+                    <MainApp />
                 </PersistGate>
             </QueryClientProvider>
         </Provider>
+    );
+}
+
+function MainApp() {
+    const theme = useSelector((state: RootState) => state.theme.mode);
+
+    return (
+        <>
+            <AppRouter />
+            <ToastContainer
+                theme={theme}
+                position="top-right"
+                autoClose={3000}
+                hideProgressBar={false}
+                newestOnTop={false}
+                closeOnClick
+                pauseOnFocusLoss
+                draggable
+                pauseOnHover
+            />
+        </>
     );
 }
 

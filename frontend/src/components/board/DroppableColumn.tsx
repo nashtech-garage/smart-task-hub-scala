@@ -119,7 +119,7 @@ const DroppableColumnComponent: React.FC<DroppableColumnProps> = ({
         <div
             ref={setNodeRef}
             style={style}
-            className={`select-none bg-[#101204] rounded-xl p-2 pr-1 w-[272px] flex-shrink-0 
+            className={`select-none bg-[var(--column-bg)] rounded-xl p-2 pr-1 w-[272px] flex-shrink-0 
                 max-h-full flex flex-col
                 ${isDragging ? 'opacity-50' : ''}`}
         >

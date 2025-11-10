@@ -83,7 +83,7 @@ const Navbar: React.FC = () => {
                 {/* Left side - Logo and Navigation */}
                 <div className='flex items-center space-x-4'>
                     {/* Grid Icon */}
-                    <button className='p-2 dark:text-gray-300 hover:text-white hover:bg-gray-700 rounded'>
+                    <button className='p-2 text-[var(--foreground)] hover:bg-[var(--board-navbar-menu-hover)] rounded'>
                         <svg
                             className='w-4 h-4'
                             fill='currentColor'
@@ -142,7 +142,7 @@ const Navbar: React.FC = () => {
 
                         {/* Dropdown results */}
                         {isDropdownOpen && (
-                            <div className="absolute mt-1 w-full max-w-xl bg-[#1E2125] border border-gray-700 rounded-md shadow-lg z-50">
+                            <div className="absolute mt-1 w-full max-w-xl bg-[var(--background)] border border-gray-700 rounded-md shadow-lg z-50">
                                 {/* Scrollable list */}
                                 <div className="max-h-[50%] overflow-y-auto">
                                     {isLoading ? (
@@ -151,7 +151,7 @@ const Navbar: React.FC = () => {
                                         results.map((task) => (
                                             <div
                                                 key={task.taskId}
-                                                className="flex items-start px-3 py-2 cursor-pointer hover:bg-gray-700 mb-1"
+                                                className="flex items-start px-3 py-2 cursor-pointer hover:bg-[var(--hover-bg)] mb-1"
                                                 onClick={() => {
                                                     setIsDropdownOpen(false);
                                                     setKeyword('');
@@ -159,13 +159,13 @@ const Navbar: React.FC = () => {
                                                 }}
                                             >
                                                 {/* Icon bên trái */}
-                                                <div className="flex-shrink-0 mt-0.5 text-gray-400">
+                                                <div className="flex-shrink-0 mt-0.5">
                                                     <StickyNote />
                                                 </div>
 
                                                 {/* Nội dung task */}
                                                 <div className="ml-2">
-                                                    <div className="text-white text-sm font-medium">
+                                                    <div className="text-[var(--foreground)] text-sm font-medium">
                                                         {task.taskName}
                                                     </div>
                                                     <div className="text-gray-400 text-xs">
@@ -181,7 +181,7 @@ const Navbar: React.FC = () => {
 
                                 {/* Advanced Search link */}
                                 <div
-                                    className="border-t border-gray-700 px-3 py-2 text-blue-400 text-sm cursor-pointer hover:bg-gray-800"
+                                    className="border-t border-gray-700 px-3 py-2 text-blue-400 text-sm cursor-pointer hover:bg-[var(--hover-bg)]"
                                     onClick={() => {
                                         setIsDropdownOpen(false);
                                         setKeyword('');

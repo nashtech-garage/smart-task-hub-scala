@@ -70,7 +70,7 @@ const Boards = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
 
     return (
-        <div className='p-6 bg-[(var(--background))] text-[(var(--foreground))]'>
+        <div className='p-6 bg-[(var(--background))] text-[var(--foreground)]'>
             {/* Most Popular Templates */}
             <div className='mb-8'>
                 <div className='flex items-center justify-between mb-4'>

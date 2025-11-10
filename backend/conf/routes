@@ -66,5 +66,10 @@ GET    /api/projects/:projectId/columns/tasks/active    controllers.TaskControll
 GET    /api/projects/:projectId/columns/:columnsId/tasks    controllers.TaskController.getActiveTasksInColumn(projectId: Int, columnsId: Int, limit: Int ?= 20, page: Int ?= 1)
 GET   /api/tasks   controllers.TaskController.search(page: Int ?= 2, size: Int ?= 10, keyword: String ?= "", projectIds: Option[List[Int]])
 
+# User Profile routes
+GET     /api/user/profile              controllers.UserProfileController.getUserProfile()
+POST    /api/user/profile              controllers.UserProfileController.createProfile()
+PUT     /api/user/profile              controllers.UserProfileController.updateProfile()
+
 #Web socket
 GET /ws/project/:projectId  controllers.WebSocketController.joinProject(projectId: Int)

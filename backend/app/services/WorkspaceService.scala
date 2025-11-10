@@ -14,6 +14,7 @@ import slick.jdbc.JdbcProfile
 import java.time.Instant
 import javax.inject.{Inject, Singleton}
 import scala.concurrent.{ExecutionContext, Future}
+import exception.AppException
 
 @Singleton
 class WorkspaceService @Inject()(

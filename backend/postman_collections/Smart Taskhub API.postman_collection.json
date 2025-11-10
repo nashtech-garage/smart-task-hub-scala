@@ -1,10 +1,10 @@
 {
 	"info": {
-		"_postman_id": "d1795af4-fe16-437c-9cbf-b90c156f1249",
+		"_postman_id": "f42570ae-fb8f-49b0-9842-2f30d0c05235",
 		"name": "Smart Taskhub API",
 		"description": "API documentation for Smart Taskhub, a task and project management application.",
-		"schema": "https://schema.getpostman.com/json/collection/v2.0.0/collection.json",
-		"_exporter_id": "38432428"
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "24956801"
 	},
 	"item": [
 		{
@@ -34,7 +34,16 @@
 								}
 							}
 						},
-						"url": "{{baseUrl}}/auth/register",
+						"url": {
+							"raw": "{{baseUrl}}/auth/register",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"register"
+							]
+						},
 						"description": "Creates a new user account"
 					},
 					"response": [
@@ -62,7 +71,16 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/auth/register"
+								"url": {
+									"raw": "{{baseUrl}}/auth/register",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"register"
+									]
+								}
 							},
 							"status": "Created",
 							"code": 201,
@@ -100,7 +118,16 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/auth/register"
+								"url": {
+									"raw": "{{baseUrl}}/auth/register",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"register"
+									]
+								}
 							},
 							"status": "Bad Request",
 							"code": 400,
@@ -138,7 +165,16 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/auth/register"
+								"url": {
+									"raw": "{{baseUrl}}/auth/register",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"register"
+									]
+								}
 							},
 							"status": "Conflict",
 							"code": 409,
@@ -178,7 +214,16 @@
 								}
 							}
 						},
-						"url": "{{baseUrl}}/auth/login",
+						"url": {
+							"raw": "{{baseUrl}}/auth/login",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"login"
+							]
+						},
 						"description": "Authenticates user and returns JWT token"
 					},
 					"response": [
@@ -206,7 +251,16 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/auth/login"
+								"url": {
+									"raw": "{{baseUrl}}/auth/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"login"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -252,7 +306,16 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/auth/login"
+								"url": {
+									"raw": "{{baseUrl}}/auth/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"login"
+									]
+								}
 							},
 							"status": "Bad Request",
 							"code": 400,
@@ -290,7 +353,16 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/auth/login"
+								"url": {
+									"raw": "{{baseUrl}}/auth/login",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"login"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -316,7 +388,16 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/auth/logout",
+						"url": {
+							"raw": "{{baseUrl}}/auth/logout",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"logout"
+							]
+						},
 						"description": "Logs out the current user and invalidates the session"
 					},
 					"response": [
@@ -330,7 +411,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/logout"
+								"url": {
+									"raw": "{{baseUrl}}/auth/logout",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"logout"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -364,7 +454,16 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/auth/me",
+						"url": {
+							"raw": "{{baseUrl}}/auth/me",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"me"
+							]
+						},
 						"description": "Returns information about the currently authenticated user"
 					},
 					"response": [
@@ -378,7 +477,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/me"
+								"url": {
+									"raw": "{{baseUrl}}/auth/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"me"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -402,7 +510,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/me"
+								"url": {
+									"raw": "{{baseUrl}}/auth/me",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"me"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -428,7 +545,16 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/auth/refresh",
+						"url": {
+							"raw": "{{baseUrl}}/auth/refresh",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"refresh"
+							]
+						},
 						"description": "Refreshes the current authentication token"
 					},
 					"response": [
@@ -442,7 +568,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/refresh"
+								"url": {
+									"raw": "{{baseUrl}}/auth/refresh",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"refresh"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -474,7 +609,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/refresh"
+								"url": {
+									"raw": "{{baseUrl}}/auth/refresh",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"refresh"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -500,7 +644,16 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/auth/check",
+						"url": {
+							"raw": "{{baseUrl}}/auth/check",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"check"
+							]
+						},
 						"description": "Verifies if the user is currently authenticated"
 					},
 					"response": [
@@ -514,7 +667,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/check"
+								"url": {
+									"raw": "{{baseUrl}}/auth/check",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"check"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -538,7 +700,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/check"
+								"url": {
+									"raw": "{{baseUrl}}/auth/check",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"check"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -564,7 +735,16 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/auth/role",
+						"url": {
+							"raw": "{{baseUrl}}/auth/role",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"auth",
+								"role"
+							]
+						},
 						"description": "Retrieves the role of the current user"
 					},
 					"response": [
@@ -578,7 +758,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/role"
+								"url": {
+									"raw": "{{baseUrl}}/auth/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"role"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -602,7 +791,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/role"
+								"url": {
+									"raw": "{{baseUrl}}/auth/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"role"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -626,7 +824,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/auth/role"
+								"url": {
+									"raw": "{{baseUrl}}/auth/role",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"auth",
+										"role"
+									]
+								}
 							},
 							"status": "Not Found",
 							"code": 404,
@@ -658,7 +865,15 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/workspaces",
+						"url": {
+							"raw": "{{baseUrl}}/workspaces",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"workspaces"
+							]
+						},
 						"description": "Retrieves all workspaces for the authenticated user"
 					},
 					"response": [
@@ -672,7 +887,15 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/workspaces"
+								"url": {
+									"raw": "{{baseUrl}}/workspaces",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"workspaces"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -696,7 +919,15 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/workspaces"
+								"url": {
+									"raw": "{{baseUrl}}/workspaces",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"workspaces"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -736,7 +967,15 @@
 								}
 							}
 						},
-						"url": "{{baseUrl}}/workspaces",
+						"url": {
+							"raw": "{{baseUrl}}/workspaces",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"workspaces"
+							]
+						},
 						"description": "Creates a new workspace for the authenticated user"
 					},
 					"response": [
@@ -764,7 +1003,15 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/workspaces"
+								"url": {
+									"raw": "{{baseUrl}}/workspaces",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"workspaces"
+									]
+								}
 							},
 							"status": "Created",
 							"code": 201,
@@ -802,7 +1049,15 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/workspaces"
+								"url": {
+									"raw": "{{baseUrl}}/workspaces",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"workspaces"
+									]
+								}
 							},
 							"status": "Bad Request",
 							"code": 400,
@@ -840,7 +1095,15 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/workspaces"
+								"url": {
+									"raw": "{{baseUrl}}/workspaces",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"workspaces"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -878,7 +1141,15 @@
 										}
 									}
 								},
-								"url": "{{baseUrl}}/workspaces"
+								"url": {
+									"raw": "{{baseUrl}}/workspaces",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"workspaces"
+									]
+								}
 							},
 							"status": "Conflict",
 							"code": 409,
@@ -2630,7 +2901,16 @@
 								"value": "application/json"
 							}
 						],
-						"url": "{{baseUrl}}/projects/completed",
+						"url": {
+							"raw": "{{baseUrl}}/projects/completed",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"projects",
+								"completed"
+							]
+						},
 						"description": "Retrieves all completed projects for the authenticated user"
 					},
 					"response": [
@@ -2644,7 +2924,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/projects/completed"
+								"url": {
+									"raw": "{{baseUrl}}/projects/completed",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"projects",
+										"completed"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -2668,7 +2957,16 @@
 										"value": "application/json"
 									}
 								],
-								"url": "{{baseUrl}}/projects/completed"
+								"url": {
+									"raw": "{{baseUrl}}/projects/completed",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"projects",
+										"completed"
+									]
+								}
 							},
 							"status": "Unauthorized",
 							"code": 401,
@@ -2828,7 +3126,15 @@
 					"request": {
 						"method": "OPTIONS",
 						"header": [],
-						"url": "{{baseUrl}}/url-preview",
+						"url": {
+							"raw": "{{baseUrl}}/url-preview",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"url-preview"
+							]
+						},
 						"description": "Handles CORS preflight requests for URL preview endpoint"
 					},
 					"response": [
@@ -2837,7 +3143,15 @@
 							"originalRequest": {
 								"method": "OPTIONS",
 								"header": [],
-								"url": "{{baseUrl}}/url-preview"
+								"url": {
+									"raw": "{{baseUrl}}/url-preview",
+									"host": [
+										"{{baseUrl}}"
+									],
+									"path": [
+										"url-preview"
+									]
+								}
 							},
 							"status": "OK",
 							"code": 200,
@@ -6101,6 +6415,92 @@
 				}
 			],
 			"description": "Task management endpoints"
+		},
+		{
+			"name": "User Profile",
+			"item": [
+				{
+					"name": "Get User Profile",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "http://localhost:9000/api/user/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"api",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile",
+					"request": {
+						"method": "PUT",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userLanguage\": \"en\",\r\n    \"themeMode\": \"Dark\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9000/api/user/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"api",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "Update User Profile Copy",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"userLanguage\": \"en\",\r\n    \"themeMode\": \"Dark\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "http://localhost:9000/api/user/profile",
+							"protocol": "http",
+							"host": [
+								"localhost"
+							],
+							"port": "9000",
+							"path": [
+								"api",
+								"user",
+								"profile"
+							]
+						}
+					},
+					"response": []
+				}
+			]
 		}
 	],
 	"variable": [

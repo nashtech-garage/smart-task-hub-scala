@@ -68,6 +68,7 @@ GET   /api/tasks   controllers.TaskController.search(page: Int ?= 2, size: Int ?
 
 # User Profile routes
 GET     /api/user/profile              controllers.UserProfileController.getUserProfile()
+POST    /api/user/profile              controllers.UserProfileController.createProfile()
 PUT     /api/user/profile              controllers.UserProfileController.updateProfile()
 
 #Web socket

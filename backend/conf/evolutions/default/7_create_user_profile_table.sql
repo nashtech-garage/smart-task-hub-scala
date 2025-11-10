@@ -7,5 +7,3 @@ CREATE TABLE user_profiles (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT user_profile_user_id_idx UNIQUE (user_id)
 );
-
-DROP TABLE IF EXISTS user_profiles;

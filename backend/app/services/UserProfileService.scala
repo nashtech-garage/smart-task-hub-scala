@@ -17,7 +17,7 @@ class UserProfileService @Inject()(
   def updateProfile(userProfile: UserProfile): Future[Option[UserProfile]] = {
     userProfileRepository.update(userProfile).flatMap {
       case 0 => Future.successful(None)
-      case _ => userProfileRepository.findById(userProfile.id)
+      case _ => userProfileRepository.findById(userProfile.id.get)
     }
   }
 

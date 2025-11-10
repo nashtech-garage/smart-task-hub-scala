@@ -19,6 +19,7 @@ object TableRegistry {
   lazy val notifications = TableQuery[NotificationTable]
   lazy val activityLogs = TableQuery[ActivityLogTable]
   lazy val userTasks = TableQuery[UserTaskTable]
+  lazy val userProfiles = TableQuery[UserProfileTable]
 
   // All tables for schema creation/evolution
   val allTables = Seq(

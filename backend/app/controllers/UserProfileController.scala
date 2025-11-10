@@ -6,6 +6,7 @@ import play.api.libs.json._
 import services.UserProfileService
 import models.entities.UserProfile
 
+import java.time.LocalDateTime
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
@@ -28,6 +29,24 @@ class UserProfileController @Inject()(
       case Some(profile) => Ok(Json.toJson(profile))
       case None => NotFound
     }
+  }
+
+  def createProfile: Action[JsValue] = authenticatedAction.async(parse.json) { request =>
+    request.body.validate[UpdateUserProfileRequest].fold(
+      errors => Future.successful(BadRequest(JsError.toJson(errors))),
+      dto => {
+        val newProfile = UserProfile(
+          userId = request.userToken.userId,
+          userLanguage = dto.userLanguage.get,
+          themeMode = dto.themeMode.get,
+          createdAt = LocalDateTime.now(),
+          updatedAt = LocalDateTime.now()
+        )
+        userProfileService.createProfile(newProfile).map { profile =>
+          Created(Json.toJson(profile))
+        }
+      }
+    )
   }
 
   def updateProfile: Action[JsValue] = authenticatedAction.async(parse.json) { request =>

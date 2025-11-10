@@ -2,20 +2,21 @@ package repositories
 
 import javax.inject.{Inject, Singleton}
 import models.entities.UserProfile
-import models.tables.UserProfileTable
-import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfig}
-import slick.jdbc.PostgresProfile
+import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
+import models.tables.TableRegistry.userProfiles
+import slick.jdbc.JdbcProfile
+
 import scala.concurrent.{ExecutionContext, Future}
 
 @Singleton
 class UserProfileRepository @Inject()(
   protected val dbConfigProvider: DatabaseConfigProvider
-)(implicit ec: ExecutionContext) extends HasDatabaseConfig[PostgresProfile] with UserProfileTable {
+)(implicit ec: ExecutionContext) extends HasDatabaseConfigProvider[JdbcProfile]  {
 
   import profile.api._
   
   def create(userProfile: UserProfile): Future[UserProfile] = {
-    val query = userProfiles returning userProfiles.map(_.id) into ((profile, id) => profile.copy(id = id))
+    val query = userProfiles returning userProfiles.map(_.id) into ((profile, id) => profile.copy(id = Some(id)))
     db.run(query += userProfile)
   }
 

@@ -3,12 +3,12 @@ import { Outlet } from "react-router-dom";
 
 const SidebarLayout = () => {
     return (
-        <div className='flex h-full bg-gray-100'>
+        <div className='flex h-full bg-[(var(--background))] text-[var(--foreground)]'>
             {/* Sidebar */}
             <Sidebar />
 
             {/* Main Content */}
-            <div className='flex-1 overflow-auto bg-[#1E2125]'>
+            <div className='flex-1 overflow-auto bg-[(var(--background))] text-[var(--foreground)]'>
                 <Outlet />
             </div>
         </div>

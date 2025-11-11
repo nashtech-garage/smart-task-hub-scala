@@ -167,7 +167,7 @@ const Boards = () => {
     }, [id]);
 
     return (
-        <div className="h-full bg-[#1E2125] text-white">
+        <div className="h-full c">
             {/* Header */}
             <div className="p-8">
                 {isEditingWorkspace ? (
@@ -308,19 +308,19 @@ const Boards = () => {
                         <button
                             onClick={handleFileClick}
                             className="
-                                h-24 bg-[#2A2D31] hover:bg-[#3A3D41] rounded-lg cursor-pointer transition-colors 
-                                flex items-center justify-center border-2 border-dashed border-gray-600"
+                                h-24 bg-[var(--button-bg)] text-[var(--foreground)] hover:bg-[var(--hover-bg)] rounded-lg cursor-pointer transition-colors 
+                                flex items-center justify-center border-2 border-gray-600"
                             disabled={isImportingBoard}
                         >
-                            <span className="text-gray-400 font-medium mr-2"><Upload /></span>
-                            <span className="text-gray-400 font-medium">{isImportingBoard ? 'Importing...' : 'Import board'}</span>
+                            <span className=" font-medium mr-2"><Upload /></span>
+                            <span className=" font-medium">{isImportingBoard ? 'Importing...' : 'Import board'}</span>
                         </button>
                     </div>
 
                     {/* View closed boards button */}
                     <button
                         onClick={() => setShowClosedBoards(true)}
-                        className="mt-6 p-2 rounded bg-[#A1BDD914] hover:bg-[#BFDBF847] text-gray-300 cursor-pointer font-bold text-sm transition-colors"
+                        className="mt-6 p-2 rounded bg-[var(--button-bg)] text-[var(--foreground)] hover:bg-[var(--hover-bg)] cursor-pointer font-bold text-sm transition-colors"
                     >
                         View closed boards
                     </button>

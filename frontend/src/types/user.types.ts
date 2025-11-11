@@ -42,3 +42,8 @@ export interface ProtectedRouteProps {
 export interface LayoutProps {
     children: React.ReactNode;
 }
+
+export interface UserProfile {
+    userLanguage: string;
+    themeMode: 'light' | 'dark';
+}

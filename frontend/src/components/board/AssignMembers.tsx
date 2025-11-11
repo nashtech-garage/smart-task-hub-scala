@@ -96,7 +96,7 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
     return (
 
         <div className="pr-2 pb-4">
-            <h3 className="text-sm font-medium text-white mb-2">Members</h3>
+            <h3 className="text-sm font-medium text-[var(--foreground)] mb-2">Members</h3>
             <div className="flex items-center gap-1 mb-1">
                 {
                     assignedMembers?.map((assignedMember) => (
@@ -130,14 +130,14 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
                                 left: coords.left,
                                 zIndex: 9999,
                             }}
-                            className="border border-gray-600 bg-[#282e3e] w-64 rounded-lg shadow-2xl p-4 mt-2"
+                            className="border border-gray-600 bg-[var(--background)] w-64 rounded-lg shadow-2xl p-4 mt-2"
                         >
                             {/* Header */}
                             <div className="flex justify-between items-center border-b pb-2">
-                                <h2 className="text-lg text-white font-semibold">Assign Members</h2>
+                                <h2 className="text-lg text-[var(--foreground)] font-semibold">Assign Members</h2>
                                 <button
                                     onClick={() => setIsOpen(false)}
-                                    className="text-gray-400 hover:text-white"
+                                    className="text-gray-400 hover:text-[var(--foreground)]"
                                 >
                                     ✕
                                 </button>
@@ -149,7 +149,7 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
                                 placeholder="Search members..."
                                 value={search}
                                 onChange={(e) => setSearch(e.target.value)}
-                                className="w-full text-gray-400 border rounded px-2 py-1 mt-3 mb-3 bg-gray-700 border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                className="w-full text-gray-400 border rounded px-2 py-1 mt-3 mb-3 bg-[var(--background)] border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                             />
 
                             {/* List members */}
@@ -164,9 +164,9 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
                                                 <li
                                                     key={m.id}
                                                     onClick={() => toggleAssign(m)}
-                                                    className="flex items-center justify-between px-2 py-1 rounded bg-gray-800 cursor-pointer hover:bg-gray-700"
+                                                    className="flex items-center justify-between px-2 py-1 rounded bg-[var(--background)] cursor-pointer hover:bg-[var(--hover-bg)]"
                                                 >
-                                                    <span className="text-white">{m.name}</span>
+                                                    <span className="text-[var(--foreground)]">{m.name}</span>
                                                     <span className="text-green-400 text-xs">✓</span>
                                                 </li>
                                             ))}
@@ -183,9 +183,9 @@ const AssignMembers: React.FC<AssignMembersProps> = (props) => {
                                                 <li
                                                     key={m.id}
                                                     onClick={() => toggleAssign(m)}
-                                                    className="flex items-center justify-between px-2 py-1 rounded hover:bg-gray-700 cursor-pointer"
+                                                    className="flex items-center justify-between px-2 py-1 rounded hover:bg-[var(--hover-bg)] cursor-pointer"
                                                 >
-                                                    <span className="text-gray-300">{m.name}</span>
+                                                    <span className="text-[var(--foreground)]">{m.name}</span>
                                                 </li>
                                             ))}
                                     </>

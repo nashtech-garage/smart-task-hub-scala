@@ -54,7 +54,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                 detectUrl(item.name) ? undefined : dispatch(showTaskModal(item.id));
             }}
             className={`
-                select-none bg-[#222f44] p-2 rounded-lg
+                select-none bg-[var(--task-bg)] p-2 rounded-lg
                 shadow-sm cursor-grab hover:shadow-md   
                 transition-shadow group 
                 border border-transparent
@@ -75,7 +75,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
             <button
                 onClick={e => {
                     e.stopPropagation();
-                    dispatch(taskDeleted(item.id));
+                    // dispatch(taskDeleted(item.id));
                 }}
                 className='
                     opacity-0 group-hover:opacity-100 
@@ -99,7 +99,7 @@ const DraggableItem: React.FC<DraggableItemProps> = ({
                     />
                 </div>
             ) : (
-                <span className={`py-1 text-sm text-[#B6C2CF] flex-1 wrap-break-word`}>
+                <span className={`py-1 text-sm text-[var(--task-title)] flex-1 wrap-break-word`}>
                     {item.name}
                 </span>
             )}

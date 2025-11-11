@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAuth } from '@/hooks/useAuth';
+import { useDispatch, useSelector } from 'react-redux';
+import { userProfileService } from '@/services/userProfileService';
+import { setTheme } from '@/store/slices/themeSlice';
 
 const LoginForm: React.FC = () => {
     const [email, setEmail] = useState('');
@@ -10,13 +13,31 @@ const LoginForm: React.FC = () => {
         useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const dispatch = useDispatch();
 
     // Redirect if already authenticated
     useEffect(() => {
-        if (isAuthenticated) {
-            const from = (location.state as any)?.from || '/user/boards';
-            navigate(from, { replace: true });
-        }
+        const fetchUserProfile = async () => {
+            if (isAuthenticated) {
+                const from = (location.state as any)?.from || '/user/boards';
+                try {
+                    const userProfile = await userProfileService.getUserProfile();
+                    dispatch(setTheme(userProfile.themeMode));
+                } catch (e) {
+                    console.error('Error setting theme on login:', e);
+                    await userProfileService.createUserProfile({
+                        userLanguage: 'en',
+                        themeMode: 'dark',
+                    });
+                    dispatch(setTheme('dark'));
+                }
+                finally {
+                    navigate(from, { replace: true });
+                }
+            }
+        };
+
+        fetchUserProfile();
     }, [isAuthenticated, navigate, location]);
 
     const handleSubmit = async (e: React.FormEvent) => {
@@ -81,7 +102,7 @@ const LoginForm: React.FC = () => {
                         required
                         value={email}
                         onChange={e => setEmail(e.target.value)}
-                        className='w-full px-3 py-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white'
+                        className='w-full px-3 py-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-black'
                         placeholder='Enter your email'
                     />
                 </div>
@@ -100,7 +121,7 @@ const LoginForm: React.FC = () => {
                         required
                         value={password}
                         onChange={e => setPassword(e.target.value)}
-                        className='w-full px-3 py-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white'
+                        className='w-full px-3 py-3 text-sm border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 bg-white text-black'
                         placeholder='Enter your password'
                     />
                 </div>

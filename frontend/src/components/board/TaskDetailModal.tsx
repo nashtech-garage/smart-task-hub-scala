@@ -88,7 +88,7 @@ const TaskDetailModal: React.FC = () => {
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-start justify-center z-40 pt-8 px-4">
-      <div className="bg-[#282e3e] rounded-lg w-full max-w-3xl max-h-[calc(100vh-4rem)] flex shadow-2xl">
+      <div className="bg-[var(--background)] rounded-lg w-full max-w-3xl max-h-[calc(100vh-4rem)] flex shadow-2xl">
         {
           isLoading ?
             <div className="flex-1 flex items-center justify-center min-h-[300px] overflow-y-auto">
@@ -107,12 +107,12 @@ const TaskDetailModal: React.FC = () => {
                         onChange={(e) => setItem({ ...item, name: e.target.value })}
                         onBlur={handleUpdate}
                         onKeyDown={(e) => e.key === 'Enter' && handleUpdate()}
-                        className="text-xl font-medium text-white bg-transparent border-b border-blue-500 outline-none flex-1 mr-4"
+                        className="text-xl font-medium text-[var(--foreground)] bg-transparent border-b border-blue-500 outline-none flex-1 mr-4"
                         autoFocus
                       />
                     ) : (
                       <h1
-                        className="text-xl font-medium text-white cursor-pointer hover:bg-gray-700 hover:bg-opacity-50 p-1 rounded flex-1 mr-4"
+                        className="text-xl font-medium text-[var(--foreground)] cursor-pointer hover:bg-[var(--hover-bg)] hover:bg-opacity-50 p-1 rounded flex-1 mr-4"
                         onClick={() => setIsEditingTitle(true)}
                       >
                         {item?.name}
@@ -120,7 +120,7 @@ const TaskDetailModal: React.FC = () => {
                     )}
                     <button
                       onClick={onModalClose}
-                      className="text-gray-400 hover:text-white p-1 rounded hover:bg-gray-600 hover:bg-opacity-50"
+                      className="text-gray-400 hover:text-[var(--foreground)] p-1 rounded hover:bg-gray-600 hover:bg-opacity-50"
                     >
                       <X size={18} />
                     </button>
@@ -131,15 +131,15 @@ const TaskDetailModal: React.FC = () => {
 
                   {/* Action Buttons */}
                   <div className="flex flex-wrap gap-2">
-                    <button className="flex items-center gap-2 px-3 py-2 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-white text-sm rounded">
+                    <button className="flex items-center gap-2 px-3 py-2 border bg-opacity-50 hover:bg-opacity-70 text-[var(--foreground)] text-sm rounded">
                       <Calendar size={14} />
                       Dates
                     </button>
-                    <button className="flex items-center gap-2 px-3 py-2 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-white text-sm rounded">
+                    <button className="flex items-center gap-2 px-3 py-2 border bg-opacity-50 hover:bg-opacity-70 text-[var(--foreground)] text-sm rounded">
                       <List size={14} />
                       Checklist
                     </button>
-                    {/* <button className="flex items-center gap-2 px-3 py-2 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-white text-sm rounded">
+                    {/* <button className="flex items-center gap-2 px-3 py-2 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-[var(--foreground)] text-sm rounded">
                       <Users size={14} />
                       Members
                     </button> */}
@@ -152,9 +152,9 @@ const TaskDetailModal: React.FC = () => {
 
                   {/* Labels Section */}
                   <div className="pb-4">
-                    <h3 className="text-sm font-medium text-white mb-2">Labels</h3>
+                    <h3 className="text-sm font-medium text-[var(--foreground)] mb-2">Labels</h3>
                     <div className="flex items-center gap-1 mb-1">
-                      <span className="px-2 py-2 bg-green-600 text-white text-xs font-medium rounded">BE</span>
+                      <span className="px-2 py-2 bg-green-600 text-[var(--foreground)] text-xs font-medium rounded">BE</span>
                       <button className="w-8 h-8 bg-gray-600 bg-opacity-50 hover:bg-opacity-70 text-gray-300 text-lg rounded flex items-center justify-center leading-none">+</button>
                     </div>
                   </div>
@@ -164,13 +164,13 @@ const TaskDetailModal: React.FC = () => {
                 {/* Description Section */}
                 <div className="px-6 pb-4">
                   <div className="flex items-center justify-between mb-3">
-                    <h3 className="text-lg font-medium text-white flex items-center gap-2">
+                    <h3 className="text-lg font-medium text-[var(--foreground)] flex items-center gap-2">
                       <List size={18} />
                       Description
                     </h3>
                     <button
                       onClick={() => setIsEditingDescription(!isEditingDescription)}
-                      className="text-gray-400 hover:text-white p-1.5 hover:bg-gray-600 hover:bg-opacity-50 rounded"
+                      className="text-gray-400 hover:text-[var(--foreground)] p-1.5 hover:bg-[var(--hover-bg)] hover:bg-opacity-50 rounded"
                     >
                       <Edit3 size={16} />
                     </button>
@@ -181,7 +181,7 @@ const TaskDetailModal: React.FC = () => {
                       <textarea
                         value={item.description || ""}
                         onChange={(e) => setItem({ ...item, description: e.target.value })}
-                        className="w-full h-32 p-3 bg-[#22272b] text-white rounded text-sm resize-none outline-none border border-gray-600 focus:border-blue-500"
+                        className="w-full h-32 p-3 bg-[var(--background)] text-[var(--foreground)] rounded text-sm resize-none outline-none border border-gray-600 focus:border-blue-500"
                         placeholder="Add a more detailed description..."
                       />
                       <div className="flex gap-2 mt-3">
@@ -198,7 +198,7 @@ const TaskDetailModal: React.FC = () => {
                           onClick={() => {
                             setIsEditingDescription(false);
                           }}
-                          className="px-3 py-1.5 bg-transparent hover:bg-gray-600 hover:bg-opacity-50 text-gray-300 text-sm rounded"
+                          className="px-3 py-1.5 bg-transparent hover:bg-[var(--hover-bg)] hover:bg-opacity-50 text-[var(--foreground)] text-sm rounded"
                         >
                           Cancel
                         </button>
@@ -207,7 +207,7 @@ const TaskDetailModal: React.FC = () => {
                   ) : (
                     <div
                       onClick={() => setIsEditingDescription(true)}
-                      className="bg-[#22272b] p-3 rounded text-gray-300 text-sm leading-relaxed cursor-pointer hover:bg-opacity-80"
+                      className="bg-[var(--background)] p-3 rounded text-[var(--foreground)] text-sm leading-relaxed cursor-pointer"
                     >
                       {item?.description || "Add a more detailed description..."}
                     </div>
@@ -216,14 +216,14 @@ const TaskDetailModal: React.FC = () => {
 
                 {/* Activity Section */}
                 <div className="px-6 pb-6">
-                  {/* <h3 className="text-lg font-medium text-white mb-4 flex items-center gap-2">
+                  {/* <h3 className="text-lg font-medium text-[var(--foreground)] mb-4 flex items-center gap-2">
                   <MessageSquareText />
                   Comments
                 </h3> */}
 
                   {/* Comment Input */}
                   {/* <div className="flex gap-3 mb-4">
-                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
+                  <div className="w-8 h-8 bg-blue-600 rounded-full flex items-center justify-center text-[var(--foreground)] text-sm font-medium flex-shrink-0">
                     A
                   </div>
                   <div className="flex-1">
@@ -231,14 +231,14 @@ const TaskDetailModal: React.FC = () => {
                       value={comment}
                       onChange={(e) => setComment(e.target.value)}
                       placeholder="Write a comment..."
-                      className="w-full p-3 bg-[#22272b] text-white rounded text-sm resize-none outline-none border border-gray-600 focus:border-blue-500"
+                      className="w-full p-3 bg-[#22272b] text-[var(--foreground)] rounded text-sm resize-none outline-none border border-gray-600 focus:border-blue-500"
                       rows={3}
                     />
                     {comment && (
                       <div className="flex gap-2 mt-2">
                         <button 
                           onClick={() => setComment('')}
-                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white text-sm rounded"
+                          className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-[var(--foreground)] text-sm rounded"
                         >
                           Save
                         </button>
@@ -249,12 +249,12 @@ const TaskDetailModal: React.FC = () => {
 
                   {/* Activity Item */}
                   {/* <div className="flex gap-3 text-sm">
-                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-white text-xs font-medium flex-shrink-0">
+                  <div className="w-8 h-8 bg-orange-500 rounded-full flex items-center justify-center text-[var(--foreground)] text-xs font-medium flex-shrink-0">
                     A
                   </div>
                   <div className="flex-1">
                     <div className="text-gray-300">
-                      <span className="font-medium text-white">ABC</span> copied this card from{' '}
+                      <span className="font-medium text-[var(--foreground)]">ABC</span> copied this card from{' '}
                       <span className="text-blue-400 underline cursor-pointer hover:text-blue-300">
                         Create, assign, update, and delete tasks
                       </span>{' '}
@@ -267,7 +267,7 @@ const TaskDetailModal: React.FC = () => {
               </div>
 
               {/* Right Sidebar */}
-              <div className="w-48 bg-[#282e3e] border-l border-gray-600 border-opacity-50">
+              <div className="w-48 bg-[var(--background)] border-l border-gray-600 border-opacity-50">
                 <div className="p-4">
                   {/* Add to Card */}
                   <div className="mb-6">
@@ -275,19 +275,19 @@ const TaskDetailModal: React.FC = () => {
                       ADD TO CARD
                     </h4>
                     <div className="space-y-1">
-                      <button className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2">
+                      <button className="w-full text-left px-2 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--hover-bg)] hover:bg-opacity-50 rounded flex items-center gap-2">
                         <Users size={14} />
                         Members
                       </button>
-                      <button className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2">
+                      <button className="w-full text-left px-2 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--hover-bg)] hover:bg-opacity-50 rounded flex items-center gap-2">
                         <div className="w-3.5 h-3.5 bg-gray-500 rounded"></div>
                         Labels
                       </button>
-                      <button className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2">
+                      <button className="w-full text-left px-2 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--hover-bg)] hover:bg-opacity-50 rounded flex items-center gap-2">
                         <List size={14} />
                         Checklist
                       </button>
-                      <button className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2">
+                      <button className="w-full text-left px-2 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--hover-bg)] hover:bg-opacity-50 rounded flex items-center gap-2">
                         <Calendar size={14} />
                         Dates
                       </button>
@@ -301,7 +301,7 @@ const TaskDetailModal: React.FC = () => {
                     </h4>
                     <div className="space-y-1">
                       <button
-                        className="w-full text-left px-2 py-2 text-sm text-gray-300 hover:bg-gray-600 hover:bg-opacity-50 rounded flex items-center gap-2"
+                        className="w-full text-left px-2 py-2 text-sm text-[var(--foreground)] hover:bg-[var(--hover-bg)] hover:bg-opacity-50 rounded flex items-center gap-2"
                         onClick={() => {
                           archiveTask(item.id);
                           onModalClose();

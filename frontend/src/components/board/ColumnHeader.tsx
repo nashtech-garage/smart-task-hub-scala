@@ -121,11 +121,11 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
                         onKeyDown={handleTitleKeyDown}
                         onBlur={handleTitleSubmit}
                         onClick={handleTitleInputClick}
-                        className="font-semibold text-[#B6C2CF] bg-[#22272B] border border-[#394B59] rounded px-2 py-1 -mx-2 -my-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1"
+                        className="font-semibold text-[var(--column-header-text)] bg-[var(--column-header-bg)] border border-[#394B59] rounded px-2 py-1 -mx-2 -my-1 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent flex-1"
                     />
                 ) : (
                     <h3
-                        className="font-semibold text-[#B6C2CF] cursor-pointer border border-transparent hover:bg-[#22272B] rounded px-2 py-1 -mx-2 -my-1 transition-colors flex-1"
+                        className="font-semibold text-[var(--column-header-text)] cursor-pointer border border-transparent hover:bg-[var(--column-header-bg)] rounded px-2 py-1 -mx-2 -my-1 transition-colors flex-1"
                         onClick={handleTitleClick}
                     >
                         {column.name}
@@ -136,7 +136,7 @@ const ColumnHeader: React.FC<ColumnHeaderProps> = ({
             <div className="relative">
                 <button
                     onClick={handleOptionsMenuToggle}
-                    className="text-gray-400 hover:text-gray-300 hover:bg-[#22272B] rounded p-1 transition-colors flex-shrink-0"
+                    className="text-gray-400 hover:text-[var(--foreground)] hover:bg-[var(--column-header-bg)] rounded p-1 transition-colors flex-shrink-0"
                 >
                     <Ellipsis size={16} />
                 </button>

@@ -2,8 +2,6 @@
 @import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
 
 @import 'react-toastify/dist/ReactToastify.css';
@@ -70,23 +68,29 @@
     box-sizing: border-box;
 }
 
+* {
+  transition: background-color 0.01s ease, color 0.01s ease, border-color 0.01s ease;
+}
+
 /* Scrollbar Track */
 ::-webkit-scrollbar {
-    width: 8px; /* or height for horizontal scrollbar */
+    width: 6px;
+    /* or height for horizontal scrollbar */
 }
 
 /* Scrollbar Track Background */
 ::-webkit-scrollbar-track {
-    background: #161414;
+    background: var(--scrollbar-track-bg);
     border-radius: 10px;
     padding: 4px;
 }
 
 /* Scrollbar Thumb (draggable part) */
 ::-webkit-scrollbar-thumb {
-    background-color: #3d3838;
+    background-color: var(--scrollbar-thumb-bg);
     border-radius: 10px;
-    border: 2px solid transparent; /* space around thumb */
+    border: 2px solid transparent;
+    /* space around thumb */
 }
 
 /* On hover */
@@ -95,7 +99,8 @@
 }
 
 body {
-    scrollbar-gutter: stable; /* optional: prevent layout shift */
+    scrollbar-gutter: stable;
+    /* optional: prevent layout shift */
 }
 
 @theme inline {
@@ -169,10 +174,23 @@ body {
     --sidebar-accent-foreground: oklch(0.205 0 0);
     --sidebar-border: oklch(0.922 0 0);
     --sidebar-ring: oklch(0.708 0 0);
+    --hover-bg: #A6C5E229;
+    --board-bg: oklch(88.2% 0.059 254.128);
+    --column-bg: oklch(92.8% 0.006 264.531);
+    --column-header-text: black;
+    --task-title: black;
+    --column-header-bg: oklch(98.5% 0.002 247.839);
+    --task-bg: white;
+    --board-navbar-bg: oklch(96.7% 0.003 264.542);
+    --board-navbar-menu-hover: oklch(92.8% 0.006 264.531);
+    --scrollbar-track-bg: oklch(96.7% 0.003 264.542);
+    --scrollbar-thumb-bg: oklch(70.7% 0.022 261.325);
+    --menu-text: black;
+    --button-bg: oklch(92.8% 0.006 264.531);
 }
 
 .dark {
-    --background: oklch(0.145 0 0);
+    --background: #1E2125;
     --foreground: oklch(0.985 0 0);
     --card: oklch(0.205 0 0);
     --card-foreground: oklch(0.985 0 0);
@@ -203,13 +221,27 @@ body {
     --sidebar-accent-foreground: oklch(0.985 0 0);
     --sidebar-border: oklch(1 0 0 / 10%);
     --sidebar-ring: oklch(0.556 0 0);
+    --hover-bg: #A6C5E229;
+    --board-bg: #283449;
+    --column-bg: #101204;
+    --column-header-text: #B6C2CF;
+    --column-header-bg: #22272B;
+    --task-bg: #222f44;
+    --task-title: #B6C2CF;
+    --board-navbar-bg: #28303E;
+    --board-navbar-menu-hover: #3A4150;
+    --scrollbar-track-bg: #161414;
+    --scrollbar-thumb-bg: #3d3838;
+    --menu-text: #B6C2CF;
+    --button-bg: #3A4150;
 }
 
 @layer base {
-  * {
-    @apply border-border outline-ring/50;
+    * {
+        @apply border-border outline-ring/50;
     }
-  body {
-    @apply bg-background text-foreground;
+
+    body {
+        @apply bg-background text-foreground;
     }
 }

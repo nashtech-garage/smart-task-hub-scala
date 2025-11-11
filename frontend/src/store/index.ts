@@ -10,7 +10,7 @@ import archivedColumnsReducer from "./slices/archiveColumnsSlice";
 import archivedTasksReducer from "./slices/archiveTasksSlice";
 import taskModalReducer from "./slices/taskModalSlice";
 import columnToggleStatesReducer from "./slices/columnToggleStatesSlice";
-
+import themeReducer from "./slices/themeSlice";
 
 import { useDispatch, useSelector, type TypedUseSelectorHook } from 'react-redux';
 
@@ -30,6 +30,7 @@ const rootReducer = combineReducers({
     members: membersReducer,
     taskModal: taskModalReducer,
     columnToggleStates: columnToggleStatesReducer,
+    theme: themeReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

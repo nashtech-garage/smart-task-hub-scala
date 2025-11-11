@@ -102,7 +102,7 @@ const SearchPage = () => {
     }
 
     return (
-        <div className="flex w-full h-full bg-[#1E2125] text-white">
+        <div className="flex w-full h-full bg-[var(--background)] text-[var(--foreground)]">
             {isLoading ? (
                 <LoadingSpinner />
             ) : (
@@ -149,8 +149,8 @@ const SearchPage = () => {
                                 {displayBoards.map((board) => (
                                     <span
                                         key={board.detail.id}
-                                        className={`px-3 py-1 rounded-full text-sm cursor-pointer flex items-center gap-1 
-                                            ${board.isChoosen ? "bg-blue-600" : "bg-gray-700 hover:bg-gray-600"}`}
+                                        className={`px-3 py-1 rounded-full text-sm cursor-pointer flex items-center gap-1 border
+                                            ${board.isChoosen ? "bg-blue-600" : "bg-[var(--background)] hover:bg-[var(--hover-bg)]"}`}
                                         onClick={() => toggleBoard(board)}
                                     >
                                         {board.isChoosen && <Check size={14} />}
@@ -164,14 +164,14 @@ const SearchPage = () => {
                                 <input
                                     type="text"
                                     placeholder="Find a board"
-                                    className="w-full px-3 py-1 rounded-md bg-gray-700 text-sm focus:outline-none"
+                                    className="w-full px-3 py-1 rounded-md bg-[var(--background)] border text-sm focus:outline-none"
                                     onFocus={() => setShowBoardDropdown(true)}
                                     value={boardSearch}
                                     onChange={(e) => setBoardSearch(e.target.value)}
                                 />
 
                                 {showBoardDropdown && (
-                                    <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-[#2A2D31] border border-gray-700 rounded-md shadow-lg">
+                                    <div className="absolute z-50 mt-1 w-full max-h-60 overflow-y-auto bg-[var(--background)] border border-gray-700 rounded-md shadow-lg">
                                         {boards
                                             .filter((b) => {
                                                 const isAlreadyChosen = displayBoards.some(
@@ -184,7 +184,7 @@ const SearchPage = () => {
                                                 return (
                                                     <div
                                                         key={b.id}
-                                                        className="px-3 py-2 text-sm cursor-pointer flex items-center gap-2 hover:bg-gray-600"
+                                                        className="px-3 py-2 text-sm cursor-pointer flex items-center gap-2 hover:bg-[var(--hover-bg)]"
                                                         onClick={() => setDisplayBoards(prev => [...prev, { isChoosen: true, detail: b }])}
                                                     >
                                                         {b.name}
@@ -215,7 +215,7 @@ const SearchPage = () => {
                             <input
                                 type="text"
                                 placeholder="Search"
-                                className="w-full px-4 py-2 rounded-md bg-[#2A2D31] border border-gray-700 focus:outline-none"
+                                className="w-full px-4 py-2 rounded-md bg-[var(--background)] border border-gray-700 focus:outline-none"
                                 value={keyword}
                                 onChange={(e) => setKeyword(e.target.value)}
                             />
@@ -227,7 +227,7 @@ const SearchPage = () => {
                             {tasks.map((card) => (
                                 <div
                                     key={card.taskId}
-                                    className="flex items-start p-3 rounded-md hover:bg-gray-800 cursor-pointer"
+                                    className="flex items-start p-3 rounded-md hover:bg-[var(--hover-bg)] cursor-pointer"
                                     onClick={() => {
                                         setShowSearch(true);
                                         navigate(`/board/${card.projectId}`);

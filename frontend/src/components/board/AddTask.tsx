@@ -104,7 +104,7 @@ const AddTask: React.FC<AddTaskProps> = ({ columnId }) => {
             onChange={(e) => setTaskTitle(e.target.value)}
             onKeyDown={handleKeyDown}
             placeholder="Enter a title or paste a link"
-            className="w-full p-2 text-sm bg-[#22272B] text-[#B6C2CF] border border-[#394B59] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            className="w-full p-2 text-sm bg-[var(--background)] text-[var(--foreground)] border border-[#394B59] rounded-lg resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             rows={3}
           />
           <div className="flex items-center gap-2">
@@ -126,7 +126,7 @@ const AddTask: React.FC<AddTaskProps> = ({ columnId }) => {
       ) : (
         <button
           onClick={handleAddTaskClick}
-          className="w-full p-2 text-[#B6C2CF] hover:text-[#B6C2CF] hover:bg-[#222f44] rounded-lg transition-colors flex items-center gap-2"
+          className="w-full p-2 text-[var(--task-title)] hover:text-[var(--task-title)] hover:bg-[var(--task-bg)] rounded-lg transition-colors flex items-center gap-2"
         >
           <Plus size={16} />
           Add a task

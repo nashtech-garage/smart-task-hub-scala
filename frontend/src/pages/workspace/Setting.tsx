@@ -63,8 +63,7 @@ const Setting = () => {
 
     return (
         <div className="
-            h-full flex flex-col justify-items-start
-            bg-[#1E2125] text-white p-8"
+            h-full flex flex-col justify-items-start p-8"
         >
             {/* Header */}
             <div className="mb-8">

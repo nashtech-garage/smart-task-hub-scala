@@ -1,3 +1,10 @@
+import { userProfileService } from "@/services/userProfileService";
+import type { RootState } from "@/store";
+import { toggleTheme } from "@/store/slices/themeSlice";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
+
 interface ProfileDropdownProps {
     userName?: string;
     email?: string;
@@ -11,11 +18,26 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
     handleLogout,
     handleCreateWorkspace,
 }) => {
+    const dispatch = useDispatch();
+    const theme = useSelector((state: RootState) => state.theme.mode);
+
+    const handleToggleTheme = async () => {
+        try {
+            await userProfileService.updateUserProfile({
+                themeMode: theme === 'dark' ? 'light' : 'dark',
+            });
+            dispatch(toggleTheme());
+        }
+        catch (error) {
+            console.error("Failed to toggle theme:", error);
+            toast.error("Failed to toggle theme");
+        }
+    }
 
     return (
-        <div className='absolute right-0 mt-2 w-80 bg-[#1E2125] rounded-lg shadow-lg shadow-[0px_8px_12px_#091e4226,0px_0px_1px_#091e424f] border border-gray-600 z-50'>
+        <div className='absolute right-0 mt-2 w-80 bg-[var(--background)] rounded-lg shadow-lg border border-gray-600 z-50'>
             <div className='p-4'>
-                <div className='text-xs text-[#B6C2CF] uppercase tracking-wide font-semibold mb-3'>
+                <div className='text-xs text-[var(--menu-text)] uppercase tracking-wide font-semibold mb-3'>
                     ACCOUNT
                 </div>
 
@@ -23,22 +45,21 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
                     <div className='w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-full flex items-center justify-center text-white font-semibold'>
                         {userName
                             ?.charAt(0)
-                            .toUpperCase() || 'VT'}
+                            .toUpperCase()}
                     </div>
                     <div>
-                        <div className='font-medium text-[#B6C2CF]'>
-                            {userName || 'Vu Tran'}
+                        <div className='font-medium text-[var(--menu-text)]'>
+                            {userName}
                         </div>
-                        <div className='text-sm text-[#B6C2CF]'>
-                            {email ||
-                                'tranmster5000@gmail.com'}
+                        <div className='text-sm text-[var(--menu-text)]'>
+                            {email}
                         </div>
                     </div>
                 </div>
 
-                <div className='border-t border-gray-600 pt-4'>
-                    {/* <div className='space-y-1 mb-4'>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
+                <div className='border-t border-gray-600'>
+                    <div className='space-y-1'>
+                        {/* <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
                             Profile and visibility
                         </button>
                         <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
@@ -49,28 +70,28 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
                         </button>
                         <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'>
                             Settings
-                        </button>
-                        <button className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded flex items-center justify-between'>
-                            Theme
-                            <svg
-                                className='w-4 h-4'
-                                fill='none'
-                                viewBox='0 0 24 24'
-                                stroke='currentColor'
+                        </button> */}
+                        <div
+                            onClick={handleToggleTheme}
+                            className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--menu-text)] hover:bg-[var(--hover-bg)] rounded justify-between"
+                        >
+                            <span>Dark mode</span>
+                            <div
+                                className={`w-10 h-5 flex items-center rounded-full p-1 duration-300 ${theme === 'dark' ? 'bg-gray-600' : 'bg-gray-300'
+                                    }`}
                             >
-                                <path
-                                    strokeLinecap='round'
-                                    strokeLinejoin='round'
-                                    strokeWidth={2}
-                                    d='M9 5l7 7-7 7'
-                                />
-                            </svg>
-                        </button>
-                    </div> */}
+                                <div
+                                    className={`bg-white w-4 h-4 rounded-full shadow-md transform duration-300 ${theme === 'dark' ? 'translate-x-5' : ''
+                                        }`}
+                                ></div>
+                            </div>
+                        </div>
+
+                    </div>
 
                     <button
                         onClick={handleCreateWorkspace}
-                        className='w-full text-left border-t border-gray-600 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded flex items-center'>
+                        className='w-full text-left border-t border-gray-600 px-3 py-2 text-sm text-blue-600 hover:bg-[var(--hover-bg)] rounded flex items-center'>
                         <svg
                             className='w-4 h-4 mr-2'
                             fill='none'
@@ -91,7 +112,7 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
                 <div className='border-t border-gray-600 pt-4'>
                     <button
                         onClick={handleLogout}
-                        className='w-full text-left px-3 py-2 text-sm text-[#B6C2CF] hover:bg-gray-700 rounded'
+                        className='w-full text-left px-3 py-2 text-sm text-[var(--menu-text)] hover:bg-[var(--hover-bg)] rounded'
                     >
                         Log out
                     </button>

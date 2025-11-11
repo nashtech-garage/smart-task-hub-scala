@@ -92,22 +92,22 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
             <div
                 onClick={() => setShowCreateModal(true)}
                 className="
-                    h-24 bg-[#2A2D31] hover:bg-[#3A3D41] rounded-lg cursor-pointer transition-colors 
-                    flex items-center justify-center border-2 border-dashed border-gray-600"
+                    h-24 bg-[var(--button-bg)] text-[var(--foreground)] hover:bg-[var(--hover-bg)] rounded-lg cursor-pointer transition-colors 
+                    flex items-center justify-center border-2 border-gray-600"
             >
-                <span className="text-gray-400 font-medium mr-0.5"><Plus /></span>
-                <span className="text-gray-400 font-medium">Create new board</span>
+                <span className="font-medium mr-0.5"><Plus /></span>
+                <span className="font-medium">Create new board</span>
             </div>
             {/* Create Board Modal */}
             {showCreateModal && (
                 <div className="fixed inset-0 flex items-center justify-center z-50">
-                    <div className="bg-[#2A2D31] rounded-lg p-0 w-[300px] max-w-md mx-4 overflow-hidden">
+                    <div className="bg-[var(--background)] border rounded-lg p-0 w-[300px] max-w-md mx-4 overflow-hidden">
                         {/* Modal Header */}
                         <div className="flex items-center justify-between p-4 border-b border-gray-600">
-                            <h3 className="text-lg font-medium text-white">Create board</h3>
+                            <h3 className="text-lg font-medium text-[var(--foreground)]">Create board</h3>
                             <button
                                 onClick={handleCloseModal}
-                                className="text-gray-400 hover:text-white text-2xl leading-none"
+                                className="text-gray-400 hover:text-[var(--foreground)] text-2xl leading-none"
                             >
                                 ×
                             </button>
@@ -126,7 +126,7 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
                                     <div className="w-full h-full bg-opacity-20 rounded-lg flex items-center justify-center"></div>
                                 </div>
 
-                                <label className="block text-sm text-gray-300 mb-2">Background</label>
+                                <label className="block text-sm text-[var(--foreground)] mb-2">Background</label>
                                 <div className="grid grid-cols-4 gap-2">
                                     {backgroundOptions.map((option, index) => (
                                         <div
@@ -147,14 +147,14 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
 
                             {/* Board Title Input */}
                             <div className="mb-4">
-                                <label className="block text-sm text-gray-300 mb-2">
+                                <label className="block text-sm text-[var(--foreground)] mb-2">
                                     Board title <span className="text-red-400">*</span>
                                 </label>
                                 <input
                                     type="text"
                                     value={boardTitle}
                                     onChange={handleTitleChange}
-                                    className={`w-full px-3 py-2 bg-[#1E2125] border rounded text-white text-sm focus:outline-none ${errorToDisplay ? 'border-red-400 focus:border-red-400' : 'border-gray-600 focus:border-blue-400'
+                                    className={`w-full px-3 py-2 bg-[var(--background)] border rounded text-[var(--foreground)] text-sm focus:outline-none ${errorToDisplay ? 'border-red-400 focus:border-red-400' : 'border-gray-600 focus:border-blue-400'
                                         }`}
                                     placeholder="Enter board title"
                                     disabled={isLoading}
@@ -171,7 +171,7 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
 
                             {/* Workspace Dropdown */}
                             <div className="mb-4">
-                                <label className="block text-sm text-gray-300 mb-2">Workspace</label>
+                                <label className="block text-sm text-[var(--foreground)] mb-2">Workspace</label>
                                 <span className="block opacity-60 cursor-not-allowed px-3 py-2 bg-[#1E2125] border border-gray-600 rounded text-white text-sm">
                                     {workspaceName}
                                 </span>
@@ -183,8 +183,8 @@ const CreateBoard: React.FC<CreateBoardProp> = ({ id, workspaceName, onBoardCrea
                                     onClick={handleCreateBoard}
                                     disabled={!boardTitle.trim() || isLoading}
                                     className={`w-full py-2 text-sm rounded font-medium ${boardTitle.trim() && !isLoading
-                                            ? 'bg-blue-600 hover:bg-blue-700 text-white'
-                                            : 'bg-gray-600 text-gray-400 cursor-not-allowed'
+                                        ? 'bg-blue-600 hover:bg-blue-700 text-white'
+                                        : 'bg-gray-600 text-gray-400 cursor-not-allowed'
                                         }`}
                                 >
                                     {isLoading ? 'Creating...' : 'Create'}

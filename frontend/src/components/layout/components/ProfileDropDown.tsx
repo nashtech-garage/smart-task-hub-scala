@@ -1,7 +1,9 @@
+import { userProfileService } from "@/services/userProfileService";
 import type { RootState } from "@/store";
 import { toggleTheme } from "@/store/slices/themeSlice";
 import { useState } from "react";
 import { useDispatch, useSelector } from "react-redux";
+import { toast } from "react-toastify";
 
 interface ProfileDropdownProps {
     userName?: string;
@@ -17,7 +19,20 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
     handleCreateWorkspace,
 }) => {
     const dispatch = useDispatch();
-    const theme = useSelector((state: RootState) => state.theme.mode)
+    const theme = useSelector((state: RootState) => state.theme.mode);
+
+    const handleToggleTheme = async () => {
+        try {
+            await userProfileService.updateUserProfile({
+                themeMode: theme === 'dark' ? 'light' : 'dark',
+            });
+            dispatch(toggleTheme());
+        }
+        catch (error) {
+            console.error("Failed to toggle theme:", error);
+            toast.error("Failed to toggle theme");
+        }
+    }
 
     return (
         <div className='absolute right-0 mt-2 w-80 bg-[var(--background)] rounded-lg shadow-lg border border-gray-600 z-50'>
@@ -57,7 +72,7 @@ const ProfileDropDown: React.FC<ProfileDropdownProps> = ({
                             Settings
                         </button> */}
                         <div
-                            onClick={() => dispatch(toggleTheme())}
+                            onClick={handleToggleTheme}
                             className="flex items-center gap-2 px-3 py-2 text-sm text-[var(--menu-text)] hover:bg-[var(--hover-bg)] rounded justify-between"
                         >
                             <span>Dark mode</span>

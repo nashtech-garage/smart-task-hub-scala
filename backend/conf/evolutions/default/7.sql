@@ -1,3 +1,5 @@
+# --- !Ups
+
 CREATE TABLE user_profiles (
     id SERIAL PRIMARY KEY,
     user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -7,3 +9,6 @@ CREATE TABLE user_profiles (
     updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT user_profile_user_id_idx UNIQUE (user_id)
 );
+
+# --- !Downs
+DROP TABLE IF EXISTS user_profiles;

@@ -68,157 +68,156 @@ const workspaceBoards: Board[] = [
 
 const HomeBoards = () => {
     const [selectedCategory, setSelectedCategory] = useState('all');
-    
-        return (
-            <div className='p-6'>
-                {/* Most Popular Templates */}
-                <div className='mb-8'>
-                    <div className='flex items-center justify-between mb-4'>
-                        <h2 className='text-xl font-bold text-white'>
-                            Most popular templates
-                        </h2>
-                        <button className='text-sm text-gray-500 hover:text-gray-700'>
-                            ×
-                        </button>
-                    </div>
-                    <p className='text-sm text-white mb-4'>
-                        Get going faster with a template from the Trello
-                        community or{' '}
-                        <select
-                            className='border border-gray-300 rounded px-2 py-1 text-sm'
-                            value={selectedCategory}
-                            onChange={e =>
-                                setSelectedCategory(e.target.value)
-                            }
+
+    return (
+        <div className='p-6'>
+            {/* Most Popular Templates */}
+            <div className='mb-8'>
+                <div className='flex items-center justify-between mb-4'>
+                    <h2 className='text-xl font-bold text-[var(--foreground)]'>
+                        Most popular templates
+                    </h2>
+                    <button className='text-sm text-gray-500 hover:text-gray-700'>
+                        ×
+                    </button>
+                </div>
+                <p className='text-sm text-[var(--foreground)] mb-4'>
+                    Get going faster with a template from the Trello
+                    community or{' '}
+                    <select
+                        className='border border-gray-300 rounded px-2 py-1 text-sm'
+                        value={selectedCategory}
+                        onChange={e =>
+                            setSelectedCategory(e.target.value)
+                        }
+                    >
+                        <option value='all'>choose a category</option>
+                        <option value='project-management'>
+                            Project Management
+                        </option>
+                        <option value='productivity'>
+                            Productivity
+                        </option>
+                        <option value='remote-work'>Remote Work</option>
+                    </select>
+                </p>
+
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+                    {templates.map(template => (
+                        <div
+                            key={template.id}
+                            className='group shadow-md rounded-lg cursor-pointer'
                         >
-                            <option value='all'>choose a category</option>
-                            <option value='project-management'>
-                                Project Management
-                            </option>
-                            <option value='productivity'>
-                                Productivity
-                            </option>
-                            <option value='remote-work'>Remote Work</option>
-                        </select>
-                    </p>
-    
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-                        {templates.map(template => (
                             <div
-                                key={template.id}
-                                className='group shadow-md rounded-lg cursor-pointer'
+                                className={`${template.color} rounded-lg h-32 relative overflow-hidden`}
                             >
-                                <div
-                                    className={`${template.color} rounded-lg h-32 relative overflow-hidden`}
-                                >
+                                <div className='absolute top-2 left-2'>
+                                    <span className='bg-yellow-400 text-yellow-900 text-xs font-medium px-2 py-0.5 rounded'>
+                                        TEMPLATE
+                                    </span>
+                                </div>
+                                <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
+                            </div>
+                            <h3 className='mt-2 text-sm font-medium text-[var(--foreground)] group-hover:text-blue-600 p-2'>
+                                {template.title}
+                            </h3>
+                        </div>
+                    ))}
+                </div>
+
+                <button className='mt-4 text-sm text-blue-600 hover:text-blue-700 hover:underline'>
+                    Browse the full template gallery
+                </button>
+            </div>
+
+            {/* Recently Viewed */}
+            <div className='mb-8'>
+                <div className='flex items-center mb-4'>
+                    <svg
+                        className='w-5 h-5 mr-2 text-[var(--foreground)]'
+                        fill='none'
+                        viewBox='0 0 24 24'
+                        stroke='currentColor'
+                    >
+                        <path
+                            strokeLinecap='round'
+                            strokeLinejoin='round'
+                            strokeWidth={2}
+                            d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
+                        />
+                    </svg>
+                    <h2 className='text-lg font-semibold text-[var(--foreground)]'>
+                        Recently viewed
+                    </h2>
+                </div>
+
+                <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+                    {recentBoards.map(board => (
+                        <div
+                            key={board.id}
+                            className='shadow-md group cursor-pointer'
+                        >
+                            <div
+                                className={`${board.color} rounded-lg h-24 relative overflow-hidden`}
+                            >
+                                {board.title.includes('Template') && (
                                     <div className='absolute top-2 left-2'>
                                         <span className='bg-yellow-400 text-yellow-900 text-xs font-medium px-2 py-0.5 rounded'>
                                             TEMPLATE
                                         </span>
                                     </div>
-                                    <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
-                                </div>
-                                <h3 className='mt-2 text-sm font-medium text-white group-hover:text-blue-600 p-2'>
-                                    {template.title}
-                                </h3>
+                                )}
+                                <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
                             </div>
-                        ))}
-                    </div>
-    
-                    <button className='mt-4 text-sm text-blue-600 hover:text-blue-700 hover:underline'>
-                        Browse the full template gallery
-                    </button>
+                            <h3 className='mt-2 p-2 text-sm font-medium text-[var(--foreground)] group-hover:text-blue-600'>
+                                {board.title}
+                            </h3>
+                        </div>
+                    ))}
                 </div>
-    
-                {/* Recently Viewed */}
-                <div className='mb-8'>
-                    <div className='flex items-center mb-4'>
-                        <svg
-                            className='w-5 h-5 mr-2 text-white'
-                            fill='none'
-                            viewBox='0 0 24 24'
-                            stroke='currentColor'
-                        >
-                            <path
-                                strokeLinecap='round'
-                                strokeLinejoin='round'
-                                strokeWidth={2}
-                                d='M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z'
-                            />
-                        </svg>
-                        <h2 className='text-lg font-semibold text-white'>
-                            Recently viewed
-                        </h2>
+            </div>
+
+            {/* Your Workspaces */}
+            <div>
+                <h2 className='text-lg font-semibold text-[var(--foreground)] mb-4 flex items-center'>
+                    YOUR WORKSPACES
+                </h2>
+
+                {/* Nashtech Workspace */}
+                <div className='mb-6'>
+                    <div className='flex items-center justify-between mb-4'>
+                        <div className='flex items-center'>
+                            <div className='w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-[var(--foreground)] font-semibold text-sm mr-3'>
+                                N
+                            </div>
+                            <h3 className='text-lg font-medium text-[var(--foreground)]'>
+                                Nashtech
+                            </h3>
+                        </div>
                     </div>
-    
-                    <div className='grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-                        {recentBoards.map(board => (
+
+                    <div className='pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
+                        {workspaceBoards.map(board => (
                             <div
                                 key={board.id}
-                                className='shadow-md group cursor-pointer'
+                                className='group shadow-md cursor-pointer'
                             >
                                 <div
                                     className={`${board.color} rounded-lg h-24 relative overflow-hidden`}
                                 >
-                                    {board.title.includes('Template') && (
-                                        <div className='absolute top-2 left-2'>
-                                            <span className='bg-yellow-400 text-yellow-900 text-xs font-medium px-2 py-0.5 rounded'>
-                                                TEMPLATE
-                                            </span>
-                                        </div>
-                                    )}
                                     <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
                                 </div>
-                                <h3 className='mt-2 p-2 text-sm font-medium text-white group-hover:text-blue-600'>
+                                <h3 className='mt-2 p-2 text-sm font-medium text-gray-900 group-hover:text-blue-600'>
                                     {board.title}
                                 </h3>
                             </div>
                         ))}
-                    </div>
-                </div>
-    
-                {/* Your Workspaces */}
-                <div>
-                    <h2 className='text-lg font-semibold text-white mb-4 flex items-center'>
-                        YOUR WORKSPACES
-                    </h2>
-    
-                    {/* Nashtech Workspace */}
-                    <div className='mb-6'>
-                        <div className='flex items-center justify-between mb-4'>
-                            <div className='flex items-center'>
-                                <div className='w-8 h-8 bg-orange-500 rounded flex items-center justify-center text-white font-semibold text-sm mr-3'>
-                                    N
-                                </div>
-                                <h3 className='text-lg font-medium text-white'>
-                                    Nashtech
-                                </h3>
-                            </div>
-                        </div>
-    
-                        <div className='pb-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4'>
-                            {workspaceBoards.map(board => (
-                                <div
-                                    key={board.id}
-                                    className='group shadow-md cursor-pointer'
-                                >
-                                    <div
-                                        className={`${board.color} rounded-lg h-24 relative overflow-hidden`}
-                                    >
-                                        <div className='absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-10 transition-all duration-200'></div>
-                                    </div>
-                                    <h3 className='mt-2 p-2 text-sm font-medium text-gray-900 group-hover:text-blue-600'>
-                                        {board.title}
-                                    </h3>
-                                </div>
-                            ))}
-                            {/* Create new board card */}
-                            <div className='group cursor-pointer'>
-                                <div className='bg-[#282D33] hover:bg-gray-300 rounded-lg h-24 flex items-center justify-center transition-colors duration-200'>
-                                    <div className='text-center'>
-                                        <div className='text-gray-600 group-hover:text-gray-700'>
-                                            Create new board
-                                        </div>
+                        {/* Create new board card */}
+                        <div className='group cursor-pointer'>
+                            <div className='bg-[#282D33] hover:bg-gray-300 rounded-lg h-24 flex items-center justify-center transition-colors duration-200'>
+                                <div className='text-center'>
+                                    <div className='text-gray-600 group-hover:text-gray-700'>
+                                        Create new board
                                     </div>
                                 </div>
                             </div>
@@ -226,7 +225,8 @@ const HomeBoards = () => {
                     </div>
                 </div>
             </div>
-        );
+        </div>
+    );
 }
 
 export default HomeBoards;

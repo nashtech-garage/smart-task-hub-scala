@@ -11,7 +11,9 @@ POST    /api/auth/logout        controllers.AuthController.logout()
 GET     /api/auth/me            controllers.AuthController.me()
 POST    /api/auth/refresh       controllers.AuthController.refresh()
 GET     /api/auth/check         controllers.AuthController.checkAuth()
-GET    /api/auth/role         controllers.AuthController.roleRetrieve()
+GET    /api/auth/role           controllers.AuthController.roleRetrieve()
+
+GET   /auth/google/callback    controllers.GoogleAuthController.callback(code: String, state: Option[String])
 
 # Workspace
 GET     /api/workspaces            controllers.WorkspaceController.getAllWorkspaces

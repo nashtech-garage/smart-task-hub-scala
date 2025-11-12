@@ -1,7 +1,7 @@
 package controllers
 
+import org.mockito.ArgumentMatchers
 import org.mockito.ArgumentMatchers._
-import org.mockito.ArgumentMatchersSugar
 import org.mockito.Mockito._
 import org.scalatestplus.mockito.MockitoSugar
 import org.scalatestplus.play._
@@ -97,7 +97,7 @@ class UrlPreviewControllerSpec extends PlaySpec with MockitoSugar {
                          |<link rel="icon" href="https://example.com/favicon.ico" />
                          |</head></html>""".stripMargin
 
-            when(ws.url(ArgumentMatchersSugar.eqTo("https://example.com"))).thenReturn(directRequest)
+            when(ws.url(ArgumentMatchers.eq("https://example.com"))).thenReturn(directRequest)
             when(directRequest.withRequestTimeout(any())).thenReturn(directRequest)
             when(directRequest.withFollowRedirects(true)).thenReturn(directRequest)
             when(directRequest.get()).thenReturn(Future.successful(wsResponse))

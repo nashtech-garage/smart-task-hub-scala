@@ -1,5 +1,8 @@
 package controllers
 
+import dto.request.profile.UpdateUserProfileRequest
+import dto.response.ApiResponse
+
 import javax.inject.{Inject, Singleton}
 import play.api.mvc._
 import play.api.libs.json._
@@ -18,15 +21,9 @@ class UserProfileController @Inject()(
 
   implicit val userProfileWrites: OWrites[UserProfile] = Json.writes[UserProfile]
 
-  // Request DTO for partial updates
-  private case class UpdateUserProfileRequest(userLanguage: Option[String], themeMode: Option[String])
-  private object UpdateUserProfileRequest {
-    implicit val reads: Reads[UpdateUserProfileRequest] = Json.reads[UpdateUserProfileRequest]
-  }
-
   def getUserProfile: Action[AnyContent] = authenticatedAction.async { request =>
     userProfileService.getUserProfile(request.userToken.userId).map {
-      case Some(profile) => Ok(Json.toJson(profile))
+      case Some(profile) => Ok(Json.toJson(ApiResponse("User profile retrieved successfully", Some(profile))))
       case None => NotFound
     }
   }
@@ -43,7 +40,7 @@ class UserProfileController @Inject()(
           updatedAt = LocalDateTime.now()
         )
         userProfileService.createProfile(newProfile).map { profile =>
-          Created(Json.toJson(profile))
+          Created(Json.toJson(ApiResponse("User profile created successfully", Some(profile))))
         }
       }
     )
@@ -62,7 +59,7 @@ class UserProfileController @Inject()(
               updatedAt = java.time.LocalDateTime.now()
             )
             userProfileService.updateProfile(updated).map {
-              case Some(profile) => Ok(Json.toJson(profile))
+              case Some(profile) => Ok(Json.toJson(ApiResponse("User profile updated successfully", Some(profile))))
               case None => InternalServerError(Json.obj("error" -> "Failed to update profile"))
             }
         }

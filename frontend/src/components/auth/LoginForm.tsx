@@ -22,7 +22,7 @@ const LoginForm: React.FC = () => {
                 const from = (location.state as any)?.from || '/user/boards';
                 try {
                     const userProfile = await userProfileService.getUserProfile();
-                    dispatch(setTheme(userProfile.themeMode));
+                    dispatch(setTheme(userProfile.data.themeMode));
                 } catch (e) {
                     console.error('Error setting theme on login:', e);
                     await userProfileService.createUserProfile({

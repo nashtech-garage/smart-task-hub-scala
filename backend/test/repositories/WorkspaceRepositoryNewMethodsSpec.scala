@@ -7,9 +7,10 @@ import org.scalatest.concurrent.ScalaFutures
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AsyncWordSpec
 import org.scalatestplus.play.guice.GuiceOneAppPerTest
-import org.scalatestplus.play.{Injecting, PlaySpec}
+import org.scalatestplus.play.{PlaySpec}
 import play.api.inject.guice.GuiceApplicationBuilder
 import play.api.test.Helpers._
+import play.api.test.Injecting
 import play.api.{Application, Configuration}
 
 import java.time.Instant

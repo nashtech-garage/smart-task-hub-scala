@@ -124,6 +124,27 @@ class WorkspaceController @Inject()(
       }
     }
 
+  def getAllMembers(workspaceId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+      workspaceService
+          .getAllMembersInWorkspace(workspaceId, userId)
+          .map { members =>
+            val apiResponse = ApiResponse.success("Members retrieved successfully", members)
+            Ok(Json.toJson(apiResponse))
+          }
+          .recover {
+            case ex: AppException =>
+              if (ex.statusCode == 403) {
+                Forbidden(Json.toJson(ApiResponse[Unit](ex.message)))
+              } else if (ex.statusCode == 404) {
+                NotFound(Json.toJson(ApiResponse[Unit](ex.message)))
+              } else {
+                BadRequest(Json.toJson(ApiResponse[Unit](ex.message)))
+              }
+          }
+    }
+
   def inviteUser(workspaceId: Int): Action[JsValue] =
     authenticatedActionWithUser.async(parse.json) { request =>
       implicit val messages: Messages = request.messages
@@ -141,5 +162,51 @@ class WorkspaceController @Inject()(
             )
       }
 
+    }
+
+  def removeMember(workspaceId: Int, memberId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val requesterId = request.userToken.userId
+      workspaceService
+        .removeMemberFromWorkspace(workspaceId, memberId, requesterId)
+        .map { success =>
+          if (success) {
+            Ok(Json.toJson(ApiResponse[Unit]("Member removed successfully")))
+          } else {
+            NotFound(Json.obj("error" -> "Failed to remove member"))
+          }
+        }
+        .recover {
+          case ex: AppException =>
+            if (ex.statusCode == 403) {
+              Forbidden(Json.toJson(ApiResponse[Unit](ex.message)))
+            } else if (ex.statusCode == 404) {
+              NotFound(Json.toJson(ApiResponse[Unit](ex.message)))
+            } else {
+              BadRequest(Json.toJson(ApiResponse[Unit](ex.message)))
+            }
+        }
+    }
+
+  def leaveWorkspace(workspaceId: Int): Action[AnyContent] =
+    authenticatedActionWithUser.async { request =>
+      val userId = request.userToken.userId
+      workspaceService
+        .leaveWorkspace(workspaceId, userId)
+        .map { success =>
+          if (success) {
+            Ok(Json.toJson(ApiResponse[Unit]("Left workspace successfully")))
+          } else {
+            NotFound(Json.obj("error" -> "Failed to leave workspace"))
+          }
+        }
+        .recover {
+          case ex: AppException =>
+            if (ex.statusCode == 404) {
+              NotFound(Json.toJson(ApiResponse[Unit](ex.message)))
+            } else {
+              BadRequest(Json.toJson(ApiResponse[Unit](ex.message)))
+            }
+        }
     }
 }

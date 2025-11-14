@@ -1,9 +1,10 @@
 package repositories
 
 import db.MyPostgresProfile.api.userWorkspaceRoleTypeMapper
+import dto.response.workspace.UserWorkspaceDTO
 import models.Enums
 import models.entities.{UserWorkspace, Workspace}
-import models.tables.{UserWorkspaceTable, WorkspaceTable}
+import models.tables.{UserTable, UserWorkspaceTable, WorkspaceTable}
 import play.api.db.slick.{DatabaseConfigProvider, HasDatabaseConfigProvider}
 import slick.jdbc.JdbcProfile
 
@@ -21,6 +22,7 @@ class WorkspaceRepository @Inject()(
   // Table query objects
   private val workspaces = TableQuery[WorkspaceTable]
   private val userWorkspaces = TableQuery[UserWorkspaceTable]
+  private val userTables = TableQuery[UserTable]
 
   /**
     * Creates a transactional action that creates a new workspace and associates it with the specified user as an owner.
@@ -152,5 +154,39 @@ class WorkspaceRepository @Inject()(
     val insertQuery = userWorkspaces returning userWorkspaces.map(_.id)
     val action = insertQuery += entry
     db.run(action)
+  }
+
+  def getAllMembersInWorkspace(workspaceId: Int): DBIO[Seq[UserWorkspaceDTO]] = {
+    (for {
+      uw <- userWorkspaces if uw.workspaceId === workspaceId
+      u <- userTables if u.id === uw.userId
+      w <- workspaces if w.id === workspaceId && !w.isDeleted
+    } yield (u, uw)).result.map { rows =>
+      rows.map { case (user, userWorkspace) =>
+        UserWorkspaceDTO(
+          userId = user.id.getOrElse(0),
+          name = user.name,
+          email = user.email,
+          role = userWorkspace.role.toString,
+          joinedAt = Some(userWorkspace.joinedAt)
+        )
+      }
+    }
+  }
+
+  /** Remove a user from a workspace by workspaceId and userId */
+  def removeUserFromWorkspace(workspaceId: Int, userId: Int): DBIO[Int] = {
+    userWorkspaces
+      .filter(uw => uw.workspaceId === workspaceId && uw.userId === userId)
+      .delete
+  }
+
+  /** Get user workspace role */
+  def getUserWorkspaceRole(workspaceId: Int, userId: Int): DBIO[Option[Enums.UserWorkspaceRole.Value]] = {
+    userWorkspaces
+      .filter(uw => uw.workspaceId === workspaceId && uw.userId === userId)
+      .map(_.role)
+      .result
+      .headOption
   }
 }

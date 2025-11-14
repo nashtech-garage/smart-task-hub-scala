@@ -26,8 +26,11 @@ OPTIONS /api/url-preview        controllers.UrlPreviewController.previewOptions(
 
 # Workspace routes
 
+GET     /api/workspaces/:workspaceId/members    controllers.WorkspaceController.getAllMembers(workspaceId: Int)
 POST   /api/workspaces    controllers.WorkspaceController.create
 POST   /api/workspaces/:workspaceId/invite    controllers.WorkspaceController.inviteUser(workspaceId: Int)
+DELETE /api/workspaces/:workspaceId/members/:memberId    controllers.WorkspaceController.removeMember(workspaceId: Int, memberId: Int)
+DELETE /api/workspaces/:workspaceId/leave    controllers.WorkspaceController.leaveWorkspace(workspaceId: Int)
 PUT    /api/workspaces/:id controllers.WorkspaceController.update(id: Int)
 
 # Project routes

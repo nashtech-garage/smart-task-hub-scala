@@ -15,7 +15,7 @@ import play.api.{Application, Configuration}
 import services.{JwtService, UserToken}
 
 class WorkspaceControllerSpec
-    extends PlaySpec
+  extends PlaySpec
     with GuiceOneAppPerTest
     with Injecting
     with ScalaFutures
